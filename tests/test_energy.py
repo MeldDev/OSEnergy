@@ -25,10 +25,19 @@ local bg, fg = 123, 456
 local cells, screens, messages = {}, {}, {}
 local step = 1
 package.preload.process = function()
-  return {info = function() return {path = '/home/monitor/energy.lua'} end}
+  return {info = function() return {path = TEST_PROGRAM_PATH or '/home/monitor/energy.lua'} end}
+end
+package.preload.shell = function()
+  return {getWorkingDirectory = function() return '/home' end,
+    resolve = function(path, ext)
+      assert(ext == 'lua')
+      if TEST_RESOLVED_PROGRAM then return TEST_RESOLVED_PROGRAM end
+      if path:sub(1, 1) == '/' then return path end
+      return '/home/' .. path .. (path:match('%.lua$') and '' or '.lua')
+    end}
 end
 package.preload.filesystem = function()
-  return {path = function(path) return path:match('^(.*)/') end,
+  return {path = function(path) return path:match('^(.*)/') or '' end,
     concat = function(a, b) return a .. '/' .. b end}
 end
 loadfile = function(path)
@@ -173,3 +182,13 @@ run("missing configuration", "local TEST_W, TEST_H=60,22; local FLOWS={{}}; loca
     "assert(not ok); contains(err, 'Не удалось загрузить'); assert(sw == 40 and sh == 15)")
 run("list without configuration", "local TEST_W, TEST_H=60,22; local FLOWS={{abc=1}}; local TEST_MISSING_CONFIG=true",
     restore + "; contains(table.concat(messages), 'abc')", arguments=', "--list"')
+for command in ("energy.lua", "energy"):
+    run(f"relative launch {command}",
+        "local TEST_W, TEST_H=60,22; local FLOWS={{r1=100,r2=200,s=50,w=25,m=80,c=20}}; "
+        f"local TEST_PROGRAM_PATH='{command}'; local TEST_CONFIG_PATH='/home/energy-config.lua'",
+        restore + "; contains(screens[1], 'Баланс: 275 EU/t')", config)
+run("launch through search path from another directory",
+    "local TEST_W, TEST_H=60,22; local FLOWS={{r1=100,r2=200,s=50,w=25,m=80,c=20}}; "
+    "local TEST_PROGRAM_PATH='energy'; local TEST_RESOLVED_PROGRAM='/opt/monitor/energy.lua'; "
+    "local TEST_CONFIG_PATH='/opt/monitor/energy-config.lua'",
+    restore + "; contains(screens[1], 'Баланс: 275 EU/t')", config)

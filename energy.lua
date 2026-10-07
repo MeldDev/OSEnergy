@@ -22,9 +22,12 @@ end
 -- Настройки рядом с программой, независимо от текущей папки OpenOS.
 -- Можно передать другой файл: energy.lua /home/my-config.lua
 local filesystem = require("filesystem")
+local shell = require("shell")
 local process = require("process").info()
-local directory = process and type(process.path) == "string" and filesystem.path(process.path)
-  or require("shell").getWorkingDirectory()
+-- process.path может быть относительным (например, "energy.lua").
+-- Сначала получаем абсолютный путь так же, как это делает OpenOS при запуске.
+local programPath = process and type(process.path) == "string" and shell.resolve(process.path, "lua")
+local directory = programPath and filesystem.path(programPath) or shell.getWorkingDirectory()
 local configPath = args[1] or filesystem.concat(directory, "energy-config.lua")
 local loader, loadError = loadfile(configPath)
 if not loader then error("Не удалось загрузить " .. configPath .. ": " .. tostring(loadError)) end
