@@ -17,34 +17,13 @@ lib.lua_tolstring.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p]
 lib.lua_tolstring.restype = ctypes.c_char_p
 lib.lua_close.argtypes = [ctypes.c_void_p]
 source = (Path(__file__).resolve().parents[1] / "energy.lua").read_text(encoding="utf-8")
-config_source = (Path(__file__).resolve().parents[1] / "energy-config.lua").read_text(encoding="utf-8")
 
 MOCKS = r'''
 local sw, sh = 40, 15
 local bg, fg = 123, 456
 local cells, screens, messages = {}, {}, {}
 local step = 1
-package.preload.process = function()
-  return {info = function() return {path = TEST_PROGRAM_PATH or '/home/monitor/energy.lua'} end}
-end
-package.preload.shell = function()
-  return {getWorkingDirectory = function() return '/home' end,
-    resolve = function(path, ext)
-      assert(ext == 'lua')
-      if TEST_RESOLVED_PROGRAM then return TEST_RESOLVED_PROGRAM end
-      if path:sub(1, 1) == '/' then return path end
-      return '/home/' .. path .. (path:match('%.lua$') and '' or '.lua')
-    end}
-end
-package.preload.filesystem = function()
-  return {path = function(path) return path:match('^(.*)/') or '' end,
-    concat = function(a, b) return a .. '/' .. b end}
-end
-loadfile = function(path)
-  assert(path == (TEST_CONFIG_PATH or '/home/monitor/energy-config.lua'), 'wrong config path: ' .. path)
-  if TEST_MISSING_CONFIG then return nil, 'file not found' end
-  return load(TEST_CONFIG_SOURCE)
-end
+loadfile = function() error('External configuration must not be loaded') end
 local gpu = {}
 function gpu.getResolution() return sw, sh end
 function gpu.maxResolution() return TEST_W, TEST_H end
@@ -119,15 +98,15 @@ end
 '''
 
 
-def run(name, setup, checks, config=None, arguments=""):
-    config_code = config_source
-    for key in ("reactors", "solar", "wind", "molecular", "machines"):
-        addresses = (config or {}).get(key, "")
-        config_code = re.sub(rf"(^\s*{key}\s*=\s*)\{{[^}}]*\}}",
-                             lambda match: match[1] + "{" + addresses + "}", config_code,
-                             count=1, flags=re.MULTILINE)
-    lua = setup + "\nlocal TEST_CONFIG_SOURCE = [====[" + config_code + "]====]\n"
-    lua += MOCKS + "\nlocal function program(...)\n" + source
+def run(name, setup, checks, config=None, arguments="", use_actual_config=False):
+    code = source
+    if not use_actual_config:
+        for key in ("reactors", "solar", "wind", "molecular", "machines"):
+            addresses = (config or {}).get(key, "")
+            code = re.sub(rf"(^\s*{key}\s*=\s*)\{{[^}}]*\}}",
+                          lambda match: match[1] + "{" + addresses + "}", code,
+                          count=1, flags=re.MULTILINE)
+    lua = setup + "\n" + MOCKS + "\nlocal function program(...)\n" + code
     lua += "\nend\nlocal ok, err = pcall(program" + arguments + ")\n" + checks
     state = lib.luaL_newstate()
     assert state, "Cannot create Lua state"
@@ -175,20 +154,12 @@ run("counter inventory", "local TEST_W, TEST_H=60,22; local FLOWS={{abc=1,def=2}
     "contains(table.concat(messages, '\\n'), 'def')", arguments=', "--list"')
 run("small screen restoration", "local TEST_W, TEST_H=50,16; local FLOWS={{}}",
     restore + "; contains(table.concat(messages), 'Экран слишком маленький')")
-run("custom configuration path", "local TEST_W, TEST_H=60,22; local FLOWS={{r1=100,r2=200,s=50,w=25,m=80,c=20}}; "
-    "local TEST_CONFIG_PATH='/etc/energy.lua'",
-    restore + "; contains(screens[1], 'Баланс: 275 EU/t')", config, arguments=', "/etc/energy.lua"')
-run("missing configuration", "local TEST_W, TEST_H=60,22; local FLOWS={{}}; local TEST_MISSING_CONFIG=true",
-    "assert(not ok); contains(err, 'Не удалось загрузить'); assert(sw == 40 and sh == 15)")
-run("list without configuration", "local TEST_W, TEST_H=60,22; local FLOWS={{abc=1}}; local TEST_MISSING_CONFIG=true",
-    restore + "; contains(table.concat(messages), 'abc')", arguments=', "--list"')
-for command in ("energy.lua", "energy"):
-    run(f"relative launch {command}",
-        "local TEST_W, TEST_H=60,22; local FLOWS={{r1=100,r2=200,s=50,w=25,m=80,c=20}}; "
-        f"local TEST_PROGRAM_PATH='{command}'; local TEST_CONFIG_PATH='/home/energy-config.lua'",
-        restore + "; contains(screens[1], 'Баланс: 275 EU/t')", config)
-run("launch through search path from another directory",
-    "local TEST_W, TEST_H=60,22; local FLOWS={{r1=100,r2=200,s=50,w=25,m=80,c=20}}; "
-    "local TEST_PROGRAM_PATH='energy'; local TEST_RESOLVED_PROGRAM='/opt/monitor/energy.lua'; "
-    "local TEST_CONFIG_PATH='/opt/monitor/energy-config.lua'",
-    restore + "; contains(screens[1], 'Баланс: 275 EU/t')", config)
+run("actual inline addresses without external config",
+    "local TEST_W, TEST_H=60,22; local FLOWS={{"
+    "['6f537d81-fa47-46ad-b625-a72e9d2b7511']=300,"
+    "['4b0f52a2-cdc4-4379-9234-5482be20016b']=50,"
+    "['668fa7db-af7f-4308-8414-098a19039a1d']=25,"
+    "['346a78af-d715-4cab-aa6e-df79d9778e0f']=80,"
+    "['64a4254a-f063-4f9a-b28e-d9e3096f63e1']=20}}",
+    restore + "; contains(screens[1], 'Баланс: 275 EU/t'); contains(screens[1], '375 EU/t')",
+    use_actual_config=True)

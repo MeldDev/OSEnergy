@@ -1,3 +1,14 @@
+-- Настройки: адреса average_counter по категориям.
+-- Несколько независимых счётчиков в категории суммируются.
+local config = {
+  reactors = {"6f537d81-fa47-46ad-b625-a72e9d2b7511"},
+  solar = {"4b0f52a2-cdc4-4379-9234-5482be20016b"},
+  wind = {"668fa7db-af7f-4308-8414-098a19039a1d"},
+  molecular = {"346a78af-d715-4cab-aa6e-df79d9778e0f"},
+  machines = {"64a4254a-f063-4f9a-b28e-d9e3096f63e1"},
+  updateInterval = 0.5 -- Секунды между обновлениями
+}
+
 local component = require("component")
 local event = require("event")
 local term = require("term")
@@ -19,21 +30,6 @@ if args[1] == "--list" then
   return
 end
 
--- Настройки рядом с программой, независимо от текущей папки OpenOS.
--- Можно передать другой файл: energy.lua /home/my-config.lua
-local filesystem = require("filesystem")
-local shell = require("shell")
-local process = require("process").info()
--- process.path может быть относительным (например, "energy.lua").
--- Сначала получаем абсолютный путь так же, как это делает OpenOS при запуске.
-local programPath = process and type(process.path) == "string" and shell.resolve(process.path, "lua")
-local directory = programPath and filesystem.path(programPath) or shell.getWorkingDirectory()
-local configPath = args[1] or filesystem.concat(directory, "energy-config.lua")
-local loader, loadError = loadfile(configPath)
-if not loader then error("Не удалось загрузить " .. configPath .. ": " .. tostring(loadError)) end
-local loaded, config = pcall(loader)
-if not loaded then error("Ошибка настройки " .. configPath .. ": " .. tostring(config)) end
-if type(config) ~= "table" then error(configPath .. " должен возвращать таблицу: return {...}") end
 config.updateInterval = config.updateInterval or 0.5
 if type(config.updateInterval) ~= "number" or config.updateInterval ~= config.updateInterval
   or config.updateInterval <= 0 or config.updateInterval == math.huge then
@@ -261,7 +257,7 @@ local function draw(generation, consumption, unassigned)
   if unassigned > 0 then
     hint = "Не привязано: " .. unassigned .. " | energy.lua --list | Q: выход"
   elseif autoReactor then
-    hint = "Один счётчик → реакторы | energy-config.lua | Q: выход"
+    hint = "Один счётчик → реакторы | Настрой config | Q: выход"
   end
   write(2, H, hint, colors.dim, W - 2, colors.bg)
 end
