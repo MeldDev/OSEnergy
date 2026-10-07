@@ -62,3 +62,37 @@ test("demo toolbar renders on T2 80x25 and T3 100x32",function()
     has(snapshots[#snapshots],"+64 в кассу");has(demoAudit(),"Demo_A 1000")
   end
 end)
+test("OpenOS nil-returning successful close saves and reloads demo balances",function()
+  reset();useData=false
+  local previousConfigure = configure
+  configure = function()
+    previousConfigure()
+    local open = io.open
+    io.open = function(filePath, mode)
+      local handle, err = open(filePath, mode)
+      if handle then handle.close = function() return nil end end
+      return handle, err
+    end
+  end
+  click(3,24);click(21,24)
+  local ok,err=runDemo()
+  configure = previousConfigure
+  assert(ok,tostring(err));has(demoAudit(),"Demo_A 1100")
+  assert(files["/home/casino-data/ledger.log"]==nil)
+end)
+test("demo preserves explicit OpenOS close errors",function()
+  reset();useData=false
+  local previousConfigure = configure
+  configure = function()
+    previousConfigure()
+    local open = io.open
+    io.open = function(filePath, mode)
+      local handle, err = open(filePath, mode)
+      if handle then handle.close = function() return nil,"close failed" end end
+      return handle, err
+    end
+  end
+  local ok,err=runDemo()
+  configure = previousConfigure
+  assert(not ok);has(tostring(err),"close failed");assert(calls==0)
+end)

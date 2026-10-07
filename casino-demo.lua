@@ -38,7 +38,18 @@ local fakeIO = setmetatable({}, {__index = io})
 function fakeIO.open(value, mode)
   -- The program only needs its journal. Fail closed if its file-access pattern changes.
   check(value == config.ledger, "Demo tried to access an unexpected file: " .. tostring(value))
-  return io.open(ledger, mode)
+  local handle, err = io.open(ledger, mode)
+  if handle then
+    -- OC filesystem.close may return no values on success, unlike standard Lua.
+    -- Normalize that convention for casino.lua without editing the live program.
+    local close = handle.close
+    handle.close = function(self)
+      local result, closeError = close(self)
+      if result == nil and closeError == nil then return true end
+      return result, closeError
+    end
+  end
+  return handle, err
 end
 
 local gpu = realComponent.gpu
