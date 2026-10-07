@@ -6,7 +6,11 @@ local config = {
   wind = {"668fa7db-af7f-4308-8414-098a19039a1d"},
   molecular = {"346a78af-d715-4cab-aa6e-df79d9778e0f"},
   machines = {"64a4254a-f063-4f9a-b28e-d9e3096f63e1"},
-  updateInterval = 0.5 -- Секунды между обновлениями
+  updateInterval = 0.5, -- Секунды между обновлениями
+  screenWidth = 80,    -- Меньшее разрешение увеличивает текст на экране
+  screenHeight = 25,
+  energyPerMatter = 80000000,
+  ticksPerSecond = 20  -- Для приблизительного расчёта при нормальном TPS
 }
 
 local component = require("component")
@@ -34,6 +38,16 @@ config.updateInterval = config.updateInterval or 0.5
 if type(config.updateInterval) ~= "number" or config.updateInterval ~= config.updateInterval
   or config.updateInterval <= 0 or config.updateInterval == math.huge then
   error("updateInterval должен быть положительным числом")
+end
+for _, key in ipairs({"screenWidth", "screenHeight", "energyPerMatter", "ticksPerSecond"}) do
+  local value = config[key]
+  if type(value) ~= "number" or value ~= value or value <= 0 or value == math.huge then
+    error(key .. " должен быть положительным числом")
+  end
+end
+if config.screenWidth < 60 or config.screenHeight < 22
+  or config.screenWidth % 1 ~= 0 or config.screenHeight % 1 ~= 0 then
+  error("Размер экрана должен быть целым числом, не меньше 60x22")
 end
 
 if not component.isAvailable("gpu") then error("GPU не найден") end
@@ -88,7 +102,6 @@ local colors = {
   green = 0x3FB950, yellow = 0xD29922, red = 0xF85149
 }
 local history = {}
-local generationPeak, generationTotal, generationSamples = 0, 0, 0
 
 local function restore()
   gpu.setResolution(oldW, oldH)
@@ -140,6 +153,30 @@ end
 
 local function finite(value)
   return type(value) == "number" and value == value and value > -math.huge and value < math.huge
+end
+
+local function fmtDuration(seconds)
+  if seconds < 1 then return string.format("%.2f с", seconds) end
+  local rounded = math.floor(seconds + 0.5)
+  local days = math.floor(rounded / 86400)
+  local hours = math.floor(rounded / 3600) % 24
+  local minutes = math.floor(rounded / 60) % 60
+  local secs = rounded % 60
+  if days > 0 then return string.format("%d д %02d ч %02d мин %02d с", days, hours, minutes, secs) end
+  if hours > 0 then return string.format("%d ч %02d мин %02d с", hours, minutes, secs) end
+  if minutes > 0 then return string.format("%d мин %02d с", minutes, secs) end
+  return string.format("%d с", secs)
+end
+
+local function matterEstimate()
+  local molecular = groups[4]
+  if not molecular.complete then return "нет полных данных", "нет полных данных" end
+  if molecular.value <= 0 then return "нет питания", "0/M" end
+  local euPerSecond = molecular.value * config.ticksPerSecond
+  local perMinute = euPerSecond * 60 / config.energyPerMatter
+  local rate = string.format("%.2f/M", perMinute)
+  if perMinute < 0.01 then rate = string.format("%.4g/M", perMinute) end
+  return "~ " .. fmtDuration(config.energyPerMatter / euPerSecond), "~ " .. rate
 end
 
 local function readGroup(group, addresses, claimed)
@@ -242,17 +279,20 @@ local function draw(generation, consumption, unassigned)
     write(60, 13, "Среднее за время работы", colors.dim, W - 63)
   end
 
-  frame(2, 16, W - 2, H - 16, "Баланс и история выработки")
+  frame(2, 15, W - 2, 6, "Баланс и материя (оценка)")
   local balance = generation.value - consumption.value
   local complete = generation.complete and consumption.complete
-  write(4, 17, "Баланс: " .. (complete and fmtEU(balance) or "нет полных данных"),
+  write(4, 16, "Баланс: " .. (complete and fmtEU(balance) or "нет полных данных"),
     complete and (balance >= 0 and colors.green or colors.red) or colors.dim, W - 7)
+  local duration, rate = matterEstimate()
+  write(4, 17, "1 материя: " .. duration, colors.cyan, W - 7)
+  write(4, 18, "В минуту: " .. rate, colors.cyan, W - 7)
+  write(4, 19, string.format("Цена: %.0f M EU | %.0f TPS", config.energyPerMatter / 1000000, config.ticksPerSecond), colors.dim, W - 7)
   if H >= 24 then
-    local average = generationSamples > 0 and fmtEU(generationTotal / generationSamples) or "—"
-    write(4, 18, "Ср.: " .. average .. " | Пик: " .. (generationSamples > 0 and fmtEU(generationPeak) or "—"), colors.dim, W - 7)
+    local graphH = math.min(3, H - 23)
+    frame(2, 21, W - 2, graphH + 2, "История выработки")
+    drawGraph(4, 22, W - 6, graphH)
   end
-  local graphY = H >= 24 and 20 or 18
-  drawGraph(4, graphY, W - 6, H - graphY - 2)
   local hint = "Q: выход | ~: неполные данные"
   if unassigned > 0 then
     hint = "Не привязано: " .. unassigned .. " | energy.lua --list | Q: выход"
@@ -265,7 +305,7 @@ end
 local function main()
   local maxW, maxH = gpu.maxResolution()
   if maxW < 60 or maxH < 22 then error("Экран слишком маленький. Нужно хотя бы 60x22") end
-  gpu.setResolution(maxW, maxH)
+  gpu.setResolution(math.min(maxW, config.screenWidth), math.min(maxH, config.screenHeight))
   W, H = gpu.getResolution()
   while true do
     local addresses, claimed = counterAddresses(), {}
@@ -275,11 +315,6 @@ local function main()
       if not claimed[address] then unassigned = unassigned + 1 end
     end
     local generation, consumption = aggregate("generation"), aggregate("consumption")
-    if generation.complete then
-      generationSamples = generationSamples + 1
-      generationTotal = generationTotal + generation.value
-      generationPeak = math.max(generationPeak, generation.value)
-    end
     -- Разрыв графика при потере данных вместо ложного нуля.
     history[#history + 1] = generation.complete and generation.value or false
     while #history > W - 6 do table.remove(history, 1) end

@@ -86,6 +86,7 @@ package.preload.term = function()
 end
 package.preload.event = function()
   return {pull = function()
+    if TEST_EXPECTED_W then assert(sw == TEST_EXPECTED_W and sh == TEST_EXPECTED_H, 'wrong display resolution') end
     screens[#screens+1] = screen()
     if step < #FLOWS then step = step + 1; return 'timer' end
     return 'key_down', 'keyboard', 113
@@ -98,7 +99,7 @@ end
 '''
 
 
-def run(name, setup, checks, config=None, arguments="", use_actual_config=False):
+def run(name, setup, checks, config=None, arguments="", use_actual_config=False, native_resolution=True):
     code = source
     if not use_actual_config:
         for key in ("reactors", "solar", "wind", "molecular", "machines"):
@@ -106,6 +107,9 @@ def run(name, setup, checks, config=None, arguments="", use_actual_config=False)
             code = re.sub(rf"(^\s*{key}\s*=\s*)\{{[^}}]*\}}",
                           lambda match: match[1] + "{" + addresses + "}", code,
                           count=1, flags=re.MULTILINE)
+    if native_resolution:
+        code = re.sub(r"(screenWidth\s*=\s*)\d+", r"\g<1>TEST_W", code, count=1)
+        code = re.sub(r"(screenHeight\s*=\s*)\d+", r"\g<1>TEST_H", code, count=1)
     lua = setup + "\n" + MOCKS + "\nlocal function program(...)\n" + code
     lua += "\nend\nlocal ok, err = pcall(program" + arguments + ")\n" + checks
     state = lib.luaL_newstate()
@@ -137,7 +141,8 @@ run("disconnect and reconnect", "local TEST_W, TEST_H=60,22; local FLOWS={"
     restore + "; contains(screens[1], '~ 100 EU/t'); contains(screens[1], '~ 175 EU/t'); "
     "contains(screens[1], 'Баланс: нет полных данных'); contains(screens[2], 'Баланс: 275 EU/t')", config)
 run("zero readings", "local TEST_W, TEST_H=60,22; local FLOWS={{r1=0,r2=0,s=0,w=0,m=0,c=0}}",
-    restore + "; contains(screens[1], 'Баланс: 0 EU/t')", config)
+    restore + "; contains(screens[1], 'Баланс: 0 EU/t'); contains(screens[1], '1 материя: нет питания'); "
+    "contains(screens[1], 'В минуту: 0/M')", config)
 run("single old counter", "local TEST_W, TEST_H=60,22; local FLOWS={{legacy=123}}",
     restore + "; contains(screens[1], '123 EU/t'); contains(screens[1], 'не настроено'); "
     "contains(screens[1], 'Один счётчик')")
@@ -153,7 +158,7 @@ run("counter inventory", "local TEST_W, TEST_H=60,22; local FLOWS={{abc=1,def=2}
     restore + "; assert(#screens == 0); contains(table.concat(messages, '\\n'), 'abc'); "
     "contains(table.concat(messages, '\\n'), 'def')", arguments=', "--list"')
 run("small screen restoration", "local TEST_W, TEST_H=50,16; local FLOWS={{}}",
-    restore + "; contains(table.concat(messages), 'Экран слишком маленький')")
+    restore + "; contains(table.concat(messages), 'Экран слишком маленький')", native_resolution=False)
 run("actual inline addresses without external config",
     "local TEST_W, TEST_H=60,22; local FLOWS={{"
     "['6f537d81-fa47-46ad-b625-a72e9d2b7511']=300,"
@@ -163,3 +168,20 @@ run("actual inline addresses without external config",
     "['64a4254a-f063-4f9a-b28e-d9e3096f63e1']=20}}",
     restore + "; contains(screens[1], 'Баланс: 275 EU/t'); contains(screens[1], '375 EU/t')",
     use_actual_config=True)
+run("larger text via default resolution", "local TEST_W, TEST_H=160,50; "
+    "local TEST_EXPECTED_W, TEST_EXPECTED_H=80,25; local FLOWS={{r1=100,r2=200,s=50,w=25,m=80,c=20}}",
+    restore + "; contains(screens[1], 'Молекулярный преобразователь'); contains(screens[1], '1 материя:')",
+    config, native_resolution=False)
+for flow, duration, rate in [(1000000, '4 с', '15.00/M'), (2000000, '2 с', '30.00/M'),
+                             (10000, '6 мин 40 с', '0.15/M'), (80, '13 ч 53 мин 20 с', '0.0012/M')]:
+    run(f"matter estimate {flow} EU/t", f"local TEST_W, TEST_H=80,25; local FLOWS={{{{m={flow}}}}}",
+        restore + f"; contains(screens[1], '1 материя: ~ {duration}'); contains(screens[1], 'В минуту: ~ {rate}')",
+        config)
+run("missing molecular measurement", "local TEST_W, TEST_H=60,22; local FLOWS={{r1=100,r2=200,s=50,w=25,c=20}}",
+    restore + "; contains(screens[1], '1 материя: нет полных данных'); contains(screens[1], 'В минуту: нет полных данных')", config)
+run("partial molecular measurement", "local TEST_W, TEST_H=60,22; local FLOWS={{ma=1000000}}",
+    restore + "; contains(screens[1], '1 материя: нет полных данных'); contains(screens[1], 'В минуту: нет полных данных')",
+    dict(config, molecular='"ma", "mb"'))
+run("multiple molecular lines", "local TEST_W, TEST_H=80,25; local FLOWS={{ma=500000,mb=500000}}",
+    restore + "; contains(screens[1], '1 материя: ~ 4 с'); contains(screens[1], 'В минуту: ~ 15.00/M')",
+    dict(config, molecular='"ma", "mb"'))
