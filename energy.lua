@@ -13,6 +13,30 @@ local config = {
   aeInterval = 5,       -- Опрос запасов, секунды
   itemsFile = "/home/energy-items.txt",
   trackedItems = {},    -- Начальный список: {"minecraft:iron_ingot", "mod:item@2"}
+  -- Русские подписи. Для предметов модов можно добавить ID или ID@meta.
+  itemNames = {
+    ["minecraft:iron_ingot"] = "Железный слиток",
+    ["minecraft:gold_ingot"] = "Золотой слиток",
+    ["minecraft:diamond"] = "Алмаз",
+    ["minecraft:emerald"] = "Изумруд",
+    ["minecraft:coal"] = "Уголь",
+    ["minecraft:coal@1"] = "Древесный уголь",
+    ["minecraft:redstone"] = "Красная пыль",
+    ["minecraft:quartz"] = "Кварц Нижнего мира",
+    ["minecraft:dye@4"] = "Лазурит",
+    ["minecraft:glowstone_dust"] = "Светопыль",
+    ["minecraft:ender_pearl"] = "Жемчуг Эндера",
+    ["minecraft:nether_star"] = "Звезда Нижнего мира",
+    ["minecraft:stone"] = "Камень",
+    ["minecraft:cobblestone"] = "Булыжник",
+    ["minecraft:sand"] = "Песок",
+    ["minecraft:gravel"] = "Гравий",
+    ["minecraft:glass"] = "Стекло",
+    ["minecraft:obsidian"] = "Обсидиан",
+    ["minecraft:iron_block"] = "Железный блок",
+    ["minecraft:gold_block"] = "Золотой блок",
+    ["minecraft:diamond_block"] = "Алмазный блок"
+  },
   molecularAddress = "376e9d0b-0a9f-4ebc-a2f4-1b582cfbdf05",
   energyPerMatter = 80000000,
   ticksPerSecond = 20  -- Для приблизительного расчёта при нормальном TPS
@@ -146,11 +170,17 @@ local items, itemPage, buttons = {}, 1, {}
 local input, notice, aeStatus, aeLast, aeSource = nil, "", "ожидание", nil, nil
 local history = {}
 
+local function itemName(key, id, label)
+  local names = config.itemNames or {}
+  return names[key] or names[id] or label or (id:match(":(.+)$"):gsub("_", " "))
+end
+
 local function parseItem(text)
   local id, damage = text:match("^([%w_%.%-]+:[%w_%.%/:%-]+)@(%d+)$")
   if not id then id = text:match("^([%w_%.%-]+:[%w_%.%/:%-]+)$") end
   if not id then return nil end
-  return {key = text, id = id, damage = damage and tonumber(damage), label = id, samples = {}}
+  return {key = text, id = id, damage = damage and tonumber(damage),
+    label = itemName(text, id), samples = {}}
 end
 
 local function loadItems()
@@ -256,7 +286,9 @@ local function readAE(now)
     for _, stack in pairs(stacks) do
       if stack.name == item.id and (item.damage == nil or stack.damage == item.damage) then
         count = count + stack.size
-        if type(stack.label) == "string" then item.label = stack.label end
+        if type(stack.label) == "string" and stack.label ~= "" then
+          item.label = itemName(item.key, item.id, stack.label)
+        end
       end
     end
     local samples = item.samples
@@ -271,7 +303,7 @@ end
 
 local function itemRate(item, window)
   local samples = item.samples
-  if #samples < 2 then return "—" end
+  if #samples < 2 then return nil end
   local last = samples[#samples]
   local cutoff, first = math.max(samples[1].time, last.time - window), samples[1]
   local incoming, outgoing = first.incoming, first.outgoing
@@ -286,10 +318,8 @@ local function itemRate(item, window)
     first = nextSample
   end
   local elapsed = last.time - cutoff
-  if elapsed <= 0 then return "—" end
-  local prefix = last.time - samples[1].time < window and "~" or ""
-  return string.format("%s+%.1f/-%.1f", prefix,
-    (last.incoming - incoming) * 60 / elapsed, (last.outgoing - outgoing) * 60 / elapsed)
+  if elapsed <= 0 then return nil end
+  return ((last.incoming - incoming) - (last.outgoing - outgoing)) * 60 / elapsed
 end
 
 local function restore()
@@ -333,15 +363,16 @@ local function frame(x, y, w, h, title)
   write(x + 2, y, " " .. title .. " ", colors.cyan, w - 4)
 end
 
-local function fmtEU(value)
+local function fmtEU(value, unit)
+  unit = unit or "EU/t"
   local magnitude = math.abs(value)
-  if magnitude >= 1000000 then return string.format("%.2f M EU/t", value / 1000000) end
-  if magnitude >= 1000 then return string.format("%.2f K EU/t", value / 1000) end
-  return string.format("%.0f EU/t", value)
+  if magnitude >= 1000000 then return string.format("%.2f M %s", value / 1000000, unit) end
+  if magnitude >= 1000 then return string.format("%.2f K %s", value / 1000, unit) end
+  return string.format("%.0f %s", value, unit)
 end
 
 local function fmtPower(value)
-  return fmtEU(value) .. string.format(" | %.2f EU/s", value * config.ticksPerSecond)
+  return fmtEU(value) .. " | " .. fmtEU(value * config.ticksPerSecond, "EU/s")
 end
 
 local function finite(value)
@@ -447,6 +478,16 @@ local function fmtCount(value)
   return string.format("%.0f", value)
 end
 
+local function drawRate(x, y, width, value)
+  if value == nil then right(x, y, width, "—", colors.dim); return end
+  -- Округляем до десятых, убирая лишний .0 и отрицательный ноль.
+  local rounded = math.floor(math.abs(value)*10 + 0.5)/10 * (value < 0 and -1 or 1)
+  local color = rounded > 0 and colors.green or (rounded < 0 and colors.red or colors.dim)
+  local text = rounded == 0 and "0" or
+    string.format(rounded % 1 == 0 and "%+.0f" or "%+.1f", rounded)
+  right(x, y, width, text, color)
+end
+
 local function draw(generation, consumption, unassigned)
   buttons = {}
   rect(1, 1, W, H, colors.bg)
@@ -473,34 +514,44 @@ local function draw(generation, consumption, unassigned)
   write(4, 13, "В минуту: " .. rate, colors.cyan, W-7)
 
   local graphH = H >= 30 and 3 or 1
-  frame(2, 15, W-2, graphH+2, "История выработки")
-  drawGraph(4, 16, W-6, graphH)
-  local top = 17+graphH
-  frame(2, top, W-2, H-top, aeStatus .. " | среднее, шт/мин")
+  local graphTop = H-graphH-2
+  local top = 15
+  frame(2, top, W-2, graphTop-top, "Хранилище")
   button(4, top+1, "[+ ID]", function() input = ""; notice = "" end)
-  local pageSize = math.max(1, math.floor((H-top-3)/2))
+  local pageSize = math.max(1, graphTop-top-4)
   local pages = math.max(1, math.ceil(#items/pageSize))
   itemPage = math.max(1, math.min(itemPage, pages))
   button(12, top+1, "[<]", function() itemPage = math.max(1, itemPage-1) end)
   button(17, top+1, "[>]", function() itemPage = math.min(pages, itemPage+1) end)
-  write(22, top+1, itemPage .. "/" .. pages .. " | 1м / 10м / 1ч", colors.dim, W-25)
-  if #items == 0 then write(4, top+2, "Добавьте предмет по ID: [+ ID] или A", colors.dim, W-7) end
+  write(22, top+1, itemPage .. "/" .. pages .. " | " .. aeStatus .. " | шт/мин", colors.dim, W-25)
+  local rateW = W >= 100 and 12 or (W >= 80 and 10 or 8)
+  local stockW = W >= 100 and 14 or (W >= 80 and 12 or 9)
+  local nameW = W-11-stockW-rateW*3-4
+  local stockX = 4+nameW+1
+  local rateX = stockX+stockW+1
+  write(4, top+2, "Предмет", colors.dim, nameW)
+  right(stockX, top+2, stockW, "Хранится", colors.dim)
+  for i, label in ipairs({"1 мин", "10 мин", "1 час"}) do
+    right(rateX+(i-1)*(rateW+1), top+2, rateW, label, colors.dim)
+  end
+  if #items == 0 then write(4, top+3, "Добавьте предмет по ID: [+ ID] или A", colors.dim, W-7) end
   for row = 1, pageSize do
     local index = (itemPage-1)*pageSize+row
     local item = items[index]
     if item then
-      local y = top+2+(row-1)*2
-      write(4, y, item.label .. " | " .. item.key, colors.text, W-24)
-      right(W-20, y, 13, fmtCount(item.count), colors.green)
+      local y = top+2+row
+      write(4, y, item.label, colors.text, nameW)
+      right(stockX, y, stockW, fmtCount(item.count), colors.text)
       button(W-6, y, "[X]", function() editItems(nil, index) end)
-      local column = math.floor((W-7)/3)
-      write(4, y+1, "1м " .. itemRate(item,60), colors.dim, column)
-      write(4+column, y+1, "10м " .. itemRate(item,600), colors.dim, column)
-      write(4+column*2, y+1, "1ч " .. itemRate(item,3600), colors.dim, W-7-column*2)
+      for i, window in ipairs({60, 600, 3600}) do
+        drawRate(rateX+(i-1)*(rateW+1), y, rateW, itemRate(item,window))
+      end
     end
   end
+  frame(2, graphTop, W-2, graphH+2, "История выработки")
+  drawGraph(4, graphTop+1, W-6, graphH)
   local footer = input ~= nil and ("ID> " .. input .. " | Enter: добавить | Esc: отмена") or
-    (notice ~= "" and notice or "A: добавить | [X]: удалить | Q: выход | ~: идёт накопление")
+    (notice ~= "" and notice or "A: добавить | [X]: удалить | Q: выход | ~: неполные данные")
   if input == nil and notice == "" and unassigned > 0 then footer = "Не привязано: " .. unassigned .. " | " .. footer end
   if input == nil and notice == "" and autoReactor then footer = "Один счётчик | " .. footer end
   write(2,H,footer,colors.dim,W-2,colors.bg)

@@ -22,6 +22,7 @@ MOCKS = r'''
 local sw, sh = 40, 15
 local bg, fg = 123, 456
 local cells, screens, messages, fills, screenFills = {}, {}, {}, {}, {}
+local writes, screenWrites = {}, {}
 local step = 1
 local now = 0
 local savedFiles = TEST_FILES or {}
@@ -63,6 +64,7 @@ function gpu.setBackground(v) bg = v end
 function gpu.setForeground(v) fg = v end
 function gpu.setResolution(w, h) sw, sh = w, h end
 function gpu.set(x, y, text)
+  writes[#writes+1]={x=x,y=y,text=text,color=fg}
   assert(x >= 1 and y >= 1 and y <= sh and x + utf8.len(text) - 1 <= sw,
     'text outside screen: ' .. x .. ',' .. y .. ': ' .. text)
   cells[y] = cells[y] or {}
@@ -135,6 +137,7 @@ package.preload.event = function()
     if TEST_EXPECTED_W then assert(sw == TEST_EXPECTED_W and sh == TEST_EXPECTED_H, 'wrong display resolution') end
     screens[#screens+1] = screen()
     screenFills[#screenFills+1]=fills; fills={}
+    screenWrites[#screenWrites+1]=writes; writes={}
     local emitted = TEST_EVENTS and TEST_EVENTS[step]
     if step < #FLOWS then
       step = step + 1; now = now + (TEST_DT or 5)
@@ -253,33 +256,33 @@ for width, height in [(60, 25), (80, 25), (120, 40), (160, 50)]:
     run(f"AE layout {width}x{height}",
         f"local TEST_W,TEST_H={width},{height}; local FLOWS={{{{}},{{}},{{}}}}; "
         f"local TEST_AE={{{stack(100)},{stack(110)},{stack(106)}}}",
-        restore + "; contains(screens[1], 'Iron'); contains(screens[1], '100'); "
-        "contains(screens[3], '~+60.0/-24.0')", config, transform=track)
+        restore + "; contains(screens[1], 'Железный'); contains(screens[1], '100'); "
+        "contains(screens[3], '+36')", config, transform=track)
 
 run("AE loss does not become withdrawal", "local TEST_W,TEST_H=80,25; "
     "local FLOWS={{},{},{},{}}; local TEST_AE={" + stack(100) + ",'error'," + stack(10) + "," + stack(20) + "}",
     restore + "; contains(screens[2], 'AE2: ошибка чтения'); "
-    "contains(screens[3], '1м —'); contains(screens[4], '~+120.0/-0.0')", config, transform=track)
+    "contains(screens[3], '—'); contains(screens[4], '+120')", config, transform=track)
 
 run("AE empty snapshot means zero stock", "local TEST_W,TEST_H=80,25; "
     "local FLOWS={{},{}}; local TEST_AE={" + stack(100) + ",{}}",
-    restore + "; contains(screens[2], '~+0.0/-1200.0')", config, transform=track)
+    restore + "; contains(screens[2], '-1200')", config, transform=track)
 
 run("AE window interpolation", "local TEST_W,TEST_H=120,40; local TEST_DT=40; "
     "local FLOWS={{},{},{}}; local TEST_AE={" + stack(100) + "," + stack(140) + "," + stack(120) + "}",
-    restore + "; contains(screens[3], '1м +20.0/-20.0'); "
-    "contains(screens[3], '10м ~+30.0/-15.0')", config, transform=track)
+    restore + "; contains(screens[3], '0'); "
+    "contains(screens[3], '+15')", config, transform=track)
 
 run("AE hour history", "local TEST_W,TEST_H=120,40; local TEST_DT=60; "
     "local FLOWS={}; local TEST_AE={}; for i=1,65 do FLOWS[i]={}; "
     "TEST_AE[i]={{name='minecraft:iron_ingot',size=i*10}} end",
-    restore + "; contains(screens[65], '1ч +10.0/-0.0')", config, transform=track)
+    restore + "; contains(screens[65], '+10')", config, transform=track)
 
 run("add via clipboard and delete via touch", "local TEST_W,TEST_H=80,25; "
     "local FLOWS={{},{},{},{},{}}; local TEST_EVENTS={"
     "{'key_down','keyboard',97,30},{'clipboard','keyboard','minecraft:gold_ingot'},"
-    "{'key_down','keyboard',13,28},{'touch','screen',74,20}}",
-    restore + "; contains(screens[4], 'minecraft:gold_ingot'); "
+    "{'key_down','keyboard',13,28},{'touch','screen',74,18}}",
+    restore + "; contains(screens[4], 'Золотой слиток'); "
     "assert(savedFiles['/home/energy-items.txt']==''); contains(screens[5], 'Добавьте предмет')", config)
 
 run("save failure leaves list unchanged", "local TEST_W,TEST_H=80,25; local TEST_SAVE_FAIL=true; "
@@ -289,7 +292,7 @@ run("save failure leaves list unchanged", "local TEST_W,TEST_H=80,25; local TEST
 
 run("stored IDs deduplicated and never executed", "local TEST_W,TEST_H=80,25; "
     "local FLOWS={{}}; local TEST_FILES={['/home/energy-items.txt']='minecraft:iron_ingot\\nminecraft:iron_ingot\\nerror(123)\\n'}",
-    restore + "; contains(screens[1], 'minecraft:iron_ingot'); contains(screens[1], '1/1')", config)
+    restore + "; contains(screens[1], 'Железный слиток'); contains(screens[1], '1/1')", config)
 
 run("molecular calculation without cycle status", "local TEST_W,TEST_H=80,25; local FLOWS={{m=1000000}}",
     restore + "; contains(screens[1], '1 материя: ~ 4 с'); contains(screens[1], 'В минуту: ~ 15.00/M'); "
@@ -340,11 +343,11 @@ for flag, reason in [("TEST_FLUSH_FAIL", "disk full on flush"), ("TEST_WRITE_FAI
 for width, height in [(60, 25), (80, 25), (120, 40)]:
     run(f"EU per second {width}x{height}", f"local TEST_W,TEST_H={width},{height}; "
         "local FLOWS={{r1=100,r2=200,s=50,w=25,m=80,c=20}}",
-        restore + "; contains(screens[1], '375 EU/t | 7500.00 EU/s'); "
-        "contains(screens[1], '100 EU/t | 2000.00 EU/s'); "
-        "contains(screens[1], 'Баланс: 275 EU/t | 5500.00 EU/s')", config)
-run("scaled EU per tick and raw EU per second", "local TEST_W,TEST_H=80,25; local FLOWS={{m=123450}}",
-    restore + "; contains(screens[1], '123.45 K EU/t | 2469000.00 EU/s')", config)
+        restore + "; contains(screens[1], '375 EU/t | 7.50 K EU/s'); "
+        "contains(screens[1], '100 EU/t | 2.00 K EU/s'); "
+        "contains(screens[1], 'Баланс: 275 EU/t | 5.50 K EU/s')", config)
+run("scaled EU per tick and per second", "local TEST_W,TEST_H=80,25; local FLOWS={{m=123450}}",
+    restore + "; contains(screens[1], '123.45 K EU/t | 2.47 M EU/s')", config)
 
 run("generation history gaps on loss", "local TEST_W,TEST_H=80,25; "
     "local FLOWS={{r1=100,r2=200,s=50,w=25,m=80,c=20},"
@@ -352,5 +355,30 @@ run("generation history gaps on loss", "local TEST_W,TEST_H=80,25; "
     "{r1=100,r2=200,s=50,w=25,m=80,c=20}}",
     restore + "; contains(screens[1], 'История выработки'); "
     "local green={}; for _,f in ipairs(screenFills[3]) do "
-    "if f.color==0x3FB950 and f.y==16 then green[f.x]=true end end; "
+    "if f.color==0x3FB950 and f.y==23 then green[f.x]=true end end; "
     "assert(green[4] and not green[5] and green[6], 'wrong history gap')", config)
+
+for amounts, expected, color in [([100, 110, 106], "+36", "0x3FB950"),
+                                  ([100, 90, 86], "-84", "0xF85149"),
+                                  ([100, 110, 100], "0", "0x8B949E")]:
+    run(f"signed storage delta {expected}", "local TEST_W,TEST_H=80,25; "
+        "local FLOWS={{},{},{}}; local TEST_AE={" + ",".join(stack(n) for n in amounts) + "}",
+        restore + "; contains(screens[3], 'Хранилище'); "
+        "assert(not screens[3]:find('minecraft:iron_ingot',1,true)); "
+        f"local found=0; for _,v in ipairs(screenWrites[3]) do if v.y==18 and v.text=='{expected}' "
+        f"and v.color=={color} then found=found+1 end end; assert(found==3,'wrong signed columns/color'); "
+        "local lines={}; for line in screens[3]:gmatch('[^\\n]+') do lines[#lines+1]=line end; "
+        "assert(lines[18]:find('Железный слиток',1,true)); assert(not lines[18]:find('/',1,true)); "
+        "assert(lines[17]:find('Хранится',1,true)); "
+        "assert(lines[22]:find('История выработки',1,true))", config, transform=track)
+
+run("server localized mod name", "local TEST_W,TEST_H=80,25; local FLOWS={{}}; "
+    "local TEST_AE={{{name='mod:alloy',label='Особый сплав',size=15}}}",
+    restore + "; contains(screens[1], 'Особый сплав'); assert(not screens[1]:find('mod:alloy',1,true))",
+    config, transform=lambda code: code.replace('trackedItems = {}', 'trackedItems = {"mod:alloy"}'))
+
+run("custom translated mod name", "local TEST_W,TEST_H=80,25; local FLOWS={{}}; "
+    "local TEST_AE={{{name='mod:alloy',label='Alloy',size=15}}}",
+    restore + "; contains(screens[1], 'Сплав'); assert(not screens[1]:find('Alloy',1,true))",
+    config, transform=lambda code: code.replace('trackedItems = {}', 'trackedItems = {"mod:alloy"}')
+        .replace('itemNames = {', 'itemNames = {["mod:alloy"]="Сплав",'))
