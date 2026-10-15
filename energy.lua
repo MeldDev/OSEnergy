@@ -168,6 +168,7 @@ local colors = {
 local computer = require("computer")
 local items, itemPage, buttons = {}, 1, {}
 local input, notice, aeStatus, aeLast, aeSource = nil, "", "ожидание", nil, nil
+local inputMode, pendingItem = "id", nil
 local history = {}
 
 local function itemName(key, id, label)
@@ -192,19 +193,29 @@ local function loadItems()
     file:close()
   end
   local seen = {}
-  for _, key in ipairs(keys) do
+  for _, line in ipairs(keys) do
+    local key, customName = line:match("^([^\t]+)\t(.+)$")
+    key = key or line
     local item = parseItem(key)
-    if item and not seen[key] then items[#items + 1], seen[key] = item, true end
+    if item and not seen[key] then
+      item.customName = customName
+      item.label = customName or item.label
+      items[#items + 1], seen[key] = item, true
+    end
   end
 end
 
--- Данные — только строки ID, никогда не исполняемый Lua.
+-- ID и необязательная подпись через табуляцию; старые списки ID тоже читаются.
 local function saveItems(candidate)
   local path = config.itemsFile
   local file, err = io.open(path .. ".tmp", "w")
   if not file then notice = "Не сохранено: " .. tostring(err); return false end
+  local lines = {}
+  for _, item in ipairs(candidate) do
+    lines[#lines+1] = item.key .. (item.customName and "\t" .. item.customName or "")
+  end
   local called, written, reason = pcall(file.write, file,
-    table.concat(candidate, "\n") .. (#candidate > 0 and "\n" or ""))
+    table.concat(lines, "\n") .. (#lines > 0 and "\n" or ""))
   local flushed, flushResult, flushErr = true, true, nil
   if called and written then flushed, flushResult, flushErr = pcall(file.flush, file) end
   local closed, closeResult, closeErr = pcall(file.close, file)
@@ -223,18 +234,43 @@ local function saveItems(candidate)
   return true
 end
 
-local function editItems(key, removeIndex)
+local function editItems(key, removeIndex, customName)
   local candidate = {}
   for index, item in ipairs(items) do
-    if index ~= removeIndex then candidate[#candidate + 1] = item.key end
+    if index ~= removeIndex then candidate[#candidate + 1] = item end
     if key and item.key == key then notice = "Этот ID уже добавлен"; return end
   end
   local added = key and parseItem(key)
   if key and not added then notice = "Формат: mod:item или mod:item@meta"; return end
-  if added then candidate[#candidate + 1] = key end
-  if not saveItems(candidate) then return end
+  if added then
+    added.customName = customName
+    added.label = customName or added.label
+    candidate[#candidate + 1] = added
+  end
+  if not saveItems(candidate) then return false end
   if removeIndex then table.remove(items, removeIndex) else items[#items + 1] = added end
   notice = removeIndex and "Предмет удалён" or "Предмет добавлен"
+  return true
+end
+
+local function startAdding()
+  input, inputMode, pendingItem, notice = "", "id", nil, ""
+end
+
+local function askName()
+  if not parseItem(input) then notice = "Формат: mod:item или mod:item@meta"; return end
+  for _, item in ipairs(items) do
+    if item.key == input then notice = "Этот ID уже добавлен"; return end
+  end
+  pendingItem, input, inputMode, notice = input, "", "name", ""
+end
+
+local function finishAdding(useName)
+  local name = useName and input:match("^%s*(.-)%s*$") or nil
+  if name == "" then name = nil end
+  if editItems(pendingItem, nil, name) then
+    input, pendingItem, inputMode = nil, nil, "id"
+  end
 end
 
 local function aeProxy()
@@ -287,7 +323,7 @@ local function readAE(now)
       if stack.name == item.id and (item.damage == nil or stack.damage == item.damage) then
         count = count + stack.size
         if type(stack.label) == "string" and stack.label ~= "" then
-          item.label = itemName(item.key, item.id, stack.label)
+          item.label = item.customName or itemName(item.key, item.id, stack.label)
         end
       end
     end
@@ -371,10 +407,6 @@ local function fmtEU(value, unit)
   return string.format("%.0f %s", value, unit)
 end
 
-local function fmtPower(value)
-  return fmtEU(value) .. " | " .. fmtEU(value * config.ticksPerSecond, "EU/s")
-end
-
 local function finite(value)
   return type(value) == "number" and value == value and value > -math.huge and value < math.huge
 end
@@ -447,9 +479,18 @@ local function aggregate(kind)
   return {value = value, complete = complete, hasData = hasData}
 end
 
-local function totalText(summary)
-  if not summary.hasData then return "нет данных" end
-  return (summary.complete and "" or "~ ") .. fmtPower(summary.value)
+local function drawPowerRow(y, label, value, complete, status, color)
+  local tickX = W < 80 and 25 or 34
+  local tickW = math.floor((W-tickX-5)/2)
+  local secondX = tickX+tickW+3
+  write(4, y, label, color, tickX-5)
+  if value == nil then
+    write(tickX, y, status or "нет данных", colors.dim, W-tickX-3)
+    return
+  end
+  local prefix = complete and "" or "~ "
+  right(tickX, y, tickW, prefix .. fmtEU(value), color)
+  right(secondX, y, W-secondX-3, prefix .. fmtEU(value*config.ticksPerSecond, "EU/s"), color)
 end
 
 local function drawGraph(x, y, w, h)
@@ -491,22 +532,20 @@ end
 local function draw(generation, consumption, unassigned)
   buttons = {}
   rect(1, 1, W, H, colors.bg)
-  frame(2, 1, W - 2, 10, "Энергосеть | EU/t и EU/s | TPS " .. config.ticksPerSecond)
-  local valueX = W < 80 and 25 or 34
-  local valueW, labelW = W - valueX - 3, valueX - 5
+  frame(2, 1, W - 2, 10, "Энергосеть | TPS " .. config.ticksPerSecond)
   for index, group in ipairs(groups) do
     local y = index + 1
     local color = group.kind == "generation" and colors.green or colors.yellow
-    write(4, y, group.name, color, labelW)
-    right(valueX, y, valueW, group.complete and fmtPower(group.value) or
-      (group.online > 0 and "~ " .. fmtPower(group.value) or group.status), color)
+    drawPowerRow(y, group.name, group.online > 0 and group.value or nil,
+      group.complete, group.status, color)
   end
-  write(4, 7, "Общая выработка", colors.green, labelW)
-  right(valueX, 7, valueW, totalText(generation), colors.green)
-  write(4, 8, "Общий расход", colors.yellow, labelW)
-  right(valueX, 8, valueW, totalText(consumption), colors.yellow)
+  drawPowerRow(7, "Общая выработка", generation.hasData and generation.value or nil,
+    generation.complete, "нет данных", colors.green)
+  drawPowerRow(8, "Общий расход", consumption.hasData and consumption.value or nil,
+    consumption.complete, "нет данных", colors.yellow)
   local complete = generation.complete and consumption.complete
-  write(4, 9, "Баланс: " .. (complete and fmtPower(generation.value-consumption.value) or "нет полных данных"), colors.cyan, W-7)
+  drawPowerRow(9, "Баланс:", complete and generation.value-consumption.value or nil,
+    true, "нет полных данных", colors.cyan)
 
   frame(2, 11, W-2, 4, "Молекулярный преобразователь (оценка)")
   local duration, rate = matterEstimate()
@@ -517,7 +556,7 @@ local function draw(generation, consumption, unassigned)
   local graphTop = H-graphH-2
   local top = 15
   frame(2, top, W-2, graphTop-top, "Хранилище")
-  button(4, top+1, "[+ ID]", function() input = ""; notice = "" end)
+  button(4, top+1, "[+ ID]", startAdding)
   local pageSize = math.max(1, graphTop-top-4)
   local pages = math.max(1, math.ceil(#items/pageSize))
   itemPage = math.max(1, math.min(itemPage, pages))
@@ -550,11 +589,26 @@ local function draw(generation, consumption, unassigned)
   end
   frame(2, graphTop, W-2, graphH+2, "История выработки")
   drawGraph(4, graphTop+1, W-6, graphH)
-  local footer = input ~= nil and ("ID> " .. input .. " | Enter: добавить | Esc: отмена") or
+  local footer = input ~= nil and inputMode == "id" and
+    ("ID> " .. input .. " | " .. (notice ~= "" and notice or "Enter: далее | Esc: отмена")) or
     (notice ~= "" and notice or "A: добавить | [X]: удалить | Q: выход | ~: неполные данные")
   if input == nil and notice == "" and unassigned > 0 then footer = "Не привязано: " .. unassigned .. " | " .. footer end
   if input == nil and notice == "" and autoReactor then footer = "Один счётчик | " .. footer end
   write(2,H,footer,colors.dim,W-2,colors.bg)
+  if input ~= nil and inputMode == "name" then
+    buttons = {} -- Окно перехватывает нажатия, скрытая таблица не активна.
+    local w, h = math.min(62, W-4), 9
+    local x, y = math.floor((W-w)/2)+1, math.floor((H-h)/2)+1
+    frame(x, y, w, h, "Название предмета")
+    write(x+2, y+1, "Хотите добавить русское название?", colors.text, w-4)
+    write(x+2, y+2, "Введите имя или нажмите «Нет».", colors.dim, w-4)
+    local visible = unicode.sub(input, math.max(1, unicode.len(input)-(w-9)+1))
+    write(x+2, y+4, "> " .. visible .. "_", colors.text, w-4)
+    button(x+2, y+6, "[Сохранить]", function() finishAdding(true) end)
+    button(x+16, y+6, "[Нет]", function() finishAdding(false) end)
+    button(x+24, y+6, "[Отмена]", function() input, pendingItem = nil, nil end)
+    if notice ~= "" then write(x+2, y+7, notice, colors.red, w-4) end
+  end
 end
 
 local function handleEvent(e, address, a, b)
@@ -565,15 +619,21 @@ local function handleEvent(e, address, a, b)
       if a >= hit.x and a < hit.x+hit.w and b == hit.y then hit.action(); break end
     end
   elseif e == "clipboard" and input ~= nil then
-    input = (input .. tostring(a):gsub("[%s%c]", "")):sub(1,160)
+    local text = tostring(a):gsub(inputMode == "name" and "%c" or "[%s%c]", "")
+    input = unicode.sub(input .. text, 1, inputMode == "name" and 64 or 160)
   elseif e == "key_down" then
     if input ~= nil then
-      if b == 1 then input = nil
-      elseif b == 28 or a == 13 then editItems(input); input = nil
-      elseif b == 14 or a == 8 then input = unicode.sub(input,1,math.max(0,unicode.len(input)-1))
-      elseif a and a >= 32 and a <= 126 and #input < 160 then input = input .. string.char(a) end
+      if b == 1 then input, pendingItem = nil, nil
+      elseif b == 28 or a == 13 then
+        if inputMode == "name" then finishAdding(true) else askName() end
+      elseif b == 14 or a == 8 then
+        input = unicode.len(input) > 0 and unicode.sub(input,1,unicode.len(input)-1) or ""
+      elseif a and a >= 32 and a <= 0x10FFFF and not (a >= 0xD800 and a <= 0xDFFF)
+        and unicode.len(input) < (inputMode == "name" and 64 or 160) then
+        input = input .. unicode.char(a)
+      end
     elseif a == 113 or a == 81 then return false
-    elseif a == 97 or a == 65 then input = ""; notice = "" end
+    elseif a == 97 or a == 65 then startAdding() end
   end
   return true
 end

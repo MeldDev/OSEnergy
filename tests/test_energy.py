@@ -123,9 +123,9 @@ package.preload.component = function()
   }
 end
 package.preload.unicode = function()
-  return {len = utf8.len, sub = function(text, first, last)
+  return {len = utf8.len, char = utf8.char, sub = function(text, first, last)
     local start = utf8.offset(text, first)
-    local finish = utf8.offset(text, last + 1)
+    local finish = last and utf8.offset(text, last + 1)
     return text:sub(start, finish and finish - 1 or #text)
   end}
 end
@@ -150,7 +150,8 @@ package.preload.event = function()
 end
 print = function(value) messages[#messages+1] = tostring(value) end
 local function contains(text, expected)
-  assert(text:find(expected, 1, true), 'missing: ' .. expected .. '\n' .. text)
+  assert(text:find(expected, 1, true) or text:gsub(" +",""):find(expected:gsub(" +",""),1,true),
+    'missing: ' .. expected .. '\n' .. text)
 end
 '''
 
@@ -279,16 +280,17 @@ run("AE hour history", "local TEST_W,TEST_H=120,40; local TEST_DT=60; "
     restore + "; contains(screens[65], '+10')", config, transform=track)
 
 run("add via clipboard and delete via touch", "local TEST_W,TEST_H=80,25; "
-    "local FLOWS={{},{},{},{},{}}; local TEST_EVENTS={"
+    "local FLOWS={{},{},{},{},{},{}}; local TEST_EVENTS={"
     "{'key_down','keyboard',97,30},{'clipboard','keyboard','minecraft:gold_ingot'},"
-    "{'key_down','keyboard',13,28},{'touch','screen',74,18}}",
-    restore + "; contains(screens[4], 'Золотой слиток'); "
-    "assert(savedFiles['/home/energy-items.txt']==''); contains(screens[5], 'Добавьте предмет')", config)
+    "{'key_down','keyboard',13,28},{'key_down','keyboard',13,28},{'touch','screen',74,18}}",
+    restore + "; contains(screens[5], 'Золотой слиток'); "
+    "assert(savedFiles['/home/energy-items.txt']==''); contains(screens[6], 'Добавьте предмет')", config)
 
 run("save failure leaves list unchanged", "local TEST_W,TEST_H=80,25; local TEST_SAVE_FAIL=true; "
-    "local FLOWS={{},{},{},{}}; local TEST_EVENTS={{'key_down','keyboard',97,30},"
-    "{'clipboard','keyboard','minecraft:gold_ingot'},{'key_down','keyboard',13,28}}",
-    restore + "; contains(screens[4], 'Не сохранено: disk full'); contains(screens[4], 'Добавьте предмет')", config)
+    "local FLOWS={{},{},{},{},{}}; local TEST_EVENTS={{'key_down','keyboard',97,30},"
+    "{'clipboard','keyboard','minecraft:gold_ingot'},{'key_down','keyboard',13,28},"
+    "{'key_down','keyboard',13,28},{'interrupted'}}",
+    restore + "; contains(screens[5], 'Не сохранено: disk full'); contains(screens[5], 'Добавьте предмет')", config)
 
 run("stored IDs deduplicated and never executed", "local TEST_W,TEST_H=80,25; "
     "local FLOWS={{}}; local TEST_FILES={['/home/energy-items.txt']='minecraft:iron_ingot\\nminecraft:iron_ingot\\nerror(123)\\n'}",
@@ -326,28 +328,29 @@ run("MetaDrive diagnostic prints read-only values", "local TEST_W,TEST_H=80,25; 
     arguments=', "--inspect"')
 
 add_events = ("local TEST_EVENTS={{'key_down','keyboard',97,30},"
-              "{'clipboard','keyboard','minecraft:iron_ingot'},{'key_down','keyboard',13,28}}; ")
+              "{'clipboard','keyboard','minecraft:iron_ingot'},{'key_down','keyboard',13,28},"
+              "{'key_down','keyboard',13,28},{'interrupted'}}; ")
 run("OpenOS successful close returns nil", "local TEST_W,TEST_H=80,25; "
-    "local FLOWS={{},{},{},{}}; local TEST_CLOSE_NIL=true; " + add_events,
-    restore + "; contains(screens[4], 'Предмет добавлен'); "
+    "local FLOWS={{},{},{},{},{}}; local TEST_CLOSE_NIL=true; " + add_events,
+    restore + "; contains(screens[5], 'Предмет добавлен'); "
     "assert(savedFiles['/home/energy-items.txt']=='minecraft:iron_ingot\\n')", config)
 for flag, reason in [("TEST_FLUSH_FAIL", "disk full on flush"), ("TEST_WRITE_FAIL", "write failed"),
                      ("TEST_CLOSE_FAIL", "close failed"), ("TEST_CLOSE_THROW", "close exception")]:
     run(f"failed save preserves original: {flag}", "local TEST_W,TEST_H=80,25; "
-        f"local {flag}=true; local FLOWS={{{{}},{{}},{{}},{{}}}}; "
+        f"local {flag}=true; local FLOWS={{{{}},{{}},{{}},{{}},{{}}}}; "
         "local TEST_FILES={['/home/energy-items.txt']='minecraft:gold_ingot\\n'}; " + add_events,
-        restore + f"; contains(screens[4], '{reason}'); "
+        restore + f"; contains(screens[5], '{reason}'); "
         "assert(savedFiles['/home/energy-items.txt']=='minecraft:gold_ingot\\n'); "
-        "assert(not screens[4]:find('minecraft:iron_ingot',1,true))", config)
+        "assert(not screens[5]:find('Железный слиток',1,true))", config)
 
 for width, height in [(60, 25), (80, 25), (120, 40)]:
     run(f"EU per second {width}x{height}", f"local TEST_W,TEST_H={width},{height}; "
         "local FLOWS={{r1=100,r2=200,s=50,w=25,m=80,c=20}}",
-        restore + "; contains(screens[1], '375 EU/t | 7.50 K EU/s'); "
-        "contains(screens[1], '100 EU/t | 2.00 K EU/s'); "
-        "contains(screens[1], 'Баланс: 275 EU/t | 5.50 K EU/s')", config)
+        restore + "; contains(screens[1], '375 EU/t 7.50 K EU/s'); "
+        "contains(screens[1], '100 EU/t 2.00 K EU/s'); "
+        "contains(screens[1], 'Баланс: 275 EU/t 5.50 K EU/s')", config)
 run("scaled EU per tick and per second", "local TEST_W,TEST_H=80,25; local FLOWS={{m=123450}}",
-    restore + "; contains(screens[1], '123.45 K EU/t | 2.47 M EU/s')", config)
+    restore + "; contains(screens[1], '123.45 K EU/t 2.47 M EU/s')", config)
 
 run("generation history gaps on loss", "local TEST_W,TEST_H=80,25; "
     "local FLOWS={{r1=100,r2=200,s=50,w=25,m=80,c=20},"
@@ -382,3 +385,49 @@ run("custom translated mod name", "local TEST_W,TEST_H=80,25; local FLOWS={{}}; 
     restore + "; contains(screens[1], 'Сплав'); assert(not screens[1]:find('Alloy',1,true))",
     config, transform=lambda code: code.replace('trackedItems = {}', 'trackedItems = {"mod:alloy"}')
         .replace('itemNames = {', 'itemNames = {["mod:alloy"]="Сплав",'))
+
+run("custom Russian name via clipboard persists through polling", "local TEST_W,TEST_H=80,25; "
+    "local FLOWS={{},{},{},{},{},{},{}}; local TEST_AE={}; "
+    "for i=1,7 do TEST_AE[i]={{name='minecraft:iron_ingot',label='Iron',size=20}} end; "
+    "local TEST_EVENTS={{'key_down','keyboard',97,30},{'clipboard','keyboard','minecraft:iron_ingot'},"
+    "{'key_down','keyboard',13,28},{'clipboard','keyboard','Моё железо'},"
+    "{'key_down','keyboard',13,28}}",
+    restore + "; contains(screens[4], 'Хотите добавить русское название?'); "
+    "contains(screens[7], 'Моё железо'); assert(not screens[7]:find('Железный слиток',1,true)); "
+    "assert(savedFiles['/home/energy-items.txt']=='minecraft:iron_ingot\\tМоё железо\\n')", config)
+
+run("custom name loads from same file", "local TEST_W,TEST_H=80,25; local FLOWS={{}}; "
+    "local TEST_FILES={['/home/energy-items.txt']='minecraft:iron_ingot\\tМоё железо\\n'}; "
+    "local TEST_AE={{{name='minecraft:iron_ingot',label='Iron',size=20}}}",
+    restore + "; contains(screens[1], 'Моё железо'); assert(not screens[1]:find('Железный слиток',1,true))", config)
+
+run("No button keeps AE2 name and drops entered alias", "local TEST_W,TEST_H=80,25; "
+    "local FLOWS={{},{},{},{},{},{}}; local TEST_AE={}; "
+    "for i=1,6 do TEST_AE[i]={{name='mod:alloy',label='Alloy',size=20}} end; "
+    "local TEST_EVENTS={{'key_down','keyboard',97,30},{'clipboard','keyboard','mod:alloy'},"
+    "{'key_down','keyboard',13,28},{'clipboard','keyboard','Мой сплав'},{'touch','screen',26,15}}",
+    restore + "; contains(screens[6], 'Alloy'); assert(not screens[6]:find('Мой сплав',1,true)); "
+    "assert(savedFiles['/home/energy-items.txt']=='mod:alloy\\n')", config)
+
+run("Unicode typing and backspace in name dialog", "local TEST_W,TEST_H=60,25; "
+    "local FLOWS={{},{},{},{},{},{},{},{}}; local TEST_EVENTS={"
+    "{'key_down','keyboard',97,30},{'clipboard','keyboard','mod:item'},{'key_down','keyboard',13,28},"
+    "{'key_down','keyboard',1046,0},{'key_down','keyboard',1071,0},"
+    "{'key_down','keyboard',8,14},{'key_down','keyboard',13,28}}",
+    restore + "; contains(screens[8], 'Ж'); assert(savedFiles['/home/energy-items.txt']=='mod:item\\tЖ\\n')", config)
+
+run("cancel custom name does not add item", "local TEST_W,TEST_H=80,25; "
+    "local FLOWS={{},{},{},{},{}}; local TEST_EVENTS={{'key_down','keyboard',97,30},"
+    "{'clipboard','keyboard','mod:item'},{'key_down','keyboard',13,28},{'key_down','keyboard',0,1}}",
+    restore + "; contains(screens[5], 'Добавьте предмет'); assert(savedFiles['/home/energy-items.txt']==nil)", config)
+
+for width, height in [(60,25), (80,25), (120,40)]:
+    run(f"power columns keep fixed edges {width}", f"local TEST_W,TEST_H={width},{height}; "
+        "local FLOWS={{r1=1,r2=1,s=1,w=1,m=1,c=1},{r1=100000,r2=200000,s=1000,w=1,m=1000000,c=0}}",
+        restore + "; local edges={}; for step=1,2 do local found=0; "
+        "for _,v in ipairs(screenWrites[step]) do if v.y==2 and "
+        "(v.text:find('EU/t',1,true) or v.text:find('EU/s',1,true)) then "
+        "local unit=v.text:find('EU/t',1,true) and 't' or 's'; "
+        "local edge=v.x+utf8.len(v.text)-1; if step==1 then edges[unit]=edge "
+        "else assert(edges[unit]==edge,'power column moved') end; found=found+1 end end; "
+        "assert(found==2,'missing power column') end", config)
