@@ -21,7 +21,7 @@ source = (Path(__file__).resolve().parents[1] / "energy.lua").read_text(encoding
 MOCKS = r'''
 local sw, sh = 40, 15
 local bg, fg = 123, 456
-local cells, screens, messages = {}, {}, {}
+local cells, screens, messages, fills, screenFills = {}, {}, {}, {}, {}
 local step = 1
 local now = 0
 local savedFiles = TEST_FILES or {}
@@ -34,7 +34,22 @@ io.open = function(path, mode)
     return {lines=function() return function() i=i+1; return lines[i] end end, close=function() return true end}
   end
   if TEST_SAVE_FAIL then return nil, 'disk full' end
-  return {write=function(self,text) savedFiles[path]=text; return self end, close=function() return true end}
+  return {
+    write=function(self,text)
+      if TEST_WRITE_FAIL then return nil,'write failed' end
+      savedFiles[path]=text; return self
+    end,
+    flush=function(self)
+      if TEST_FLUSH_FAIL then return nil,'disk full on flush' end
+      return self
+    end,
+    close=function()
+      if TEST_CLOSE_FAIL then return nil,'close failed' end
+      if TEST_CLOSE_THROW then error('close exception') end
+      if TEST_CLOSE_NIL then return end
+      return true
+    end
+  }
 end
 os.rename = function(a,b) savedFiles[b]=savedFiles[a]; savedFiles[a]=nil; return true end
 package.preload.computer = function() return {uptime=function() return now end} end
@@ -55,6 +70,7 @@ function gpu.set(x, y, text)
   for _, char in utf8.codes(text) do cells[y][col] = utf8.char(char); col = col + 1 end
 end
 function gpu.fill(x, y, w, h, char)
+  fills[#fills+1]={x=x,y=y,w=w,h=h,color=bg}
   assert(w > 0 and h > 0 and x >= 1 and y >= 1 and x+w-1 <= sw and y+h-1 <= sh,
     'rectangle outside screen')
   for row = y, y + h - 1 do gpu.set(x, row, string.rep(char, w)) end
@@ -118,6 +134,7 @@ package.preload.event = function()
   return {pull = function()
     if TEST_EXPECTED_W then assert(sw == TEST_EXPECTED_W and sh == TEST_EXPECTED_H, 'wrong display resolution') end
     screens[#screens+1] = screen()
+    screenFills[#screenFills+1]=fills; fills={}
     local emitted = TEST_EVENTS and TEST_EVENTS[step]
     if step < #FLOWS then
       step = step + 1; now = now + (TEST_DT or 5)
@@ -274,10 +291,9 @@ run("stored IDs deduplicated and never executed", "local TEST_W,TEST_H=80,25; "
     "local FLOWS={{}}; local TEST_FILES={['/home/energy-items.txt']='minecraft:iron_ingot\\nminecraft:iron_ingot\\nerror(123)\\n'}",
     restore + "; contains(screens[1], 'minecraft:iron_ingot'); contains(screens[1], '1/1')", config)
 
-run("real cycle adapter and ETA", "local TEST_W,TEST_H=80,25; local FLOWS={{m=1000000}}",
-    restore + "; contains(screens[1], '40000000 / 80000000 EU'); contains(screens[1], 'Осталось: ~ 2 с')",
-    config, transform=lambda code: code.replace("molecularRead = nil",
-        "molecularRead = function() return {spent=40000000,required=80000000} end"))
+run("molecular calculation without cycle status", "local TEST_W,TEST_H=80,25; local FLOWS={{m=1000000}}",
+    restore + "; contains(screens[1], '1 материя: ~ 4 с'); contains(screens[1], 'В минуту: ~ 15.00/M'); "
+    "assert(not screens[1]:find('Нужно на цикл',1,true)); assert(not screens[1]:find('прогресс',1,true))", config)
 
 run("AE multiple bridges require selection", "local TEST_W,TEST_H=80,25; local FLOWS={{}}; "
     "local TEST_AE_ADDRS={'ae','ae2'}; local TEST_AE={{}}",
@@ -298,10 +314,43 @@ run("machine diagnostic", "local TEST_W,TEST_H=80,25; local FLOWS={{}}",
     "contains(table.concat(messages), '376e9d0b')", arguments=', "--inspect"')
 
 run("MetaDrive exposes energy methods only", "local TEST_W,TEST_H=80,25; local FLOWS={{m=1000000}}; local TEST_ENERGY_ONLY=true",
-    restore + "; contains(screens[1], 'API машины не передаёт прогресс'); "
+    restore + "; assert(not screens[1]:find('API машины',1,true)); "
     "assert(not screens[1]:find('Осталось:',1,true)); contains(screens[1], '1 материя: ~ 4 с')", config)
 
 run("MetaDrive diagnostic prints read-only values", "local TEST_W,TEST_H=80,25; local FLOWS={{}}; local TEST_ENERGY_ONLY=true",
     "assert(ok,err); contains(table.concat(messages), 'значение: 123'); "
     "contains(table.concat(messages), 'значение: 4'); contains(table.concat(messages), 'чтение прогресса цикла не предоставлено')",
     arguments=', "--inspect"')
+
+add_events = ("local TEST_EVENTS={{'key_down','keyboard',97,30},"
+              "{'clipboard','keyboard','minecraft:iron_ingot'},{'key_down','keyboard',13,28}}; ")
+run("OpenOS successful close returns nil", "local TEST_W,TEST_H=80,25; "
+    "local FLOWS={{},{},{},{}}; local TEST_CLOSE_NIL=true; " + add_events,
+    restore + "; contains(screens[4], 'Предмет добавлен'); "
+    "assert(savedFiles['/home/energy-items.txt']=='minecraft:iron_ingot\\n')", config)
+for flag, reason in [("TEST_FLUSH_FAIL", "disk full on flush"), ("TEST_WRITE_FAIL", "write failed"),
+                     ("TEST_CLOSE_FAIL", "close failed"), ("TEST_CLOSE_THROW", "close exception")]:
+    run(f"failed save preserves original: {flag}", "local TEST_W,TEST_H=80,25; "
+        f"local {flag}=true; local FLOWS={{{{}},{{}},{{}},{{}}}}; "
+        "local TEST_FILES={['/home/energy-items.txt']='minecraft:gold_ingot\\n'}; " + add_events,
+        restore + f"; contains(screens[4], '{reason}'); "
+        "assert(savedFiles['/home/energy-items.txt']=='minecraft:gold_ingot\\n'); "
+        "assert(not screens[4]:find('minecraft:iron_ingot',1,true))", config)
+
+for width, height in [(60, 25), (80, 25), (120, 40)]:
+    run(f"EU per second {width}x{height}", f"local TEST_W,TEST_H={width},{height}; "
+        "local FLOWS={{r1=100,r2=200,s=50,w=25,m=80,c=20}}",
+        restore + "; contains(screens[1], '375 EU/t | 7500.00 EU/s'); "
+        "contains(screens[1], '100 EU/t | 2000.00 EU/s'); "
+        "contains(screens[1], 'Баланс: 275 EU/t | 5500.00 EU/s')", config)
+run("scaled EU per tick and raw EU per second", "local TEST_W,TEST_H=80,25; local FLOWS={{m=123450}}",
+    restore + "; contains(screens[1], '123.45 K EU/t | 2469000.00 EU/s')", config)
+
+run("generation history gaps on loss", "local TEST_W,TEST_H=80,25; "
+    "local FLOWS={{r1=100,r2=200,s=50,w=25,m=80,c=20},"
+    "{r1=100,r2='error',s=50,w=25,m=80,c=20},"
+    "{r1=100,r2=200,s=50,w=25,m=80,c=20}}",
+    restore + "; contains(screens[1], 'История выработки'); "
+    "local green={}; for _,f in ipairs(screenFills[3]) do "
+    "if f.color==0x3FB950 and f.y==16 then green[f.x]=true end end; "
+    "assert(green[4] and not green[5] and green[6], 'wrong history gap')", config)

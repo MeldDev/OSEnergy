@@ -13,8 +13,6 @@ local config = {
   aeInterval = 5,       -- Опрос запасов, секунды
   itemsFile = "/home/energy-items.txt",
   trackedItems = {},    -- Начальный список: {"minecraft:iron_ingot", "mod:item@2"}
-  -- Необязательный адаптер вашей сборки: function(component) return {spent=EU, required=EU, name="рецепт"} end
-  molecularRead = nil,
   molecularAddress = "376e9d0b-0a9f-4ebc-a2f4-1b582cfbdf05",
   energyPerMatter = 80000000,
   ticksPerSecond = 20  -- Для приблизительного расчёта при нормальном TPS
@@ -146,7 +144,7 @@ local colors = {
 local computer = require("computer")
 local items, itemPage, buttons = {}, 1, {}
 local input, notice, aeStatus, aeLast, aeSource = nil, "", "ожидание", nil, nil
-local cycle = {status = "Прогресс цикла недоступен"}
+local history = {}
 
 local function parseItem(text)
   local id, damage = text:match("^([%w_%.%-]+:[%w_%.%/:%-]+)@(%d+)$")
@@ -175,9 +173,21 @@ local function saveItems(candidate)
   local path = config.itemsFile
   local file, err = io.open(path .. ".tmp", "w")
   if not file then notice = "Не сохранено: " .. tostring(err); return false end
-  local ok, reason = file:write(table.concat(candidate, "\n") .. (#candidate > 0 and "\n" or ""))
-  local closed, closeErr = file:close()
-  if not ok or not closed then notice = "Ошибка записи: " .. tostring(reason or closeErr); return false end
+  local called, written, reason = pcall(file.write, file,
+    table.concat(candidate, "\n") .. (#candidate > 0 and "\n" or ""))
+  local flushed, flushResult, flushErr = true, true, nil
+  if called and written then flushed, flushResult, flushErr = pcall(file.flush, file) end
+  local closed, closeResult, closeErr = pcall(file.close, file)
+  -- В OpenOS успешный close() может ничего не возвращать.
+  -- flush() проверяем явно: close() не во всех версиях передаёт его ошибку.
+  if not called or not written or not flushed or not flushResult or not closed
+    or closeResult == false or closeErr ~= nil then
+    local failure = not called and written or reason or
+      (not flushed and flushResult or flushErr) or
+      (not closed and closeResult or closeErr) or "не удалось записать файл"
+    notice = "Ошибка записи: " .. tostring(failure):gsub("^.-:%d+:%s*", "")
+    return false
+  end
   local moved, moveErr = os.rename(path .. ".tmp", path)
   if not moved then notice = "Не сохранено: " .. tostring(moveErr); return false end
   return true
@@ -282,27 +292,6 @@ local function itemRate(item, window)
     (last.incoming - incoming) * 60 / elapsed, (last.outgoing - outgoing) * 60 / elapsed)
 end
 
-local function readCycle()
-  cycle = {status = "Прогресс цикла недоступен"}
-  if type(config.molecularRead) ~= "function" then
-    local ok, methods = pcall(component.methods, config.molecularAddress)
-    if ok and type(methods) == "table" and methods.getOfferedEnergy and methods.getSinkTier then
-      local energyOnly = true
-      for name in pairs(methods) do
-        if name ~= "getOfferedEnergy" and name ~= "getSinkTier" then energyOnly = false end
-      end
-      if energyOnly then cycle.status = "API машины не передаёт прогресс" end
-    end
-    return
-  end
-  local ok, data = pcall(config.molecularRead, component)
-  if not ok or type(data) ~= "table" then cycle.status = "Ошибка датчика цикла"; return end
-  if type(data.spent) == "number" and type(data.required) == "number"
-    and data.spent >= 0 and data.required > 0 and data.spent <= data.required
-    and data.required < math.huge then cycle = data
-  else cycle.status = "Нет активного цикла" end
-end
-
 local function restore()
   gpu.setResolution(oldW, oldH)
   gpu.setBackground(oldBg)
@@ -349,6 +338,10 @@ local function fmtEU(value)
   if magnitude >= 1000000 then return string.format("%.2f M EU/t", value / 1000000) end
   if magnitude >= 1000 then return string.format("%.2f K EU/t", value / 1000) end
   return string.format("%.0f EU/t", value)
+end
+
+local function fmtPower(value)
+  return fmtEU(value) .. string.format(" | %.2f EU/s", value * config.ticksPerSecond)
 end
 
 local function finite(value)
@@ -425,7 +418,23 @@ end
 
 local function totalText(summary)
   if not summary.hasData then return "нет данных" end
-  return (summary.complete and "" or "~ ") .. fmtEU(summary.value)
+  return (summary.complete and "" or "~ ") .. fmtPower(summary.value)
+end
+
+local function drawGraph(x, y, w, h)
+  rect(x, y, w, h, colors.bg)
+  local maximum = 1
+  for _, value in ipairs(history) do
+    if value then maximum = math.max(maximum, value) end
+  end
+  local first = math.max(1, #history - w + 1)
+  for i = first, #history do
+    local value = history[i]
+    if value and value > 0 then
+      local height = math.min(h, math.max(1, math.floor(value / maximum * h + 0.5)))
+      rect(x + i - first, y + h - height, 1, height, colors.green)
+    end
+  end
 end
 
 local function button(x, y, label, action)
@@ -441,40 +450,32 @@ end
 local function draw(generation, consumption, unassigned)
   buttons = {}
   rect(1, 1, W, H, colors.bg)
-  frame(2, 1, W - 2, 10, "Энергосеть | EU/t")
-  local valueX, valueW = 34, W - 37
+  frame(2, 1, W - 2, 10, "Энергосеть | EU/t и EU/s | TPS " .. config.ticksPerSecond)
+  local valueX = W < 80 and 25 or 34
+  local valueW, labelW = W - valueX - 3, valueX - 5
   for index, group in ipairs(groups) do
     local y = index + 1
     local color = group.kind == "generation" and colors.green or colors.yellow
-    write(4, y, group.name, color, 29)
-    right(valueX, y, valueW, group.complete and fmtEU(group.value) or
-      (group.online > 0 and "~ " .. fmtEU(group.value) or group.status), color)
+    write(4, y, group.name, color, labelW)
+    right(valueX, y, valueW, group.complete and fmtPower(group.value) or
+      (group.online > 0 and "~ " .. fmtPower(group.value) or group.status), color)
   end
-  write(4, 7, "Общая выработка", colors.green, 29)
+  write(4, 7, "Общая выработка", colors.green, labelW)
   right(valueX, 7, valueW, totalText(generation), colors.green)
-  write(4, 8, "Общий расход", colors.yellow, 29)
+  write(4, 8, "Общий расход", colors.yellow, labelW)
   right(valueX, 8, valueW, totalText(consumption), colors.yellow)
   local complete = generation.complete and consumption.complete
-  write(4, 9, "Баланс: " .. (complete and fmtEU(generation.value-consumption.value) or "нет полных данных"), colors.cyan, W-7)
+  write(4, 9, "Баланс: " .. (complete and fmtPower(generation.value-consumption.value) or "нет полных данных"), colors.cyan, W-7)
 
-  frame(2, 11, W-2, 7, "Молекулярный преобразователь" ..
-    (type(cycle.name) == "string" and " | " .. cycle.name or ""))
-  write(4, 12, "Приходит: " .. (groups[4].complete and fmtEU(groups[4].value) or "нет полных данных"), colors.yellow, W-7)
-  if cycle.spent then
-    local remaining = cycle.required - cycle.spent
-    write(4, 13, string.format("Цикл: %.0f / %.0f EU | %.1f%%", cycle.spent, cycle.required, cycle.spent/cycle.required*100), colors.cyan, W-7)
-    local eta = remaining == 0 and "завершён" or
-      (groups[4].complete and groups[4].value > 0 and "~ " .. fmtDuration(remaining / (groups[4].value*config.ticksPerSecond)) or "нет питания/данных")
-    write(4, 14, "Осталось: " .. eta, colors.cyan, W-7)
-  else
-    write(4, 13, string.format("Нужно на цикл: %.0f EU (config)", config.energyPerMatter), colors.dim, W-7)
-    write(4, 14, cycle.status, colors.dim, W-7)
-  end
+  frame(2, 11, W-2, 4, "Молекулярный преобразователь (оценка)")
   local duration, rate = matterEstimate()
-  write(4, 15, "1 материя: " .. duration, colors.cyan, W-7)
-  write(4, 16, "В минуту: " .. rate, colors.cyan, W-7)
+  write(4, 12, "1 материя: " .. duration, colors.cyan, W-7)
+  write(4, 13, "В минуту: " .. rate, colors.cyan, W-7)
 
-  local top = 18
+  local graphH = H >= 30 and 3 or 1
+  frame(2, 15, W-2, graphH+2, "История выработки")
+  drawGraph(4, 16, W-6, graphH)
+  local top = 17+graphH
   frame(2, top, W-2, H-top, aeStatus .. " | среднее, шт/мин")
   button(4, top+1, "[+ ID]", function() input = ""; notice = "" end)
   local pageSize = math.max(1, math.floor((H-top-3)/2))
@@ -543,7 +544,9 @@ local function main()
       if not claimed[address] then unassigned = unassigned + 1 end
     end
     readAE(now)
-    readCycle()
+    local generation = aggregate("generation")
+    history[#history + 1] = generation.complete and generation.value or false
+    while #history > W-6 do table.remove(history, 1) end
     nextSample = now + config.updateInterval
     end
     draw(aggregate("generation"), aggregate("consumption"), unassigned)
