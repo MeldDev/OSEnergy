@@ -7,8 +7,15 @@ local config = {
   molecular = {"346a78af-d715-4cab-aa6e-df79d9778e0f"},
   machines = {"64a4254a-f063-4f9a-b28e-d9e3096f63e1"},
   updateInterval = 0.5, -- Секунды между обновлениями
-  screenWidth = 80,    -- Меньшее разрешение увеличивает текст на экране
-  screenHeight = 25,
+  screenWidth = 120,   -- Ограничивается возможностями GPU
+  screenHeight = 40,
+  aeAddress = "",      -- Пусто: автоматически выбрать единственный me_controller/me_interface
+  aeInterval = 5,       -- Опрос запасов, секунды
+  itemsFile = "/home/energy-items.txt",
+  trackedItems = {},    -- Начальный список: {"minecraft:iron_ingot", "mod:item@2"}
+  -- Необязательный адаптер вашей сборки: function(component) return {spent=EU, required=EU, name="рецепт"} end
+  molecularRead = nil,
+  molecularAddress = "376e9d0b-0a9f-4ebc-a2f4-1b582cfbdf05",
   energyPerMatter = 80000000,
   ticksPerSecond = 20  -- Для приблизительного расчёта при нормальном TPS
 }
@@ -28,6 +35,24 @@ local function counterAddresses()
 end
 
 local args = {...}
+if args[1] == "--inspect" then
+  local address = args[2] or config.molecularAddress
+  local proxy = component.proxy(address)
+  print("Компонент: " .. address)
+  local methods = {}
+  for name in pairs(component.methods(address)) do methods[#methods + 1] = name end
+  table.sort(methods)
+  for _, name in ipairs(methods) do
+    print(name .. ": " .. tostring(component.doc(address, name) or ""))
+  end
+  if proxy.getSensorInformation then
+    local ok, data = pcall(proxy.getSensorInformation)
+    if ok and type(data) == "table" then
+      for key, value in pairs(data) do print(tostring(key) .. ": " .. tostring(value)) end
+    end
+  end
+  return
+end
 if args[1] == "--list" then
   print("Адреса average_counter:")
   for _, address in ipairs(counterAddresses()) do print(address) end
@@ -35,6 +60,10 @@ if args[1] == "--list" then
 end
 
 config.updateInterval = config.updateInterval or 0.5
+if type(config.aeInterval) ~= "number" or config.aeInterval <= 0
+  or config.aeInterval ~= config.aeInterval or config.aeInterval == math.huge then
+  error("aeInterval должен быть положительным числом")
+end
 if type(config.updateInterval) ~= "number" or config.updateInterval ~= config.updateInterval
   or config.updateInterval <= 0 or config.updateInterval == math.huge then
   error("updateInterval должен быть положительным числом")
@@ -45,9 +74,9 @@ for _, key in ipairs({"screenWidth", "screenHeight", "energyPerMatter", "ticksPe
     error(key .. " должен быть положительным числом")
   end
 end
-if config.screenWidth < 60 or config.screenHeight < 22
+if config.screenWidth < 60 or config.screenHeight < 25
   or config.screenWidth % 1 ~= 0 or config.screenHeight % 1 ~= 0 then
-  error("Размер экрана должен быть целым числом, не меньше 60x22")
+  error("Размер экрана должен быть целым числом, не меньше 60x25")
 end
 
 if not component.isAvailable("gpu") then error("GPU не найден") end
@@ -101,7 +130,155 @@ local colors = {
   text = 0xE6EDF3, dim = 0x8B949E, cyan = 0x58A6FF,
   green = 0x3FB950, yellow = 0xD29922, red = 0xF85149
 }
-local history = {}
+local computer = require("computer")
+local items, itemPage, buttons = {}, 1, {}
+local input, notice, aeStatus, aeLast, aeSource = nil, "", "ожидание", nil, nil
+local cycle = {status = "Прогресс цикла недоступен"}
+
+local function parseItem(text)
+  local id, damage = text:match("^([%w_%.%-]+:[%w_%.%/:%-]+)@(%d+)$")
+  if not id then id = text:match("^([%w_%.%-]+:[%w_%.%/:%-]+)$") end
+  if not id then return nil end
+  return {key = text, id = id, damage = damage and tonumber(damage), label = id, samples = {}}
+end
+
+local function loadItems()
+  local keys = config.trackedItems or {}
+  local file = io.open(config.itemsFile, "r")
+  if file then
+    keys = {}
+    for line in file:lines() do keys[#keys + 1] = line end
+    file:close()
+  end
+  local seen = {}
+  for _, key in ipairs(keys) do
+    local item = parseItem(key)
+    if item and not seen[key] then items[#items + 1], seen[key] = item, true end
+  end
+end
+
+-- Данные — только строки ID, никогда не исполняемый Lua.
+local function saveItems(candidate)
+  local path = config.itemsFile
+  local file, err = io.open(path .. ".tmp", "w")
+  if not file then notice = "Не сохранено: " .. tostring(err); return false end
+  local ok, reason = file:write(table.concat(candidate, "\n") .. (#candidate > 0 and "\n" or ""))
+  local closed, closeErr = file:close()
+  if not ok or not closed then notice = "Ошибка записи: " .. tostring(reason or closeErr); return false end
+  local moved, moveErr = os.rename(path .. ".tmp", path)
+  if not moved then notice = "Не сохранено: " .. tostring(moveErr); return false end
+  return true
+end
+
+local function editItems(key, removeIndex)
+  local candidate = {}
+  for index, item in ipairs(items) do
+    if index ~= removeIndex then candidate[#candidate + 1] = item.key end
+    if key and item.key == key then notice = "Этот ID уже добавлен"; return end
+  end
+  local added = key and parseItem(key)
+  if key and not added then notice = "Формат: mod:item или mod:item@meta"; return end
+  if added then candidate[#candidate + 1] = key end
+  if not saveItems(candidate) then return end
+  if removeIndex then table.remove(items, removeIndex) else items[#items + 1] = added end
+  notice = removeIndex and "Предмет удалён" or "Предмет добавлен"
+end
+
+local function aeProxy()
+  local matches = {}
+  for _, kind in ipairs({"me_controller", "me_interface"}) do
+    for address in component.list(kind, true) do
+      if config.aeAddress == "" or address:sub(1, #config.aeAddress) == config.aeAddress then
+        matches[#matches + 1] = address
+      end
+    end
+  end
+  table.sort(matches)
+  if #matches ~= 1 then
+    return nil, #matches == 0 and "AE2: нет связи" or "AE2: укажите aeAddress в config"
+  end
+  return component.proxy(matches[1]), matches[1]
+end
+
+local function resetSamples()
+  for _, item in ipairs(items) do item.samples, item.count = {}, nil end
+end
+
+local function readAE(now)
+  if aeLast and now - aeLast < config.aeInterval then return end
+  aeLast = now
+  local ok, proxy, address = pcall(aeProxy)
+  if not ok or not proxy then
+    aeStatus = ok and address or "AE2: ошибка подключения"
+    resetSamples()
+    aeSource = nil
+    return
+  end
+  if aeSource ~= address then resetSamples(); aeSource = address end
+  local success, stacks = pcall(function() return proxy.getItemsInNetwork() end)
+  if not success or type(stacks) ~= "table" then
+    aeStatus = "AE2: ошибка чтения"; resetSamples(); return
+  end
+  -- Проверить весь снимок до обновления истории.
+  for _, stack in pairs(stacks) do
+    if type(stack) ~= "table" or type(stack.name) ~= "string"
+      or type(stack.size) ~= "number" or stack.size < 0 or stack.size ~= stack.size
+      or stack.size == math.huge then
+      aeStatus = "AE2: неверный снимок"; resetSamples(); return
+    end
+  end
+  aeStatus = "AE2: подключено"
+  for _, item in ipairs(items) do
+    local count = 0
+    for _, stack in pairs(stacks) do
+      if stack.name == item.id and (item.damage == nil or stack.damage == item.damage) then
+        count = count + stack.size
+        if type(stack.label) == "string" then item.label = stack.label end
+      end
+    end
+    local samples = item.samples
+    local previous = samples[#samples]
+    samples[#samples + 1] = {time = now, count = count,
+      incoming = previous and previous.incoming + math.max(0, count - previous.count) or 0,
+      outgoing = previous and previous.outgoing + math.max(0, previous.count - count) or 0}
+    item.count = count
+    while #samples > 2 and samples[2].time <= now - 3600 do table.remove(samples, 1) end
+  end
+end
+
+local function itemRate(item, window)
+  local samples = item.samples
+  if #samples < 2 then return "—" end
+  local last = samples[#samples]
+  local cutoff, first = math.max(samples[1].time, last.time - window), samples[1]
+  local incoming, outgoing = first.incoming, first.outgoing
+  for i = 2, #samples do
+    local nextSample = samples[i]
+    if nextSample.time >= cutoff then
+      local fraction = (cutoff - first.time) / (nextSample.time - first.time)
+      incoming = first.incoming + (nextSample.incoming - first.incoming) * fraction
+      outgoing = first.outgoing + (nextSample.outgoing - first.outgoing) * fraction
+      break
+    end
+    first = nextSample
+  end
+  local elapsed = last.time - cutoff
+  if elapsed <= 0 then return "—" end
+  local prefix = last.time - samples[1].time < window and "~" or ""
+  return string.format("%s+%.1f/-%.1f", prefix,
+    (last.incoming - incoming) * 60 / elapsed, (last.outgoing - outgoing) * 60 / elapsed)
+end
+
+local function readCycle()
+  cycle = {status = "Прогресс цикла недоступен"}
+  if type(config.molecularRead) ~= "function" then return end
+  local ok, data = pcall(config.molecularRead, component)
+  if not ok or type(data) ~= "table" then cycle.status = "Ошибка датчика цикла"; return end
+  if type(data.spent) == "number" and type(data.required) == "number"
+    and data.spent >= 0 and data.required > 0 and data.spent <= data.required
+    and data.required < math.huge then cycle = data
+  else cycle.status = "Нет активного цикла" end
+end
 
 local function restore()
   gpu.setResolution(oldW, oldH)
@@ -228,99 +405,125 @@ local function totalText(summary)
   return (summary.complete and "" or "~ ") .. fmtEU(summary.value)
 end
 
-local function drawGraph(x, y, w, h)
-  rect(x, y, w, h, colors.bg)
-  local maximum = 1
-  for _, value in ipairs(history) do
-    if value then maximum = math.max(maximum, value) end
-  end
-  local first = math.max(1, #history - w + 1)
-  for i = first, #history do
-    local value = history[i]
-    if value and value > 0 then
-      local height = math.min(h, math.max(1, math.floor(value / maximum * h + 0.5)))
-      rect(x + i - first, y + h - height, 1, height, colors.green)
-    end
-  end
+local function button(x, y, label, action)
+  write(x, y, label, colors.cyan, nil, colors.panel)
+  buttons[#buttons + 1] = {x=x, y=y, w=unicode.len(label), action=action}
+end
+
+local function fmtCount(value)
+  if value == nil then return "—" end
+  return string.format("%.0f", value)
 end
 
 local function draw(generation, consumption, unassigned)
+  buttons = {}
   rect(1, 1, W, H, colors.bg)
-  local title = "МОНИТОР ЭНЕРГОСЕТИ"
-  write(math.floor((W - unicode.len(title)) / 2) + 1, 2, title, colors.cyan, nil, colors.bg)
-  frame(2, 4, W - 2, 11, "Выработка и расход")
+  frame(2, 1, W - 2, 10, "Энергосеть | EU/t")
   local valueX, valueW = 34, W - 37
-  local wide = W >= 100
-  if wide then valueW = 23 end
-  write(4, 5, "Категория", colors.dim, 29)
-  right(valueX, 5, valueW, "Сейчас", colors.dim)
-  if wide then
-    right(60, 5, 18, "Среднее", colors.dim)
-    right(81, 5, W - 84, "Связь", colors.dim)
-  end
   for index, group in ipairs(groups) do
-    local y = 5 + index
+    local y = index + 1
     local color = group.kind == "generation" and colors.green or colors.yellow
     write(4, y, group.name, color, 29)
-    local value = group.complete and fmtEU(group.value) or
-      (group.online > 0 and "~ " .. fmtEU(group.value) or group.status)
-    right(valueX, y, valueW, value, group.complete and color or colors.dim)
-    if wide then
-      right(60, y, 18, group.samples > 0 and fmtEU(group.total / group.samples) or "—", colors.dim)
-      right(81, y, W - 84, group.online .. "/" .. #group.addresses, group.complete and colors.green or colors.yellow)
+    right(valueX, y, valueW, group.complete and fmtEU(group.value) or
+      (group.online > 0 and "~ " .. fmtEU(group.value) or group.status), color)
+  end
+  write(4, 7, "Общая выработка", colors.green, 29)
+  right(valueX, 7, valueW, totalText(generation), colors.green)
+  write(4, 8, "Общий расход", colors.yellow, 29)
+  right(valueX, 8, valueW, totalText(consumption), colors.yellow)
+  local complete = generation.complete and consumption.complete
+  write(4, 9, "Баланс: " .. (complete and fmtEU(generation.value-consumption.value) or "нет полных данных"), colors.cyan, W-7)
+
+  frame(2, 11, W-2, 7, "Молекулярный преобразователь")
+  write(4, 12, "Приходит: " .. (groups[4].complete and fmtEU(groups[4].value) or "нет полных данных"), colors.yellow, W-7)
+  if cycle.spent then
+    local remaining = cycle.required - cycle.spent
+    write(4, 13, string.format("Цикл: %.0f / %.0f EU | %.1f%%", cycle.spent, cycle.required, cycle.spent/cycle.required*100), colors.cyan, W-7)
+    local eta = remaining == 0 and "завершён" or
+      (groups[4].complete and groups[4].value > 0 and "~ " .. fmtDuration(remaining / (groups[4].value*config.ticksPerSecond)) or "нет питания/данных")
+    write(4, 14, "Осталось: " .. eta, colors.cyan, W-7)
+  else
+    write(4, 13, string.format("Нужно на цикл: %.0f EU (config)", config.energyPerMatter), colors.dim, W-7)
+    write(4, 14, cycle.status .. " | --inspect", colors.dim, W-7)
+  end
+  local duration, rate = matterEstimate()
+  write(4, 15, "1 материя: " .. duration, colors.cyan, W-7)
+  write(4, 16, "В минуту: " .. rate, colors.cyan, W-7)
+
+  local top = 18
+  frame(2, top, W-2, H-top, aeStatus .. " | среднее, шт/мин")
+  button(4, top+1, "[+ ID]", function() input = ""; notice = "" end)
+  local pageSize = math.max(1, math.floor((H-top-3)/2))
+  local pages = math.max(1, math.ceil(#items/pageSize))
+  itemPage = math.max(1, math.min(itemPage, pages))
+  button(12, top+1, "[<]", function() itemPage = math.max(1, itemPage-1) end)
+  button(17, top+1, "[>]", function() itemPage = math.min(pages, itemPage+1) end)
+  write(22, top+1, itemPage .. "/" .. pages .. " | 1м / 10м / 1ч", colors.dim, W-25)
+  if #items == 0 then write(4, top+2, "Добавьте предмет по ID: [+ ID] или A", colors.dim, W-7) end
+  for row = 1, pageSize do
+    local index = (itemPage-1)*pageSize+row
+    local item = items[index]
+    if item then
+      local y = top+2+(row-1)*2
+      write(4, y, item.label .. " | " .. item.key, colors.text, W-24)
+      right(W-20, y, 13, fmtCount(item.count), colors.green)
+      button(W-6, y, "[X]", function() editItems(nil, index) end)
+      local column = math.floor((W-7)/3)
+      write(4, y+1, "1м " .. itemRate(item,60), colors.dim, column)
+      write(4+column, y+1, "10м " .. itemRate(item,600), colors.dim, column)
+      write(4+column*2, y+1, "1ч " .. itemRate(item,3600), colors.dim, W-7-column*2)
     end
   end
-  write(4, 12, "Общая выработка", colors.green, 29)
-  right(valueX, 12, valueW, totalText(generation), colors.green)
-  write(4, 13, "Общий расход", colors.yellow, 29)
-  right(valueX, 13, valueW, totalText(consumption), colors.yellow)
-  if wide then
-    write(60, 12, "~ = неполные данные", colors.dim, W - 63)
-    write(60, 13, "Среднее за время работы", colors.dim, W - 63)
-  end
+  local footer = input ~= nil and ("ID> " .. input .. " | Enter: добавить | Esc: отмена") or
+    (notice ~= "" and notice or "A: добавить | [X]: удалить | Q: выход | ~: идёт накопление")
+  if input == nil and notice == "" and unassigned > 0 then footer = "Не привязано: " .. unassigned .. " | " .. footer end
+  if input == nil and notice == "" and autoReactor then footer = "Один счётчик | " .. footer end
+  write(2,H,footer,colors.dim,W-2,colors.bg)
+end
 
-  frame(2, 15, W - 2, 6, "Баланс и материя (оценка)")
-  local balance = generation.value - consumption.value
-  local complete = generation.complete and consumption.complete
-  write(4, 16, "Баланс: " .. (complete and fmtEU(balance) or "нет полных данных"),
-    complete and (balance >= 0 and colors.green or colors.red) or colors.dim, W - 7)
-  local duration, rate = matterEstimate()
-  write(4, 17, "1 материя: " .. duration, colors.cyan, W - 7)
-  write(4, 18, "В минуту: " .. rate, colors.cyan, W - 7)
-  write(4, 19, string.format("Цена: %.0f M EU | %.0f TPS", config.energyPerMatter / 1000000, config.ticksPerSecond), colors.dim, W - 7)
-  if H >= 24 then
-    local graphH = math.min(3, H - 23)
-    frame(2, 21, W - 2, graphH + 2, "История выработки")
-    drawGraph(4, 22, W - 6, graphH)
+local function handleEvent(e, address, a, b)
+  if e == "interrupted" then return false end
+  if e == "touch" then
+    if gpu.getScreen and address ~= gpu.getScreen() then return true end
+    for _, hit in ipairs(buttons) do
+      if a >= hit.x and a < hit.x+hit.w and b == hit.y then hit.action(); break end
+    end
+  elseif e == "clipboard" and input ~= nil then
+    input = (input .. tostring(a):gsub("[%s%c]", "")):sub(1,160)
+  elseif e == "key_down" then
+    if input ~= nil then
+      if b == 1 then input = nil
+      elseif b == 28 or a == 13 then editItems(input); input = nil
+      elseif b == 14 or a == 8 then input = unicode.sub(input,1,math.max(0,unicode.len(input)-1))
+      elseif a and a >= 32 and a <= 126 and #input < 160 then input = input .. string.char(a) end
+    elseif a == 113 or a == 81 then return false
+    elseif a == 97 or a == 65 then input = ""; notice = "" end
   end
-  local hint = "Q: выход | ~: неполные данные"
-  if unassigned > 0 then
-    hint = "Не привязано: " .. unassigned .. " | energy.lua --list | Q: выход"
-  elseif autoReactor then
-    hint = "Один счётчик → реакторы | Настрой config | Q: выход"
-  end
-  write(2, H, hint, colors.dim, W - 2, colors.bg)
+  return true
 end
 
 local function main()
   local maxW, maxH = gpu.maxResolution()
-  if maxW < 60 or maxH < 22 then error("Экран слишком маленький. Нужно хотя бы 60x22") end
+  if maxW < 60 or maxH < 25 then error("Экран слишком маленький. Нужно хотя бы 60x25") end
   gpu.setResolution(math.min(maxW, config.screenWidth), math.min(maxH, config.screenHeight))
   W, H = gpu.getResolution()
+  loadItems()
+  local nextSample, unassigned = 0, 0
   while true do
+    local now = computer.uptime()
+    if now >= nextSample then
     local addresses, claimed = counterAddresses(), {}
     for _, group in ipairs(groups) do readGroup(group, addresses, claimed) end
-    local unassigned = 0
+    unassigned = 0
     for _, address in ipairs(addresses) do
       if not claimed[address] then unassigned = unassigned + 1 end
     end
-    local generation, consumption = aggregate("generation"), aggregate("consumption")
-    -- Разрыв графика при потере данных вместо ложного нуля.
-    history[#history + 1] = generation.complete and generation.value or false
-    while #history > W - 6 do table.remove(history, 1) end
-    draw(generation, consumption, unassigned)
-    local e, _, char = event.pull(config.updateInterval)
-    if e == "interrupted" or (e == "key_down" and (char == 113 or char == 81)) then break end
+    readAE(now)
+    readCycle()
+    nextSample = now + config.updateInterval
+    end
+    draw(aggregate("generation"), aggregate("consumption"), unassigned)
+    if not handleEvent(event.pull(math.max(0, nextSample-computer.uptime()))) then break end
   end
 end
 

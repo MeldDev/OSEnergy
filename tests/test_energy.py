@@ -23,6 +23,21 @@ local sw, sh = 40, 15
 local bg, fg = 123, 456
 local cells, screens, messages = {}, {}, {}
 local step = 1
+local now = 0
+local savedFiles = TEST_FILES or {}
+io.open = function(path, mode)
+  if mode == 'r' then
+    if not savedFiles[path] then return nil end
+    local lines = {}
+    for line in savedFiles[path]:gmatch('[^\n]+') do lines[#lines+1]=line end
+    local i=0
+    return {lines=function() return function() i=i+1; return lines[i] end end, close=function() return true end}
+  end
+  if TEST_SAVE_FAIL then return nil, 'disk full' end
+  return {write=function(self,text) savedFiles[path]=text; return self end, close=function() return true end}
+end
+os.rename = function(a,b) savedFiles[b]=savedFiles[a]; savedFiles[a]=nil; return true end
+package.preload.computer = function() return {uptime=function() return now end} end
 loadfile = function() error('External configuration must not be loaded') end
 local gpu = {}
 function gpu.getResolution() return sw, sh end
@@ -58,14 +73,21 @@ package.preload.component = function()
     gpu = gpu,
     isAvailable = function(kind) return kind == 'gpu' or kind == 'screen' end,
     list = function(kind, exact)
-      assert(kind == 'average_counter' and exact)
+      assert(exact)
       local keys = {}
-      for address in pairs(FLOWS[step]) do keys[#keys+1] = address end
+      if kind == 'average_counter' then
+        for address in pairs(FLOWS[step]) do keys[#keys+1] = address end
+      elseif kind == 'me_controller' and TEST_AE then keys={'ae'} end
       table.sort(keys)
       local index = 0
       return function() index = index + 1; return keys[index] end
     end,
     proxy = function(address)
+      if address == 'ae' then return {getItemsInNetwork=function()
+        local snapshot=TEST_AE[step]
+        if snapshot == 'error' then error('offline') end
+        return snapshot
+      end} end
       return {getAverage = function()
         local value = FLOWS[step][address]
         if value == 'error' then error('disconnected') end
@@ -88,7 +110,13 @@ package.preload.event = function()
   return {pull = function()
     if TEST_EXPECTED_W then assert(sw == TEST_EXPECTED_W and sh == TEST_EXPECTED_H, 'wrong display resolution') end
     screens[#screens+1] = screen()
-    if step < #FLOWS then step = step + 1; return 'timer' end
+    local emitted = TEST_EVENTS and TEST_EVENTS[step]
+    if step < #FLOWS then
+      step = step + 1; now = now + (TEST_DT or 5)
+      if emitted then return table.unpack(emitted) end
+      return 'timer'
+    end
+    if emitted then return table.unpack(emitted) end
     return 'key_down', 'keyboard', 113
   end}
 end
@@ -99,7 +127,7 @@ end
 '''
 
 
-def run(name, setup, checks, config=None, arguments="", use_actual_config=False, native_resolution=True):
+def run(name, setup, checks, config=None, arguments="", use_actual_config=False, native_resolution=True, transform=None):
     code = source
     if not use_actual_config:
         for key in ("reactors", "solar", "wind", "molecular", "machines"):
@@ -110,6 +138,8 @@ def run(name, setup, checks, config=None, arguments="", use_actual_config=False,
     if native_resolution:
         code = re.sub(r"(screenWidth\s*=\s*)\d+", r"\g<1>TEST_W", code, count=1)
         code = re.sub(r"(screenHeight\s*=\s*)\d+", r"\g<1>TEST_H", code, count=1)
+    if transform:
+        code = transform(code)
     lua = setup + "\n" + MOCKS + "\nlocal function program(...)\n" + code
     lua += "\nend\nlocal ok, err = pcall(program" + arguments + ")\n" + checks
     state = lib.luaL_newstate()
@@ -128,39 +158,40 @@ def run(name, setup, checks, config=None, arguments="", use_actual_config=False,
 
 config = dict(reactors='"r1", "r2"', solar='"s"', wind='"w"',
               molecular='"m"', machines='"c"')
-restore = "assert(sw == 40 and sh == 15 and bg == 123 and fg == 456); assert(ok, err)"
-for width, height in [(60, 22), (80, 25), (100, 24), (160, 50)]:
+restore = ("assert(sw == 40 and sh == 15 and bg == 123 and fg == 456); assert(ok, err); "
+           "assert(not table.concat(messages):find('Ошибка:',1,true), table.concat(messages))")
+for width, height in [(60, 25), (80, 25), (100, 30), (160, 50)]:
     run(f"totals and layout {width}x{height}",
         f"local TEST_W, TEST_H = {width}, {height}; local FLOWS = {{{{r1=100,r2=200,s=50,w=25,m=80,c=20}}}}",
         restore + "; contains(screens[1], '375 EU/t'); contains(screens[1], '100 EU/t'); "
         "contains(screens[1], 'Баланс: 275 EU/t'); contains(screens[1], 'Молекулярный преобразователь')",
         config)
 
-run("disconnect and reconnect", "local TEST_W, TEST_H=60,22; local FLOWS={"
+run("disconnect and reconnect", "local TEST_W, TEST_H=60,25; local FLOWS={"
     "{r1=100,r2='error',s=50,w=25,m=80,c=20}, {r1=100,r2=200,s=50,w=25,m=80,c=20}}",
     restore + "; contains(screens[1], '~ 100 EU/t'); contains(screens[1], '~ 175 EU/t'); "
     "contains(screens[1], 'Баланс: нет полных данных'); contains(screens[2], 'Баланс: 275 EU/t')", config)
-run("zero readings", "local TEST_W, TEST_H=60,22; local FLOWS={{r1=0,r2=0,s=0,w=0,m=0,c=0}}",
+run("zero readings", "local TEST_W, TEST_H=60,25; local FLOWS={{r1=0,r2=0,s=0,w=0,m=0,c=0}}",
     restore + "; contains(screens[1], 'Баланс: 0 EU/t'); contains(screens[1], '1 материя: нет питания'); "
     "contains(screens[1], 'В минуту: 0/M')", config)
-run("single old counter", "local TEST_W, TEST_H=60,22; local FLOWS={{legacy=123}}",
+run("single old counter", "local TEST_W, TEST_H=60,25; local FLOWS={{legacy=123}}",
     restore + "; contains(screens[1], '123 EU/t'); contains(screens[1], 'не настроено'); "
     "contains(screens[1], 'Один счётчик')")
-run("missing and invalid readings", "local TEST_W, TEST_H=60,22; local FLOWS={{r1=0/0,s=-5,w=25,m=80,c=20}}",
+run("missing and invalid readings", "local TEST_W, TEST_H=60,25; local FLOWS={{r1=0/0,s=-5,w=25,m=80,c=20}}",
     restore + "; contains(screens[1], 'ошибка чтения'); contains(screens[1], '~ 25 EU/t'); "
     "contains(screens[1], 'нет полных данных')", config)
-run("ambiguous prefix", "local TEST_W, TEST_H=60,22; local FLOWS={{aa=1,ab=2}}",
+run("ambiguous prefix", "local TEST_W, TEST_H=60,25; local FLOWS={{aa=1,ab=2}}",
     restore + "; contains(screens[1], 'неоднозначный адрес')", dict(reactors='"a"'))
-run("duplicate binding", "local TEST_W, TEST_H=60,22; local FLOWS={{abc=1}}",
+run("duplicate binding", "local TEST_W, TEST_H=60,25; local FLOWS={{abc=1}}",
     "assert(not ok); contains(err, 'Повторная привязка'); assert(sw == 40 and sh == 15)",
     dict(reactors='"a"', solar='"abc"'))
-run("counter inventory", "local TEST_W, TEST_H=60,22; local FLOWS={{abc=1,def=2}}",
+run("counter inventory", "local TEST_W, TEST_H=60,25; local FLOWS={{abc=1,def=2}}",
     restore + "; assert(#screens == 0); contains(table.concat(messages, '\\n'), 'abc'); "
     "contains(table.concat(messages, '\\n'), 'def')", arguments=', "--list"')
 run("small screen restoration", "local TEST_W, TEST_H=50,16; local FLOWS={{}}",
-    restore + "; contains(table.concat(messages), 'Экран слишком маленький')", native_resolution=False)
+    "assert(ok, err); assert(sw == 40 and sh == 15); contains(table.concat(messages), 'Экран слишком маленький')", native_resolution=False)
 run("actual inline addresses without external config",
-    "local TEST_W, TEST_H=60,22; local FLOWS={{"
+    "local TEST_W, TEST_H=60,25; local FLOWS={{"
     "['6f537d81-fa47-46ad-b625-a72e9d2b7511']=300,"
     "['4b0f52a2-cdc4-4379-9234-5482be20016b']=50,"
     "['668fa7db-af7f-4308-8414-098a19039a1d']=25,"
@@ -169,7 +200,7 @@ run("actual inline addresses without external config",
     restore + "; contains(screens[1], 'Баланс: 275 EU/t'); contains(screens[1], '375 EU/t')",
     use_actual_config=True)
 run("larger text via default resolution", "local TEST_W, TEST_H=160,50; "
-    "local TEST_EXPECTED_W, TEST_EXPECTED_H=80,25; local FLOWS={{r1=100,r2=200,s=50,w=25,m=80,c=20}}",
+    "local TEST_EXPECTED_W, TEST_EXPECTED_H=120,40; local FLOWS={{r1=100,r2=200,s=50,w=25,m=80,c=20}}",
     restore + "; contains(screens[1], 'Молекулярный преобразователь'); contains(screens[1], '1 материя:')",
     config, native_resolution=False)
 for flow, duration, rate in [(1000000, '4 с', '15.00/M'), (2000000, '2 с', '30.00/M'),
@@ -177,11 +208,64 @@ for flow, duration, rate in [(1000000, '4 с', '15.00/M'), (2000000, '2 с', '30
     run(f"matter estimate {flow} EU/t", f"local TEST_W, TEST_H=80,25; local FLOWS={{{{m={flow}}}}}",
         restore + f"; contains(screens[1], '1 материя: ~ {duration}'); contains(screens[1], 'В минуту: ~ {rate}')",
         config)
-run("missing molecular measurement", "local TEST_W, TEST_H=60,22; local FLOWS={{r1=100,r2=200,s=50,w=25,c=20}}",
+run("missing molecular measurement", "local TEST_W, TEST_H=60,25; local FLOWS={{r1=100,r2=200,s=50,w=25,c=20}}",
     restore + "; contains(screens[1], '1 материя: нет полных данных'); contains(screens[1], 'В минуту: нет полных данных')", config)
-run("partial molecular measurement", "local TEST_W, TEST_H=60,22; local FLOWS={{ma=1000000}}",
+run("partial molecular measurement", "local TEST_W, TEST_H=60,25; local FLOWS={{ma=1000000}}",
     restore + "; contains(screens[1], '1 материя: нет полных данных'); contains(screens[1], 'В минуту: нет полных данных')",
     dict(config, molecular='"ma", "mb"'))
 run("multiple molecular lines", "local TEST_W, TEST_H=80,25; local FLOWS={{ma=500000,mb=500000}}",
     restore + "; contains(screens[1], '1 материя: ~ 4 с'); contains(screens[1], 'В минуту: ~ 15.00/M')",
     dict(config, molecular='"ma", "mb"'))
+
+
+def track(code):
+    return code.replace("trackedItems = {}", 'trackedItems = {"minecraft:iron_ingot"}')
+
+
+stack = lambda n: '{{name="minecraft:iron_ingot", label="Iron", size=' + str(n) + ',damage=0}}'
+for width, height in [(60, 25), (80, 25), (120, 40), (160, 50)]:
+    run(f"AE layout {width}x{height}",
+        f"local TEST_W,TEST_H={width},{height}; local FLOWS={{{{}},{{}},{{}}}}; "
+        f"local TEST_AE={{{stack(100)},{stack(110)},{stack(106)}}}",
+        restore + "; contains(screens[1], 'Iron'); contains(screens[1], '100'); "
+        "contains(screens[3], '~+60.0/-24.0')", config, transform=track)
+
+run("AE loss does not become withdrawal", "local TEST_W,TEST_H=80,25; "
+    "local FLOWS={{},{},{},{}}; local TEST_AE={" + stack(100) + ",'error'," + stack(10) + "," + stack(20) + "}",
+    restore + "; contains(screens[2], 'AE2: ошибка чтения'); "
+    "contains(screens[3], '1м —'); contains(screens[4], '~+120.0/-0.0')", config, transform=track)
+
+run("AE empty snapshot means zero stock", "local TEST_W,TEST_H=80,25; "
+    "local FLOWS={{},{}}; local TEST_AE={" + stack(100) + ",{}}",
+    restore + "; contains(screens[2], '~+0.0/-1200.0')", config, transform=track)
+
+run("AE window interpolation", "local TEST_W,TEST_H=120,40; local TEST_DT=40; "
+    "local FLOWS={{},{},{}}; local TEST_AE={" + stack(100) + "," + stack(140) + "," + stack(120) + "}",
+    restore + "; contains(screens[3], '1м +20.0/-20.0'); "
+    "contains(screens[3], '10м ~+30.0/-15.0')", config, transform=track)
+
+run("AE hour history", "local TEST_W,TEST_H=120,40; local TEST_DT=60; "
+    "local FLOWS={}; local TEST_AE={}; for i=1,65 do FLOWS[i]={}; "
+    "TEST_AE[i]={{name='minecraft:iron_ingot',size=i*10}} end",
+    restore + "; contains(screens[65], '1ч +10.0/-0.0')", config, transform=track)
+
+run("add via clipboard and delete via touch", "local TEST_W,TEST_H=80,25; "
+    "local FLOWS={{},{},{},{},{}}; local TEST_EVENTS={"
+    "{'key_down','keyboard',97,30},{'clipboard','keyboard','minecraft:gold_ingot'},"
+    "{'key_down','keyboard',13,28},{'touch','screen',74,20}}",
+    restore + "; contains(screens[4], 'minecraft:gold_ingot'); "
+    "assert(savedFiles['/home/energy-items.txt']==''); contains(screens[5], 'Добавьте предмет')", config)
+
+run("save failure leaves list unchanged", "local TEST_W,TEST_H=80,25; local TEST_SAVE_FAIL=true; "
+    "local FLOWS={{},{},{},{}}; local TEST_EVENTS={{'key_down','keyboard',97,30},"
+    "{'clipboard','keyboard','minecraft:gold_ingot'},{'key_down','keyboard',13,28}}",
+    restore + "; contains(screens[4], 'Не сохранено: disk full'); contains(screens[4], 'Добавьте предмет')", config)
+
+run("stored IDs deduplicated and never executed", "local TEST_W,TEST_H=80,25; "
+    "local FLOWS={{}}; local TEST_FILES={['/home/energy-items.txt']='minecraft:iron_ingot\\nminecraft:iron_ingot\\nerror(123)\\n'}",
+    restore + "; contains(screens[1], 'minecraft:iron_ingot'); contains(screens[1], '1/1')", config)
+
+run("real cycle adapter and ETA", "local TEST_W,TEST_H=80,25; local FLOWS={{m=1000000}}",
+    restore + "; contains(screens[1], '40000000 / 80000000 EU'); contains(screens[1], 'Осталось: ~ 2 с')",
+    config, transform=lambda code: code.replace("molecularRead = nil",
+        "molecularRead = function() return {spent=40000000,required=80000000} end"))

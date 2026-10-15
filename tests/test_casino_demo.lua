@@ -22,10 +22,26 @@ end
 local function demoAudit()
   assert(runDemo("--audit")); return table.concat(printed,"\n")
 end
+local function demoClick(action, name)
+  local w,h=math.min(100,screenWidth),math.min(32,screenHeight)
+  local toolbarWidth=math.floor((w-15)/4)
+  local toolbarActions={fund1=0,fund10=1,switch=2,bank=3}
+  if toolbarActions[action] then
+    return click(11+toolbarActions[action]*(toolbarWidth+1),h-1,name)
+  end
+  local cardWidth=math.floor((w-8)/2)
+  local right=3+cardWidth+2
+  local controlWidth=math.floor((cardWidth-7)/4)
+  local first=math.floor((cardWidth-(controlWidth*4+3))/2)
+  if action=="withdraw" then return click(right+first+2*(controlWidth+1),h>=30 and 26 or 20,name) end
+  if action=="roulette" then return click(5,h>=30 and 20 or 16,name) end
+  if action=="slots" then return click(right+2,h>=30 and 20 or 16,name) end
+  error("unknown demo test action")
+end
 test("demo runs without PIM and changes no real inventory or ledger",function()
   reset();useData=false;player[1]=stack(5)
   -- Simulate only screen/GPU hardware; even fake real-world PIM is removed.
-  click(3,24,"ActualUser");click(21,24,"ActualUser")
+  demoClick("fund1","ActualUser");demoClick("fund10","ActualUser")
   local ok,err=runDemo();assert(ok,tostring(err))
   assert(calls==0 and player[1].size==5 and bank[1].size==64)
   assert(files["/home/casino-data/ledger.log"]==nil)
@@ -36,29 +52,30 @@ test("demo runs without PIM and changes no real inventory or ledger",function()
 end)
 test("fake player switch, roulette and slots use separate saved demo balances",function()
   reset();useData=false
-  click(21,24);click(41,24);click(3,24)
+  demoClick("fund10");demoClick("switch");demoClick("fund1")
   local ok,err=runDemo();assert(ok,tostring(err))
   local report=demoAudit();has(report,"Demo_A 1000");has(report,"Demo_B 100")
-  click(4,18);click(54,18);assert(runDemo())
+  demoClick("roulette");demoClick("slots");assert(runDemo())
   assert(calls==0);report=demoAudit();has(report,"Demo_B 100")
   has(report,"Operations: 6")
 end)
 test("demo coin injection is exact even after a virtual withdrawal",function()
   reset();useData=false
-  click(21,24);click(40,23);click(21,24)
+  demoClick("fund10");demoClick("withdraw");demoClick("fund10")
   assert(runDemo());has(demoAudit(),"Demo_A 1900")
   assert(calls==0)
 end)
 test("demo audit rejects live ledger and preserves its bytes",function()
   reset();useData=false
   files["/home/casino-data/ledger.log"]="LIVE-DO-NOT-TOUCH"
-  click(3,24);assert(runDemo());has(demoAudit(),"Demo_A 100")
+  demoClick("fund1");assert(runDemo());has(demoAudit(),"Demo_A 100")
   assert(files["/home/casino-data/ledger.log"]=="LIVE-DO-NOT-TOUCH")
 end)
 test("demo toolbar renders on T2 80x25 and T3 100x32",function()
-  for _,size in ipairs({{80,25},{100,32}}) do
+  for _,size in ipairs({{80,25},{100,32},{80,32},{100,30}}) do
     reset(size[1],size[2]);useData=false
-    click(60,24);click(21,24);assert(runDemo())
+    demoClick("bank");demoClick("fund10");assert(runDemo())
+    if size[1]==80 then has(snapshots[#snapshots],"Вн.64");has(snapshots[#snapshots],"Выд.64") end
     has(snapshots[#snapshots],"+64 в кассу");has(demoAudit(),"Demo_A 1000")
   end
 end)
@@ -74,12 +91,20 @@ test("OpenOS nil-returning successful close saves and reloads demo balances",fun
       return handle, err
     end
   end
-  click(3,24);click(21,24)
+  demoClick("fund1");demoClick("fund10")
   local ok,err=runDemo()
   configure = previousConfigure
   assert(ok,tostring(err));has(demoAudit(),"Demo_A 1100")
   assert(files["/home/casino-data/ledger.log"]==nil)
 end)
+test("new demo buttons accept their entire height and selected cell stays visible",function()
+  reset();useData=false
+  demoClick("fund10");click(10,10);click(5,21)
+  assert(runDemo());has(demoAudit(),"Operations: 3")
+  has(snapshots[#snapshots],"Выбор: Число 1")
+end)
+-- Export a readable, funded demo preview rather than an error/empty session.
+reset();useData=false;demoClick("fund10");assert(runDemo())
 test("demo preserves explicit OpenOS close errors",function()
   reset();useData=false
   local previousConfigure = configure
