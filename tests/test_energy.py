@@ -77,13 +77,16 @@ package.preload.component = function()
       local keys = {}
       if kind == 'average_counter' then
         for address in pairs(FLOWS[step]) do keys[#keys+1] = address end
-      elseif kind == 'me_controller' and TEST_AE then keys={'ae'} end
+      elseif kind == 'me_controller' and TEST_AE then keys=TEST_AE_ADDRS or {'ae'} end
       table.sort(keys)
       local index = 0
       return function() index = index + 1; return keys[index] end
     end,
     proxy = function(address)
-      if address == 'ae' then return {getItemsInNetwork=function()
+      if TEST_ENERGY_ONLY and address == '376e9d0b-0a9f-4ebc-a2f4-1b582cfbdf05' then
+        return {getOfferedEnergy=function() return 123 end, getSinkTier=function() return 4 end}
+      end
+      if address == 'ae' or address == 'ae2' then return {getItemsInNetwork=function()
         local snapshot=TEST_AE[step]
         if snapshot == 'error' then error('offline') end
         return snapshot
@@ -93,7 +96,12 @@ package.preload.component = function()
         if value == 'error' then error('disconnected') end
         return value
       end}
-    end
+    end,
+    methods = function()
+      if TEST_ENERGY_ONLY then return {getOfferedEnergy=true,getSinkTier=true} end
+      return {getSensorInformation=true}
+    end,
+    doc = function() return 'function():table' end
   }
 end
 package.preload.unicode = function()
@@ -128,7 +136,8 @@ end
 
 
 def run(name, setup, checks, config=None, arguments="", use_actual_config=False, native_resolution=True, transform=None):
-    code = source
+    code = re.sub(r'(^\s*aeAddress\s*=\s*)"[^"]*"', r'\1""', source,
+                  count=1, flags=re.MULTILINE)
     if not use_actual_config:
         for key in ("reactors", "solar", "wind", "molecular", "machines"):
             addresses = (config or {}).get(key, "")
@@ -269,3 +278,30 @@ run("real cycle adapter and ETA", "local TEST_W,TEST_H=80,25; local FLOWS={{m=10
     restore + "; contains(screens[1], '40000000 / 80000000 EU'); contains(screens[1], 'Осталось: ~ 2 с')",
     config, transform=lambda code: code.replace("molecularRead = nil",
         "molecularRead = function() return {spent=40000000,required=80000000} end"))
+
+run("AE multiple bridges require selection", "local TEST_W,TEST_H=80,25; local FLOWS={{}}; "
+    "local TEST_AE_ADDRS={'ae','ae2'}; local TEST_AE={{}}",
+    restore + "; contains(screens[1], 'укажите aeAddress')", config)
+
+run("AE explicit bridge", "local TEST_W,TEST_H=80,25; local FLOWS={{}}; "
+    "local TEST_AE_ADDRS={'ae','ae2'}; local TEST_AE={{}}",
+    restore + "; contains(screens[1], 'AE2: подключено')", config,
+    transform=lambda code: code.replace('aeAddress = ""', 'aeAddress = "ae2"'))
+
+run("AE metadata matching and aggregate variants", "local TEST_W,TEST_H=80,25; local FLOWS={{}}; "
+    "local TEST_AE={{{name='mod:item',size=12,damage=0},{name='mod:item',size=25,damage=2}}}",
+    restore + "; contains(screens[1], '37'); contains(screens[1], '25')", config,
+    transform=lambda code: code.replace('trackedItems = {}', 'trackedItems = {"mod:item","mod:item@2"}'))
+
+run("machine diagnostic", "local TEST_W,TEST_H=80,25; local FLOWS={{}}",
+    "assert(ok,err); assert(#screens==0); contains(table.concat(messages), 'getSensorInformation'); "
+    "contains(table.concat(messages), '376e9d0b')", arguments=', "--inspect"')
+
+run("MetaDrive exposes energy methods only", "local TEST_W,TEST_H=80,25; local FLOWS={{m=1000000}}; local TEST_ENERGY_ONLY=true",
+    restore + "; contains(screens[1], 'API машины не передаёт прогресс'); "
+    "assert(not screens[1]:find('Осталось:',1,true)); contains(screens[1], '1 материя: ~ 4 с')", config)
+
+run("MetaDrive diagnostic prints read-only values", "local TEST_W,TEST_H=80,25; local FLOWS={{}}; local TEST_ENERGY_ONLY=true",
+    "assert(ok,err); contains(table.concat(messages), 'значение: 123'); "
+    "contains(table.concat(messages), 'значение: 4'); contains(table.concat(messages), 'чтение прогресса цикла не предоставлено')",
+    arguments=', "--inspect"')

@@ -9,7 +9,7 @@ local config = {
   updateInterval = 0.5, -- Секунды между обновлениями
   screenWidth = 120,   -- Ограничивается возможностями GPU
   screenHeight = 40,
-  aeAddress = "",      -- Пусто: автоматически выбрать единственный me_controller/me_interface
+  aeAddress = "e81d7176-b346-4f86-9936-e4acb003beb6", -- Адрес компонента ME-контроллера
   aeInterval = 5,       -- Опрос запасов, секунды
   itemsFile = "/home/energy-items.txt",
   trackedItems = {},    -- Начальный список: {"minecraft:iron_ingot", "mod:item@2"}
@@ -43,7 +43,16 @@ if args[1] == "--inspect" then
   for name in pairs(component.methods(address)) do methods[#methods + 1] = name end
   table.sort(methods)
   for _, name in ipairs(methods) do
-    print(name .. ": " .. tostring(component.doc(address, name) or ""))
+    local documented, doc = pcall(component.doc, address, name)
+    print(name .. ": " .. (documented and tostring(doc or "") or "нет документации"))
+    -- Только известные методы чтения; произвольные методы машины не вызываем.
+    if name == "getOfferedEnergy" or name == "getSinkTier" then
+      local ok, value = pcall(proxy[name])
+      print("  значение: " .. (ok and tostring(value) or "ошибка: " .. tostring(value)))
+    end
+  end
+  if #methods == 2 and methods[1] == "getOfferedEnergy" and methods[2] == "getSinkTier" then
+    print("Доступны только энергетические методы; чтение прогресса цикла не предоставлено.")
   end
   if proxy.getSensorInformation then
     local ok, data = pcall(proxy.getSensorInformation)
@@ -56,6 +65,10 @@ end
 if args[1] == "--list" then
   print("Адреса average_counter:")
   for _, address in ipairs(counterAddresses()) do print(address) end
+  for _, kind in ipairs({"me_controller", "me_interface"}) do
+    print("Адреса " .. kind .. ":")
+    for address in component.list(kind, true) do print(address) end
+  end
   return
 end
 
@@ -271,7 +284,17 @@ end
 
 local function readCycle()
   cycle = {status = "Прогресс цикла недоступен"}
-  if type(config.molecularRead) ~= "function" then return end
+  if type(config.molecularRead) ~= "function" then
+    local ok, methods = pcall(component.methods, config.molecularAddress)
+    if ok and type(methods) == "table" and methods.getOfferedEnergy and methods.getSinkTier then
+      local energyOnly = true
+      for name in pairs(methods) do
+        if name ~= "getOfferedEnergy" and name ~= "getSinkTier" then energyOnly = false end
+      end
+      if energyOnly then cycle.status = "API машины не передаёт прогресс" end
+    end
+    return
+  end
   local ok, data = pcall(config.molecularRead, component)
   if not ok or type(data) ~= "table" then cycle.status = "Ошибка датчика цикла"; return end
   if type(data.spent) == "number" and type(data.required) == "number"
@@ -434,7 +457,8 @@ local function draw(generation, consumption, unassigned)
   local complete = generation.complete and consumption.complete
   write(4, 9, "Баланс: " .. (complete and fmtEU(generation.value-consumption.value) or "нет полных данных"), colors.cyan, W-7)
 
-  frame(2, 11, W-2, 7, "Молекулярный преобразователь")
+  frame(2, 11, W-2, 7, "Молекулярный преобразователь" ..
+    (type(cycle.name) == "string" and " | " .. cycle.name or ""))
   write(4, 12, "Приходит: " .. (groups[4].complete and fmtEU(groups[4].value) or "нет полных данных"), colors.yellow, W-7)
   if cycle.spent then
     local remaining = cycle.required - cycle.spent
@@ -444,7 +468,7 @@ local function draw(generation, consumption, unassigned)
     write(4, 14, "Осталось: " .. eta, colors.cyan, W-7)
   else
     write(4, 13, string.format("Нужно на цикл: %.0f EU (config)", config.energyPerMatter), colors.dim, W-7)
-    write(4, 14, cycle.status .. " | --inspect", colors.dim, W-7)
+    write(4, 14, cycle.status, colors.dim, W-7)
   end
   local duration, rate = matterEstimate()
   write(4, 15, "1 материя: " .. duration, colors.cyan, W-7)
