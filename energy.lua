@@ -10,7 +10,7 @@ local config = {
   screenWidth = 120,   -- Ограничивается возможностями GPU
   screenHeight = 40,
   aeAddress = "e81d7176-b346-4f86-9936-e4acb003beb6", -- Адрес компонента ME-контроллера
-  aeInterval = 5,       -- Опрос запасов, секунды
+  aeInterval = 10,      -- Опрос запасов и обновление всех трёх периодов, секунды
   itemsFile = "/home/energy-items.txt",
   trackedItems = {},    -- Начальный список: {"minecraft:iron_ingot", "mod:item@2"}
   -- Русские подписи. Для предметов модов можно добавить ID или ID@meta.
@@ -340,10 +340,7 @@ local function readAE(now)
       end
     end
     local samples = item.samples
-    local previous = samples[#samples]
-    samples[#samples + 1] = {time = now, count = count,
-      incoming = previous and previous.incoming + math.max(0, count - previous.count) or 0,
-      outgoing = previous and previous.outgoing + math.max(0, previous.count - count) or 0}
+    samples[#samples + 1] = {time = now, count = count}
     item.count = count
     if addedFeedback == item.key then
       notice = count == 0 and ("Предмет сохранён; в сети нет запаса: " .. item.key) or "Предмет добавлен"
@@ -357,23 +354,13 @@ local function itemChange(item, window)
   local samples = item.samples
   if #samples < 2 then return nil end
   local last = samples[#samples]
-  local cutoff, first = math.max(samples[1].time, last.time - window), samples[1]
-  local incoming, outgoing = first.incoming, first.outgoing
-  for i = 2, #samples do
-    local nextSample = samples[i]
-    if nextSample.time >= cutoff then
-      local fraction = (cutoff - first.time) / (nextSample.time - first.time)
-      incoming = first.incoming + (nextSample.incoming - first.incoming) * fraction
-      outgoing = first.outgoing + (nextSample.outgoing - first.outgoing) * fraction
-      break
-    end
-    first = nextSample
+  local cutoff = last.time-window
+  -- Только реальные снимки: берём ближайший замер не позднее границы периода.
+  -- До накопления полной истории ничего не прогнозируем.
+  for i = #samples-1, 1, -1 do
+    if samples[i].time <= cutoff then return last.count-samples[i].count end
   end
-  local elapsed = last.time - cutoff
-  if elapsed <= 0 then return nil end
-  -- Полное окно: изменение запасов за сам период.
-  -- Пока окно не накопилось, оцениваем весь период по доступным замерам.
-  return ((last.incoming - incoming) - (last.outgoing - outgoing)) * window / elapsed
+  return nil
 end
 
 local function restore()
@@ -589,17 +576,6 @@ local function draw(generation, consumption, unassigned)
   write(4, top+2, "Предмет", colors.dim, nameW)
   right(stockX, top+2, stockW, "Хранится", colors.dim)
   for i, label in ipairs({"1 мин", "10 мин", "1 час"}) do
-    local window = ({60, 600, 3600})[i]
-    for row=1,pageSize do
-      local item = items[(itemPage-1)*pageSize+row]
-      if item then
-        local samples = item.samples
-        if #samples < 2 or samples[#samples].time-samples[1].time < window then
-          label = label .. "*"
-          break
-        end
-      end
-    end
     right(rateX+(i-1)*(rateW+1), top+2, rateW, label, colors.dim)
   end
   if #items == 0 then write(4, top+3, "Добавьте предмет по ID: [+ ID] или A", colors.dim, W-7) end
@@ -620,7 +596,7 @@ local function draw(generation, consumption, unassigned)
   drawGraph(4, graphTop+1, W-6, graphH)
   local footer = input ~= nil and inputMode == "id" and
     ("ID> " .. input .. " | " .. (notice ~= "" and notice or "Enter: далее | Esc: отмена")) or
-    (notice ~= "" and notice or "A: добавить | [X]: удалить | Q: выход | *: оценка | ~: неполные данные")
+    (notice ~= "" and notice or "A: добавить | [X]: удалить | Q: выход | ~: неполные данные")
   if input == nil and notice == "" and unassigned > 0 then footer = "Не привязано: " .. unassigned .. " | " .. footer end
   if input == nil and notice == "" and autoReactor then footer = "Один счётчик | " .. footer end
   write(2,H,footer,colors.dim,W-2,colors.bg)

@@ -140,7 +140,7 @@ package.preload.event = function()
     screenWrites[#screenWrites+1]=writes; writes={}
     local emitted = TEST_EVENTS and TEST_EVENTS[step]
     if step < #FLOWS then
-      step = step + 1; now = now + (TEST_DT or 5)
+      step = step + 1; now = TEST_TIMES and TEST_TIMES[step] or now + (TEST_DT or 5)
       if emitted then return table.unpack(emitted) end
       return 'timer'
     end
@@ -255,24 +255,24 @@ def track(code):
 stack = lambda n: '{{name="minecraft:iron_ingot", label="Iron", size=' + str(n) + ',damage=0}}'
 for width, height in [(60, 25), (80, 25), (120, 40), (160, 50)]:
     run(f"AE layout {width}x{height}",
-        f"local TEST_W,TEST_H={width},{height}; local FLOWS={{{{}},{{}},{{}}}}; "
+        f"local TEST_W,TEST_H={width},{height}; local TEST_DT=60; local FLOWS={{{{}},{{}},{{}}}}; "
         f"local TEST_AE={{{stack(100)},{stack(110)},{stack(106)}}}",
         restore + "; contains(screens[1], 'Железный'); contains(screens[1], '100'); "
-        "contains(screens[3], '+36')", config, transform=track)
+        "contains(screens[3], '-4')", config, transform=track)
 
-run("AE loss does not become withdrawal", "local TEST_W,TEST_H=80,25; "
+run("AE loss does not become withdrawal", "local TEST_W,TEST_H=80,25; local TEST_DT=60; "
     "local FLOWS={{},{},{},{}}; local TEST_AE={" + stack(100) + ",'error'," + stack(10) + "," + stack(20) + "}",
     restore + "; contains(screens[2], 'AE2: ошибка чтения'); "
-    "contains(screens[3], '—'); contains(screens[4], '+120')", config, transform=track)
+    "contains(screens[3], '—'); contains(screens[4], '+10')", config, transform=track)
 
-run("AE empty snapshot means zero stock", "local TEST_W,TEST_H=80,25; "
+run("AE empty snapshot means zero stock", "local TEST_W,TEST_H=80,25; local TEST_DT=60; "
     "local FLOWS={{},{}}; local TEST_AE={" + stack(100) + ",{}}",
-    restore + "; contains(screens[2], '-1200')", config, transform=track)
+    restore + "; contains(screens[2], '-100')", config, transform=track)
 
-run("AE window interpolation", "local TEST_W,TEST_H=120,40; local TEST_DT=40; "
+run("AE uses actual snapshots without interpolation", "local TEST_W,TEST_H=120,40; local TEST_DT=40; "
     "local FLOWS={{},{},{}}; local TEST_AE={" + stack(100) + "," + stack(140) + "," + stack(120) + "}",
-    restore + "; contains(screens[3], '0'); "
-    "contains(screens[3], '+150'); contains(screens[3], '+900')", config, transform=track)
+    restore + "; contains(screens[3], '+20'); "
+    "assert(not screens[3]:find('+150',1,true)); assert(not screens[3]:find('+900',1,true))", config, transform=track)
 
 run("AE hour history", "local TEST_W,TEST_H=120,40; local TEST_DT=60; "
     "local FLOWS={}; local TEST_AE={}; for i=1,65 do FLOWS[i]={}; "
@@ -361,15 +361,15 @@ run("generation history gaps on loss", "local TEST_W,TEST_H=80,25; "
     "if f.color==0x3FB950 and f.y==23 then green[f.x]=true end end; "
     "assert(green[4] and not green[5] and green[6], 'wrong history gap')", config)
 
-for amounts, expected, color in [([100, 110, 106], "+36", "0x3FB950"),
-                                  ([100, 90, 86], "-84", "0xF85149"),
-                                  ([100, 110, 100], "0", "0x8B949E")]:
-    run(f"signed storage delta {expected}", "local TEST_W,TEST_H=80,25; "
+for amounts, expected, color in [([100, 110, 146], "+36", "0x3FB950"),
+                                  ([100, 90, 6], "-84", "0xF85149"),
+                                  ([100, 110, 110], "0", "0x8B949E")]:
+    run(f"signed storage delta {expected}", "local TEST_W,TEST_H=80,25; local TEST_DT=60; "
         "local FLOWS={{},{},{}}; local TEST_AE={" + ",".join(stack(n) for n in amounts) + "}",
         restore + "; contains(screens[3], 'Хранилище'); "
         "assert(not screens[3]:find('minecraft:iron_ingot',1,true)); "
         f"local found=0; for _,v in ipairs(screenWrites[3]) do if v.y==18 and v.text=='{expected}' "
-        f"and v.color=={color} then found=found+1 end end; assert(found=={3 if expected == '0' else 1},'wrong signed columns/color'); "
+        f"and v.color=={color} then found=found+1 end end; assert(found==1,'wrong signed column/color'); "
         "local lines={}; for line in screens[3]:gmatch('[^\\n]+') do lines[#lines+1]=line end; "
         "assert(lines[18]:find('Железный слиток',1,true)); assert(not lines[18]:find('/',1,true)); "
         "assert(lines[17]:find('Хранится',1,true)); "
@@ -470,3 +470,20 @@ run("period totals with changing flow and history pruning", "local TEST_W,TEST_H
     "if v.y==18 then found[v.text]=v.color end end; "
     "assert(found['-30']==0xF85149 and found['-300']==0xF85149 and found['+4700']==0x3FB950,"
     "'wrong rolling totals after flow change')", config, transform=track)
+
+run("no predictions before a full period", "local TEST_W,TEST_H=80,25; local TEST_DT=10; "
+    "local FLOWS={{},{},{}}; local TEST_AE={" + stack(100) + "," + stack(200) + "," + stack(500) + "}",
+    restore + "; local missing=0; for _,v in ipairs(screenWrites[3]) do "
+    "if v.y==18 and v.text=='—' then missing=missing+1 end end; assert(missing==3); "
+    "assert(not screens[3]:find('+',1,true) or screens[3]:find('[+ ID]',1,true))", config, transform=track)
+
+run("all rolling periods refresh every ten seconds", "local TEST_W,TEST_H=120,40; "
+    "local TEST_TIMES={0,10,3000,3010,3540,3550,3600,3605,3610}; local FLOWS={}; "
+    "for i=1,9 do FLOWS[i]={} end; local TEST_AE={" +
+    ",".join(stack(n) for n in [100,110,500,501,700,701,800,999,850]) + "}",
+    restore + "; local function rowValues(step) local values={}; "
+    "for _,v in ipairs(screenWrites[step]) do if v.y==18 then values[v.text]=true end end; return values end; "
+    "local a,b,c=rowValues(7),rowValues(8),rowValues(9); "
+    "assert(a['+100'] and a['+300'] and a['+700']); "
+    "assert(b['+100'] and b['+300'] and b['+700'] and b['800']); "
+    "assert(c['+149'] and c['+349'] and c['+740'] and c['850'])", config, transform=track)
