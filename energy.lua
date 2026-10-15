@@ -24,6 +24,7 @@ local config = {
     ["minecraft:redstone"] = "Красная пыль",
     ["minecraft:quartz"] = "Кварц Нижнего мира",
     ["minecraft:dye@4"] = "Лазурит",
+    ["minecraft:lapis_block"] = "Лазуритовый блок",
     ["minecraft:glowstone_dust"] = "Светопыль",
     ["minecraft:ender_pearl"] = "Жемчуг Эндера",
     ["minecraft:nether_star"] = "Звезда Нижнего мира",
@@ -169,6 +170,7 @@ local computer = require("computer")
 local items, itemPage, buttons = {}, 1, {}
 local input, notice, aeStatus, aeLast, aeSource = nil, "", "ожидание", nil, nil
 local inputMode, pendingItem = "id", nil
+local addedFeedback
 local history = {}
 
 local function itemName(key, id, label)
@@ -180,6 +182,11 @@ local function parseItem(text)
   local id, damage = text:match("^([%w_%.%-]+:[%w_%.%/:%-]+)@(%d+)$")
   if not id then id = text:match("^([%w_%.%-]+:[%w_%.%/:%-]+)$") end
   if not id then return nil end
+  -- Точное известное соответствие; регистр ID предметов модов не меняем.
+  if id == "minecraft:blockLapis" then
+    id = "minecraft:lapis_block"
+    text = id .. (damage and "@" .. damage or "")
+  end
   return {key = text, id = id, damage = damage and tonumber(damage),
     label = itemName(text, id), samples = {}}
 end
@@ -197,10 +204,10 @@ local function loadItems()
     local key, customName = line:match("^([^\t]+)\t(.+)$")
     key = key or line
     local item = parseItem(key)
-    if item and not seen[key] then
+    if item and not seen[item.key] then
       item.customName = customName
       item.label = customName or item.label
-      items[#items + 1], seen[key] = item, true
+      items[#items + 1], seen[item.key] = item, true
     end
   end
 end
@@ -249,6 +256,10 @@ local function editItems(key, removeIndex, customName)
   end
   if not saveItems(candidate) then return false end
   if removeIndex then table.remove(items, removeIndex) else items[#items + 1] = added end
+  if added then
+    itemPage = math.huge -- draw() ограничит номер последней страницей.
+    aeLast, addedFeedback = nil, added.key
+  end
   notice = removeIndex and "Предмет удалён" or "Предмет добавлен"
   return true
 end
@@ -258,11 +269,12 @@ local function startAdding()
 end
 
 local function askName()
-  if not parseItem(input) then notice = "Формат: mod:item или mod:item@meta"; return end
+  local parsed = parseItem(input)
+  if not parsed then notice = "Формат: mod:item или mod:item@meta"; return end
   for _, item in ipairs(items) do
-    if item.key == input then notice = "Этот ID уже добавлен"; return end
+    if item.key == parsed.key then notice = "Этот ID уже добавлен"; return end
   end
-  pendingItem, input, inputMode, notice = input, "", "name", ""
+  pendingItem, input, inputMode, notice = parsed.key, "", "name", ""
 end
 
 local function finishAdding(useName)
@@ -333,11 +345,15 @@ local function readAE(now)
       incoming = previous and previous.incoming + math.max(0, count - previous.count) or 0,
       outgoing = previous and previous.outgoing + math.max(0, previous.count - count) or 0}
     item.count = count
+    if addedFeedback == item.key then
+      notice = count == 0 and ("Предмет сохранён; в сети нет запаса: " .. item.key) or "Предмет добавлен"
+      addedFeedback = nil
+    end
     while #samples > 2 and samples[2].time <= now - 3600 do table.remove(samples, 1) end
   end
 end
 
-local function itemRate(item, window)
+local function itemChange(item, window)
   local samples = item.samples
   if #samples < 2 then return nil end
   local last = samples[#samples]
@@ -355,7 +371,9 @@ local function itemRate(item, window)
   end
   local elapsed = last.time - cutoff
   if elapsed <= 0 then return nil end
-  return ((last.incoming - incoming) - (last.outgoing - outgoing)) * 60 / elapsed
+  -- Полное окно: изменение запасов за сам период.
+  -- Пока окно не накопилось, оцениваем весь период по доступным замерам.
+  return ((last.incoming - incoming) - (last.outgoing - outgoing)) * window / elapsed
 end
 
 local function restore()
@@ -562,7 +580,7 @@ local function draw(generation, consumption, unassigned)
   itemPage = math.max(1, math.min(itemPage, pages))
   button(12, top+1, "[<]", function() itemPage = math.max(1, itemPage-1) end)
   button(17, top+1, "[>]", function() itemPage = math.min(pages, itemPage+1) end)
-  write(22, top+1, itemPage .. "/" .. pages .. " | " .. aeStatus .. " | шт/мин", colors.dim, W-25)
+  write(22, top+1, itemPage .. "/" .. pages .. " | " .. aeStatus .. " | шт/период", colors.dim, W-25)
   local rateW = W >= 100 and 12 or (W >= 80 and 10 or 8)
   local stockW = W >= 100 and 14 or (W >= 80 and 12 or 9)
   local nameW = W-11-stockW-rateW*3-4
@@ -571,6 +589,17 @@ local function draw(generation, consumption, unassigned)
   write(4, top+2, "Предмет", colors.dim, nameW)
   right(stockX, top+2, stockW, "Хранится", colors.dim)
   for i, label in ipairs({"1 мин", "10 мин", "1 час"}) do
+    local window = ({60, 600, 3600})[i]
+    for row=1,pageSize do
+      local item = items[(itemPage-1)*pageSize+row]
+      if item then
+        local samples = item.samples
+        if #samples < 2 or samples[#samples].time-samples[1].time < window then
+          label = label .. "*"
+          break
+        end
+      end
+    end
     right(rateX+(i-1)*(rateW+1), top+2, rateW, label, colors.dim)
   end
   if #items == 0 then write(4, top+3, "Добавьте предмет по ID: [+ ID] или A", colors.dim, W-7) end
@@ -583,7 +612,7 @@ local function draw(generation, consumption, unassigned)
       right(stockX, y, stockW, fmtCount(item.count), colors.text)
       button(W-6, y, "[X]", function() editItems(nil, index) end)
       for i, window in ipairs({60, 600, 3600}) do
-        drawRate(rateX+(i-1)*(rateW+1), y, rateW, itemRate(item,window))
+        drawRate(rateX+(i-1)*(rateW+1), y, rateW, itemChange(item,window))
       end
     end
   end
@@ -591,7 +620,7 @@ local function draw(generation, consumption, unassigned)
   drawGraph(4, graphTop+1, W-6, graphH)
   local footer = input ~= nil and inputMode == "id" and
     ("ID> " .. input .. " | " .. (notice ~= "" and notice or "Enter: далее | Esc: отмена")) or
-    (notice ~= "" and notice or "A: добавить | [X]: удалить | Q: выход | ~: неполные данные")
+    (notice ~= "" and notice or "A: добавить | [X]: удалить | Q: выход | *: оценка | ~: неполные данные")
   if input == nil and notice == "" and unassigned > 0 then footer = "Не привязано: " .. unassigned .. " | " .. footer end
   if input == nil and notice == "" and autoReactor then footer = "Один счётчик | " .. footer end
   write(2,H,footer,colors.dim,W-2,colors.bg)
@@ -602,6 +631,7 @@ local function draw(generation, consumption, unassigned)
     frame(x, y, w, h, "Название предмета")
     write(x+2, y+1, "Хотите добавить русское название?", colors.text, w-4)
     write(x+2, y+2, "Введите имя или нажмите «Нет».", colors.dim, w-4)
+    write(x+2, y+3, pendingItem, colors.dim, w-4)
     local visible = unicode.sub(input, math.max(1, unicode.len(input)-(w-9)+1))
     write(x+2, y+4, "> " .. visible .. "_", colors.text, w-4)
     button(x+2, y+6, "[Сохранить]", function() finishAdding(true) end)

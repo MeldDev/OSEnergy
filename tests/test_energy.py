@@ -272,12 +272,12 @@ run("AE empty snapshot means zero stock", "local TEST_W,TEST_H=80,25; "
 run("AE window interpolation", "local TEST_W,TEST_H=120,40; local TEST_DT=40; "
     "local FLOWS={{},{},{}}; local TEST_AE={" + stack(100) + "," + stack(140) + "," + stack(120) + "}",
     restore + "; contains(screens[3], '0'); "
-    "contains(screens[3], '+15')", config, transform=track)
+    "contains(screens[3], '+150'); contains(screens[3], '+900')", config, transform=track)
 
 run("AE hour history", "local TEST_W,TEST_H=120,40; local TEST_DT=60; "
     "local FLOWS={}; local TEST_AE={}; for i=1,65 do FLOWS[i]={}; "
     "TEST_AE[i]={{name='minecraft:iron_ingot',size=i*10}} end",
-    restore + "; contains(screens[65], '+10')", config, transform=track)
+    restore + "; contains(screens[65], '+10'); contains(screens[65], '+100'); contains(screens[65], '+600')", config, transform=track)
 
 run("add via clipboard and delete via touch", "local TEST_W,TEST_H=80,25; "
     "local FLOWS={{},{},{},{},{},{}}; local TEST_EVENTS={"
@@ -369,7 +369,7 @@ for amounts, expected, color in [([100, 110, 106], "+36", "0x3FB950"),
         restore + "; contains(screens[3], 'Хранилище'); "
         "assert(not screens[3]:find('minecraft:iron_ingot',1,true)); "
         f"local found=0; for _,v in ipairs(screenWrites[3]) do if v.y==18 and v.text=='{expected}' "
-        f"and v.color=={color} then found=found+1 end end; assert(found==3,'wrong signed columns/color'); "
+        f"and v.color=={color} then found=found+1 end end; assert(found=={3 if expected == '0' else 1},'wrong signed columns/color'); "
         "local lines={}; for line in screens[3]:gmatch('[^\\n]+') do lines[#lines+1]=line end; "
         "assert(lines[18]:find('Железный слиток',1,true)); assert(not lines[18]:find('/',1,true)); "
         "assert(lines[17]:find('Хранится',1,true)); "
@@ -431,3 +431,42 @@ for width, height in [(60,25), (80,25), (120,40)]:
         "local edge=v.x+utf8.len(v.text)-1; if step==1 then edges[unit]=edge "
         "else assert(edges[unit]==edge,'power column moved') end; found=found+1 end end; "
         "assert(found==2,'missing power column') end", config)
+
+run("blockLapis resolves to network registry ID", "local TEST_W,TEST_H=80,25; "
+    "local FLOWS={{},{},{},{},{}}; local TEST_AE={}; "
+    "for i=1,5 do TEST_AE[i]={{name='minecraft:lapis_block',label='Lapis Block',size=42}} end; "
+    "local TEST_EVENTS={{'key_down','keyboard',97,30},{'clipboard','keyboard','minecraft:blockLapis'},"
+    "{'key_down','keyboard',13,28},{'key_down','keyboard',13,28}}",
+    restore + "; contains(screens[4],'minecraft:lapis_block'); contains(screens[5],'Лазуритовый блок'); "
+    "contains(screens[5],'42'); assert(savedFiles['/home/energy-items.txt']=='minecraft:lapis_block\\n')", config)
+
+run("new tracked item opens last page", "local TEST_W,TEST_H=80,25; local FLOWS={{},{},{},{},{}}; "
+    "local TEST_EVENTS={{'key_down','keyboard',97,30},{'clipboard','keyboard','minecraft:lapis_block'},"
+    "{'key_down','keyboard',13,28},{'key_down','keyboard',13,28}}",
+    restore + "; contains(screens[5],'Лазуритовый блок'); contains(screens[5],'2/2')",
+    config, transform=lambda code: code.replace('trackedItems = {}',
+        'trackedItems = {"minecraft:iron_ingot","minecraft:gold_ingot","minecraft:diamond"}'))
+
+run("empty network gives explicit saved item feedback", "local TEST_W,TEST_H=80,25; "
+    "local FLOWS={{},{},{},{},{}}; local TEST_AE={{},{},{},{},{}}; "
+    "local TEST_EVENTS={{'key_down','keyboard',97,30},{'clipboard','keyboard','minecraft:lapis_block'},"
+    "{'key_down','keyboard',13,28},{'key_down','keyboard',13,28}}",
+    restore + "; contains(screens[5],'Предмет сохранён; в сети нет запаса'); "
+    "assert(savedFiles['/home/energy-items.txt']=='minecraft:lapis_block\\n')", config)
+
+run("distinct period totals after more than one hour", "local TEST_W,TEST_H=120,40; local TEST_DT=60; "
+    "local FLOWS={}; local TEST_AE={}; for i=1,121 do FLOWS[i]={}; "
+    "TEST_AE[i]={{name='minecraft:iron_ingot',size=1000+i*200}} end",
+    restore + "; local found={}; for _,v in ipairs(screenWrites[121]) do "
+    "if v.y==18 and v.color==0x3FB950 then found[v.text]=true end end; "
+    "assert(found['+200'] and found['+2000'] and found['+12000'],'periods normalized incorrectly'); "
+    "contains(screens[121],'шт/период')", config, transform=track)
+
+run("period totals with changing flow and history pruning", "local TEST_W,TEST_H=120,40; local TEST_DT=60; "
+    "local FLOWS={}; local TEST_AE={}; local stock=20000; "
+    "for i=1,81 do if i>1 then stock=stock+(i>71 and -30 or 100) end; "
+    "FLOWS[i]={}; TEST_AE[i]={{name='minecraft:iron_ingot',size=stock}} end",
+    restore + "; local found={}; for _,v in ipairs(screenWrites[81]) do "
+    "if v.y==18 then found[v.text]=v.color end end; "
+    "assert(found['-30']==0xF85149 and found['-300']==0xF85149 and found['+4700']==0x3FB950,"
+    "'wrong rolling totals after flow change')", config, transform=track)
