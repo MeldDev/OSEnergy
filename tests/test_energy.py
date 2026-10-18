@@ -17,6 +17,7 @@ lib.lua_tolstring.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p]
 lib.lua_tolstring.restype = ctypes.c_char_p
 lib.lua_close.argtypes = [ctypes.c_void_p]
 source = (Path(__file__).resolve().parents[1] / "energy.lua").read_text(encoding="utf-8")
+assert "collectgarbage" not in source, "Monitor must not depend on manual GC control"
 
 MOCKS = r'''
 -- OpenComputers does not necessarily expose the standard Lua GC API.
@@ -227,6 +228,10 @@ config = dict(reactors='"r1", "r2"', solar='"s"', wind='"w"',
               molecular='"m"', machines='"c"', bees='"b"')
 restore = ("assert(sw == 40 and sh == 15 and bg == 123 and fg == 456); assert(ok, err); "
            "assert(not table.concat(messages):find('Ошибка:',1,true), table.concat(messages))")
+run("version identifies installed file without starting monitor",
+    "local TEST_W,TEST_H=80,25; local FLOWS={{}}",
+    restore + "; contains(table.concat(messages),'2026-10-18-no-gc'); assert(#screens==0)",
+    arguments=', "--version"')
 for width, height in [(60, 25), (80, 25), (100, 30), (160, 50)]:
     run(f"totals and layout {width}x{height}",
         f"local TEST_W, TEST_H = {width}, {height}; local FLOWS = {{{{r1=100,r2=200,s=50,w=25,m=80,c=20}}}}",
