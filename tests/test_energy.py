@@ -19,6 +19,8 @@ lib.lua_close.argtypes = [ctypes.c_void_p]
 source = (Path(__file__).resolve().parents[1] / "energy.lua").read_text(encoding="utf-8")
 
 MOCKS = r'''
+-- OpenComputers does not necessarily expose the standard Lua GC API.
+collectgarbage = TEST_GC
 local sw, sh = 40, 15
 local bg, fg = 123, 456
 local cells, screens, messages, fills, screenFills = {}, {}, {}, {}, {}
@@ -619,6 +621,12 @@ run("main screen requests each tracked ID once per poll", "local TEST_W,TEST_H=1
 run("startup without tracked items does not load ME inventory", "local TEST_W,TEST_H=120,40; "
     "local FLOWS={{},{},{}}; local TEST_AE={{},{},{}}",
     restore + "; assert(#aeQueries==0,'unnecessary full-network query')", config)
+
+run("restricted collectgarbage does not interrupt AE polling", "local TEST_W,TEST_H=80,25; "
+    "local TEST_GC=function() error('GC control unavailable') end; "
+    "local FLOWS={{},{}}; local TEST_DT=10; local TEST_AE={" + stack(10) + "," + stack(20) + "}",
+    restore + "; contains(screens[2],'AE2: подключено'); contains(screenLine(2,19),'20')",
+    config, transform=track)
 
 search_setup = (
     "local TEST_W,TEST_H=80,25; local TEST_DT=0.5; local FLOWS={}; local TEST_AE={}; "

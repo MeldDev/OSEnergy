@@ -169,6 +169,11 @@ local colors = {
   green = 0x3FB950, yellow = 0xD29922, red = 0xF85149
 }
 local computer = require("computer")
+local function releaseMemory()
+  -- В OpenComputers collectgarbage может отсутствовать или быть ограничена.
+  -- В этом случае память освобождает автоматический сборщик среды.
+  if type(collectgarbage) == "function" then pcall(collectgarbage, "collect") end
+end
 local items, itemPage, buttons = {}, 1, {}
 local input, notice, aeStatus, aeLast, aeSource = nil, "", "ожидание", nil, nil
 local inputMode, pendingItem = "id", nil
@@ -373,7 +378,7 @@ local function readAE(now)
     return true
   end
   -- Освободить старый каталог и промежуточные кадры перед запросом к AE2.
-  collectgarbage("collect")
+  releaseMemory()
   local success, valid = pcall(function()
     if browsing then return collect(proxy.getItemsInNetwork()) end
     local queried = {}
@@ -381,7 +386,7 @@ local function readAE(now)
       if not queried[item.id] then
         queried[item.id] = true
         if not collect(proxy.getItemsInNetwork({name=item.id})) then return false end
-        collectgarbage("collect")
+        releaseMemory()
       end
     end
     return true
@@ -391,7 +396,7 @@ local function readAE(now)
     resetSamples()
     return
   end
-  collectgarbage("collect")
+  releaseMemory()
   aeStatus = "AE2: подключено"
   if browsing then
     for _, entry in pairs(byKey) do

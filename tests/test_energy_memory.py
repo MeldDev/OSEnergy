@@ -36,6 +36,7 @@ source = source.replace("screenWidth = 120", "screenWidth = 160")
 source = source.replace("screenHeight = 40", "screenHeight = 50")
 
 MOCKS = r'''
+collectgarbage = nil
 local now, step, queries = 0, 0, 0
 local invalidQuery = false
 local gpu = {getResolution=function() return 160,50 end,
