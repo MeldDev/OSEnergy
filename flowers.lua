@@ -2,19 +2,20 @@ local robot = require("robot")
 local ic = require("component").inventory_controller
 
 -- Keep the tool slot empty before starting.
--- Optionally supply more bone meal through the chest above the robot.
-local function isBoneMeal(item)
-  return item and item.name == "minecraft:dye" and item.damage == 15
+-- Optionally supply Forestry mineral fertilizer through the chest above.
+local function isFertilizer(item)
+  return item and item.name
+    and item.name:lower() == "forestry:fertilizercompound"
 end
 
-local function findBoneMeal()
+local function findFertilizer()
   local selected = robot.select()
-  if isBoneMeal(ic.getStackInInternalSlot(selected)) then
+  if isFertilizer(ic.getStackInInternalSlot(selected)) then
     return selected
   end
 
   for slot = 1, robot.inventorySize() do
-    if isBoneMeal(ic.getStackInInternalSlot(slot)) then
+    if isFertilizer(ic.getStackInInternalSlot(slot)) then
       return slot
     end
   end
@@ -31,10 +32,10 @@ local function refill()
 end
 
 while true do
-  local slot = findBoneMeal()
+  local slot = findFertilizer()
   if not slot then
     refill()
-    slot = findBoneMeal()
+    slot = findFertilizer()
   end
 
   if slot then
@@ -42,7 +43,7 @@ while true do
     if ic.equip() then
       robot.use()
       robot.select(slot)
-      assert(ic.equip(), "Cannot return bone meal from tool slot")
+      assert(ic.equip(), "Cannot return fertilizer from tool slot")
     end
   end
 
