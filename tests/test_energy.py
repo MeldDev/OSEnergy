@@ -23,6 +23,7 @@ local sw, sh = 40, 15
 local bg, fg = 123, 456
 local cells, screens, messages, fills, screenFills = {}, {}, {}, {}, {}
 local writes, screenWrites = {}, {}
+local cellColors, screenColors = {}, {}
 local step = 1
 local now = 0
 local savedFiles = TEST_FILES or {}
@@ -68,8 +69,13 @@ function gpu.set(x, y, text)
   assert(x >= 1 and y >= 1 and y <= sh and x + utf8.len(text) - 1 <= sw,
     'text outside screen: ' .. x .. ',' .. y .. ': ' .. text)
   cells[y] = cells[y] or {}
+  cellColors[y] = cellColors[y] or {}
   local col = x
-  for _, char in utf8.codes(text) do cells[y][col] = utf8.char(char); col = col + 1 end
+  for _, char in utf8.codes(text) do
+    cells[y][col] = utf8.char(char)
+    cellColors[y][col] = {fg=fg,bg=bg}
+    col = col + 1
+  end
 end
 function gpu.fill(x, y, w, h, char)
   fills[#fills+1]={x=x,y=y,w=w,h=h,color=bg}
@@ -138,6 +144,11 @@ package.preload.event = function()
   return {pull = function()
     if TEST_EXPECTED_W then assert(sw == TEST_EXPECTED_W and sh == TEST_EXPECTED_H, 'wrong display resolution') end
     screens[#screens+1] = screen()
+    local snapshot = {}
+    for y,row in pairs(cellColors) do
+      snapshot[y] = {}; for x,color in pairs(row) do snapshot[y][x] = color end
+    end
+    screenColors[#screens] = snapshot
     screenFills[#screenFills+1]=fills; fills={}
     screenWrites[#screenWrites+1]=writes; writes={}
     local emitted = TEST_EVENTS and TEST_EVENTS[step]
@@ -154,6 +165,19 @@ print = function(value) messages[#messages+1] = tostring(value) end
 local function contains(text, expected)
   assert(text:find(expected, 1, true) or text:gsub(" +",""):find(expected:gsub(" +",""),1,true),
     'missing: ' .. expected .. '\n' .. text)
+end
+local function screenLine(step,y)
+  local lines={}; for line in screens[step]:gmatch('[^\n]+') do lines[#lines+1]=line end
+  return lines[y]
+end
+local function rowValues(step,y)
+  local values = {}
+  local line = screenLine(step,y)
+  for start,text in line:gmatch('()([+%-]?%d+)') do
+    local col = utf8.len(line:sub(1,start-1))+1
+    values[text] = screenColors[step][y][col].fg
+  end
+  return values
 end
 '''
 
@@ -227,8 +251,8 @@ run("actual inline addresses without external config",
     "['6f537d81-fa47-46ad-b625-a72e9d2b7511']=300,"
     "['4b0f52a2-cdc4-4379-9234-5482be20016b']=50,"
     "['668fa7db-af7f-4308-8414-098a19039a1d']=25,"
-    "['346a78af-d715-4cab-aa6e-df79d9778e0f']=80,"
-    "['64a4254a-f063-4f9a-b28e-d9e3096f63e1']=20,"
+    "['51faab62-bc43-4710-b2bf-6b072db8e58d']=80,"
+    "['30e6effc-47f2-4bbb-ac7f-0e9fe95db5aa']=20,"
     "['6fae6d5f-10c8-489e-87a4-4ae2f5afb49a']=0}}",
     restore + "; contains(screens[1], 'Баланс: 275 EU/t'); contains(screens[1], '375 EU/t')",
     use_actual_config=True)
@@ -360,9 +384,8 @@ run("generation history gaps on loss", "local TEST_W,TEST_H=80,25; "
     "{r1=100,r2='error',s=50,w=25,m=80,c=20},"
     "{r1=100,r2=200,s=50,w=25,m=80,c=20}}",
     restore + "; contains(screens[1], 'История выработки'); "
-    "local green={}; for _,f in ipairs(screenFills[3]) do "
-    "if f.color==0x3FB950 and f.y==23 then green[f.x]=true end end; "
-    "assert(green[4] and not green[5] and green[6], 'wrong history gap')", config)
+    "local row=screenColors[3][23]; "
+    "assert(row[4].bg==0x3FB950 and row[5].bg~=0x3FB950 and row[6].bg==0x3FB950, 'wrong history gap')", config)
 
 for amounts, expected, color in [([100, 110, 146], "+36", "0x3FB950"),
                                   ([100, 90, 6], "-84", "0xF85149"),
@@ -371,8 +394,7 @@ for amounts, expected, color in [([100, 110, 146], "+36", "0x3FB950"),
         "local FLOWS={{},{},{}}; local TEST_AE={" + ",".join(stack(n) for n in amounts) + "}",
         restore + "; contains(screens[3], 'Хранилище'); "
         "assert(not screens[3]:find('minecraft:iron_ingot',1,true)); "
-        f"local found=0; for _,v in ipairs(screenWrites[3]) do if v.y==19 and v.text=='{expected}' "
-        f"and v.color=={color} then found=found+1 end end; assert(found==1,'wrong signed column/color'); "
+        f"assert(rowValues(3,19)['{expected}']=={color},'wrong signed column/color'); "
         "local lines={}; for line in screens[3]:gmatch('[^\\n]+') do lines[#lines+1]=line end; "
         "assert(lines[19]:find('Железный слиток',1,true)); assert(not lines[19]:find('/',1,true)); "
         "assert(lines[18]:find('Хранится',1,true)); "
@@ -428,11 +450,10 @@ for width, height in [(60,25), (80,25), (120,40)]:
     run(f"power columns keep fixed edges {width}", f"local TEST_W,TEST_H={width},{height}; "
         "local FLOWS={{r1=1,r2=1,s=1,w=1,m=1,c=1},{r1=100000,r2=200000,s=1000,w=1,m=1000000,c=0}}",
         restore + "; local edges={}; for step=1,2 do local found=0; "
-        "for _,v in ipairs(screenWrites[step]) do if v.y==2 and "
-        "(v.text:find('EU/t',1,true) or v.text:find('EU/s',1,true)) then "
-        "local unit=v.text:find('EU/t',1,true) and 't' or 's'; "
-        "local edge=v.x+utf8.len(v.text)-1; if step==1 then edges[unit]=edge "
-        "else assert(edges[unit]==edge,'power column moved') end; found=found+1 end end; "
+        "for _,unit in ipairs({'t','s'}) do local line=screenLine(step,2); "
+        "local pos=assert(line:find('EU/'..unit,1,true)); "
+        "local edge=utf8.len(line:sub(1,pos+3)); if step==1 then edges[unit]=edge "
+        "else assert(edges[unit]==edge,'power column moved') end; found=found+1 end; "
         "assert(found==2,'missing power column') end", config)
 
 run("blockLapis resolves to network registry ID", "local TEST_W,TEST_H=80,25; "
@@ -460,33 +481,28 @@ run("empty network gives explicit saved item feedback", "local TEST_W,TEST_H=80,
 run("distinct period totals after more than one hour", "local TEST_W,TEST_H=120,40; local TEST_DT=60; "
     "local FLOWS={}; local TEST_AE={}; for i=1,121 do FLOWS[i]={}; "
     "TEST_AE[i]={{name='minecraft:iron_ingot',size=1000+i*200}} end",
-    restore + "; local found={}; for _,v in ipairs(screenWrites[121]) do "
-    "if v.y==19 and v.color==0x3FB950 then found[v.text]=true end end; "
-    "assert(found['+200'] and found['+2000'] and found['+12000'],'periods normalized incorrectly'); "
+    restore + "; local found=rowValues(121,19); "
+    "assert(found['+200']==0x3FB950 and found['+2000']==0x3FB950 and found['+12000']==0x3FB950,'periods normalized incorrectly'); "
     "contains(screens[121],'шт/период')", config, transform=track)
 
 run("period totals with changing flow and history pruning", "local TEST_W,TEST_H=120,40; local TEST_DT=60; "
     "local FLOWS={}; local TEST_AE={}; local stock=20000; "
     "for i=1,81 do if i>1 then stock=stock+(i>71 and -30 or 100) end; "
     "FLOWS[i]={}; TEST_AE[i]={{name='minecraft:iron_ingot',size=stock}} end",
-    restore + "; local found={}; for _,v in ipairs(screenWrites[81]) do "
-    "if v.y==19 then found[v.text]=v.color end end; "
+    restore + "; local found=rowValues(81,19); "
     "assert(found['-30']==0xF85149 and found['-300']==0xF85149 and found['+4700']==0x3FB950,"
     "'wrong rolling totals after flow change')", config, transform=track)
 
 run("no predictions before a full period", "local TEST_W,TEST_H=80,25; local TEST_DT=10; "
     "local FLOWS={{},{},{}}; local TEST_AE={" + stack(100) + "," + stack(200) + "," + stack(500) + "}",
-    restore + "; local missing=0; for _,v in ipairs(screenWrites[3]) do "
-    "if v.y==19 and v.text=='—' then missing=missing+1 end end; assert(missing==3); "
+    restore + "; local _,missing=screenLine(3,19):gsub('—',''); assert(missing==3); "
     "assert(not screens[3]:find('+',1,true) or screens[3]:find('[+ ID]',1,true))", config, transform=track)
 
 run("all rolling periods refresh every ten seconds", "local TEST_W,TEST_H=120,40; "
     "local TEST_TIMES={0,10,3000,3010,3540,3550,3600,3605,3610}; local FLOWS={}; "
     "for i=1,9 do FLOWS[i]={} end; local TEST_AE={" +
     ",".join(stack(n) for n in [100,110,500,501,700,701,800,999,850]) + "}",
-    restore + "; local function rowValues(step) local values={}; "
-    "for _,v in ipairs(screenWrites[step]) do if v.y==19 then values[v.text]=true end end; return values end; "
-    "local a,b,c=rowValues(7),rowValues(8),rowValues(9); "
+    restore + "; local a,b,c=rowValues(7,19),rowValues(8,19),rowValues(9,19); "
     "assert(a['+100'] and a['+300'] and a['+700']); "
     "assert(b['+100'] and b['+300'] and b['+700'] and b['800']); "
     "assert(c['+149'] and c['+349'] and c['+740'] and c['850'])", config, transform=track)
@@ -559,3 +575,24 @@ run("network browser save failure keeps name dialog", "local TEST_W,TEST_H=80,25
     restore + "; contains(screens[4],'Не сохранено: disk full'); "
     "contains(screens[4],'Хотите добавить русское название?'); "
     "assert(savedFiles['/home/energy-items.txt']==nil)", config)
+
+run("browser and name dialog only send changed cells to GPU", "local TEST_W,TEST_H=80,25; "
+    "local TEST_DT=0.5; local FLOWS={}; local TEST_AE={}; for i=1,9 do FLOWS[i]={}; "
+    "TEST_AE[i]={{name='mod:alloy',label='Alloy',size=20}} end; "
+    "local TEST_EVENTS={{'touch','screen',67,16},{'touch','screen',67,4},"
+    "{'timer'},{'clipboard','keyboard','Сплав'},{'key_down','keyboard',8,14},"
+    "{'key_down','keyboard',0,1},{'key_down','keyboard',0,1}}",
+    restore + "; assert(#screenWrites[4]==0,'idle dialog repainted'); "
+    "for step=5,6 do assert(#screenWrites[step]>0 and #screenWrites[step]<=2,'excessive typing redraw'); "
+    "for _,v in ipairs(screenWrites[step]) do assert(v.y==13,'typing redraws background') end end; "
+    "contains(screens[5],'Сплав'); contains(screens[6],'Спла_'); "
+    "contains(screens[7],'Все предметы МЭ-сети'); contains(screens[8],'Энергосеть'); "
+    "for _,fills in ipairs(screenFills) do assert(#fills==0,'GPU cleared during rendering') end; "
+    "assert(savedFiles['/home/energy-items.txt']==nil)", config)
+
+run("unchanged network browser does not redraw on polling", "local TEST_W,TEST_H=60,25; "
+    "local TEST_DT=10; local FLOWS={{},{},{},{}}; local TEST_AE={}; "
+    "for i=1,4 do TEST_AE[i]={{name='mod:alloy',label='Alloy',size=20}} end; "
+    "local TEST_EVENTS={{'touch','screen',47,16},{'timer'},{'timer'}}",
+    restore + "; contains(screens[2],'Все предметы МЭ-сети'); "
+    "assert(#screenWrites[3]==0 and #screenWrites[4]==0,'unchanged browser repainted')", config)

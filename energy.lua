@@ -4,8 +4,8 @@ local config = {
   reactors = {"6f537d81-fa47-46ad-b625-a72e9d2b7511"},
   solar = {"4b0f52a2-cdc4-4379-9234-5482be20016b"},
   wind = {"668fa7db-af7f-4308-8414-098a19039a1d"},
-  molecular = {"346a78af-d715-4cab-aa6e-df79d9778e0f"},
-  machines = {"64a4254a-f063-4f9a-b28e-d9e3096f63e1"},
+  molecular = {"51faab62-bc43-4710-b2bf-6b072db8e58d"},
+  machines = {"30e6effc-47f2-4bbb-ac7f-0e9fe95db5aa"},
   bees = {"6fae6d5f-10c8-489e-87a4-4ae2f5afb49a"},
   updateInterval = 0.5, -- Секунды между обновлениями
   screenWidth = 120,   -- Ограничивается возможностями GPU
@@ -395,10 +395,50 @@ local function restore()
   term.setCursor(1, 1)
 end
 
+-- Собираем окончательный кадр в памяти: промежуточные экраны и очистки
+-- не отправляются на GPU. Работает и без аппаратных видеобуферов.
+local canvas, displayed = {}, {}
+local paintBg, paintFg = colors.bg, colors.text
+local function paintText(x, y, text)
+  local row = canvas[y]
+  if not row then row = {}; canvas[y] = row end
+  local style = string.format("%06x%06x", paintBg, paintFg)
+  for i = 1, unicode.len(text) do
+    row[x+i-1] = style .. unicode.sub(text, i, i)
+  end
+end
+
+local function present()
+  for y = 1, H do
+    local row, previous = canvas[y], displayed[y] or {}
+    local x = 1
+    while x <= W do
+      local cell, old = row[x], previous[x]
+      if old == cell then
+        x = x+1
+      else
+        local start, text = x, {}
+        repeat
+          text[#text+1] = row[x]:sub(13)
+          x = x+1
+          local nextCell, nextOld = row[x], previous[x]
+          if x > W or nextCell:sub(1,12) ~= cell:sub(1,12)
+            or nextOld == nextCell then break end
+        until false
+        gpu.setBackground(tonumber(cell:sub(1,6), 16))
+        gpu.setForeground(tonumber(cell:sub(7,12), 16))
+        gpu.set(start, y, table.concat(text))
+      end
+    end
+  end
+  displayed = canvas
+end
+
 local function rect(x, y, w, h, color)
   if w <= 0 or h <= 0 then return end
-  gpu.setBackground(color)
-  gpu.fill(x, y, w, h, " ")
+  paintBg = color
+  local text = string.rep(" ", w)
+  for row = y, y+h-1 do paintText(x, row, text) end
 end
 
 local function write(x, y, value, color, width, bg)
@@ -406,9 +446,8 @@ local function write(x, y, value, color, width, bg)
   local limit = math.min(width or W - x + 1, W - x + 1)
   if limit <= 0 then return end
   if unicode.len(text) > limit then text = unicode.sub(text, 1, limit - 1) .. "…" end
-  gpu.setBackground(bg or colors.panel)
-  gpu.setForeground(color or colors.text)
-  gpu.set(x, y, text)
+  paintBg, paintFg = bg or colors.panel, color or colors.text
+  paintText(x, y, text)
 end
 
 local function right(x, y, width, value, color)
@@ -418,13 +457,13 @@ end
 
 local function frame(x, y, w, h, title)
   rect(x, y, w, h, colors.panel)
-  gpu.setForeground(colors.grid)
-  gpu.set(x, y, "┌" .. string.rep("─", w - 2) .. "┐")
+  paintFg = colors.grid
+  paintText(x, y, "┌" .. string.rep("─", w - 2) .. "┐")
   for row = y + 1, y + h - 2 do
-    gpu.set(x, row, "│")
-    gpu.set(x + w - 1, row, "│")
+    paintText(x, row, "│")
+    paintText(x + w - 1, row, "│")
   end
-  gpu.set(x, y + h - 1, "└" .. string.rep("─", w - 2) .. "┘")
+  paintText(x, y + h - 1, "└" .. string.rep("─", w - 2) .. "┘")
   write(x + 2, y, " " .. title .. " ", colors.cyan, w - 4)
 end
 
@@ -559,6 +598,8 @@ local function drawRate(x, y, width, value)
 end
 
 local function draw(generation, consumption, unassigned)
+  canvas = {}
+  paintFg = colors.text
   buttons = {}
   rect(1, 1, W, H, colors.bg)
   frame(2, 1, W - 2, 11, "Энергосеть | TPS " .. config.ticksPerSecond)
@@ -677,6 +718,7 @@ local function draw(generation, consumption, unassigned)
     button(x+24, y+6, "[Отмена]", function() input, pendingItem = nil, nil end)
     if notice ~= "" then write(x+2, y+7, notice, colors.red, w-4) end
   end
+  present()
 end
 
 local function handleEvent(e, address, a, b)
