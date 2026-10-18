@@ -175,6 +175,33 @@ local inputMode, pendingItem = "id", nil
 local addedFeedback
 local history = {}
 local networkItems, networkPage, browsing = {}, 1, false
+local searchText, searching = "", false
+
+local function searchLower(text)
+  -- string.lower не меняет кириллицу в Lua/OpenOS.
+  return string.lower(text):gsub("[\208\209][\128-\191]", function(char)
+    local a, b = char:byte(1, 2)
+    if a == 208 and b >= 144 and b <= 159 then return string.char(208, b+32) end
+    if a == 208 and b >= 160 and b <= 175 then return string.char(209, b-32) end
+    if a == 208 and b == 129 then return "ё" end
+    return char
+  end)
+end
+
+local function setSearch(text)
+  searchText, networkPage = unicode.sub(text:gsub("%c", ""), 1, 64), 1
+end
+
+local function matchesSearch(entry, query)
+  if query == "" then return true end
+  if searchLower(entry.key):find(query, 1, true)
+    or searchLower(entry.label):find(query, 1, true) then return true end
+  for _, item in ipairs(items) do
+    if item.id == entry.id and (item.damage == nil or item.damage == entry.damage) and item.customName
+      and searchLower(item.customName):find(query, 1, true) then return true end
+  end
+  return false
+end
 
 local function itemName(key, id, label)
   local names = config.itemNames or {}
@@ -285,7 +312,7 @@ local function finishAdding(useName)
   if name == "" then name = nil end
   if editItems(pendingItem, nil, name) then
     input, pendingItem, inputMode = nil, nil, "id"
-    browsing = false
+    browsing, networkItems = false, {}
   end
 end
 
@@ -321,43 +348,63 @@ local function readAE(now)
     return
   end
   if aeSource ~= address then resetSamples(); aeSource = address end
-  local success, stacks = pcall(function() return proxy.getItemsInNetwork() end)
-  if not success or type(stacks) ~= "table" then
-    aeStatus = "AE2: ошибка чтения"; resetSamples(); return
-  end
-  -- Проверить весь снимок до обновления истории.
-  for _, stack in pairs(stacks) do
-    if type(stack) ~= "table" or type(stack.name) ~= "string"
-      or type(stack.size) ~= "number" or stack.size < 0 or stack.size ~= stack.size
-      or stack.size == math.huge then
-      aeStatus = "AE2: неверный снимок"; resetSamples(); return
-    end
-  end
-  aeStatus = "AE2: подключено"
-  local byKey = {}
-  for _, stack in pairs(stacks) do
-    -- NBT-варианты суммируются, как и в основном списке наблюдения.
-    local damage = stack.damage
-    local suffix = type(damage) == "number" and damage >= 0 and damage % 1 == 0
-      and ("@" .. string.format("%.0f", damage)) or ""
-    local entry = parseItem(stack.name .. suffix)
-    if entry then
-      local existing = byKey[entry.key]
+  local byKey, invalid = {}, false
+  local function collect(stacks)
+    if type(stacks) ~= "table" then return false end
+    for _, stack in pairs(stacks) do
+      if type(stack) ~= "table" or type(stack.name) ~= "string"
+        or type(stack.size) ~= "number" or stack.size < 0 or stack.size ~= stack.size
+        or stack.size == math.huge then
+        invalid = true
+        return false
+      end
+      local damage = stack.damage
+      local suffix = type(damage) == "number" and damage >= 0 and damage % 1 == 0
+        and ("@" .. string.format("%.0f", damage)) or ""
+      local key = stack.name .. suffix
+      local existing = byKey[key]
       if existing then existing.count = existing.count + stack.size
       else
-        entry.count = stack.size
-        entry.label = itemName(entry.key, entry.id, stack.label)
-        byKey[entry.key] = entry
-        networkItems[#networkItems + 1] = entry
+        -- Только поля для экрана: без NBT, рецептов и истории общего списка.
+        byKey[key] = {key=key, id=stack.name, damage=damage, count=stack.size,
+          label=type(stack.label) == "string" and stack.label ~= "" and stack.label or nil}
       end
     end
+    return true
   end
-  table.sort(networkItems, function(a, b) return a.key < b.key end)
+  -- Освободить старый каталог и промежуточные кадры перед запросом к AE2.
+  collectgarbage("collect")
+  local success, valid = pcall(function()
+    if browsing then return collect(proxy.getItemsInNetwork()) end
+    local queried = {}
+    for _, item in ipairs(items) do
+      if not queried[item.id] then
+        queried[item.id] = true
+        if not collect(proxy.getItemsInNetwork({name=item.id})) then return false end
+        collectgarbage("collect")
+      end
+    end
+    return true
+  end)
+  if not success or not valid then
+    aeStatus = invalid and "AE2: неверный снимок" or "AE2: ошибка чтения"
+    resetSamples()
+    return
+  end
+  collectgarbage("collect")
+  aeStatus = "AE2: подключено"
+  if browsing then
+    for _, entry in pairs(byKey) do
+      entry.label = itemName(entry.key, entry.id, entry.label)
+      networkItems[#networkItems + 1] = entry
+    end
+    table.sort(networkItems, function(a, b) return a.key < b.key end)
+  end
   for _, item in ipairs(items) do
     local count = 0
-    for _, stack in pairs(stacks) do
-      if stack.name == item.id and (item.damage == nil or stack.damage == item.damage) then
-        count = count + stack.size
+    for _, stack in pairs(byKey) do
+      if stack.id == item.id and (item.damage == nil or stack.damage == item.damage) then
+        count = count + stack.count
         if type(stack.label) == "string" and stack.label ~= "" then
           item.label = item.customName or itemName(item.key, item.id, stack.label)
         end
@@ -399,35 +446,45 @@ end
 -- не отправляются на GPU. Работает и без аппаратных видеобуферов.
 local canvas, displayed = {}, {}
 local paintBg, paintFg = colors.bg, colors.text
+local paintStyles, styleIds = {}, {}
 local function paintText(x, y, text)
+  -- Две строки на ряд вместо таблицы из W отдельных ячеек.
+  local styleKey = paintBg .. ":" .. paintFg
+  local style = styleIds[styleKey]
+  if not style then
+    style = string.char(#paintStyles+1)
+    styleIds[styleKey] = style
+    paintStyles[#paintStyles+1] = {bg=paintBg, fg=paintFg}
+  end
+  local length = unicode.len(text)
   local row = canvas[y]
-  if not row then row = {}; canvas[y] = row end
-  local style = string.format("%06x%06x", paintBg, paintFg)
-  for i = 1, unicode.len(text) do
-    row[x+i-1] = style .. unicode.sub(text, i, i)
+  if not row or (x == 1 and length == W) then
+    canvas[y] = {text, string.rep(style, length)}
+  else
+    row[1] = unicode.sub(row[1], 1, x-1) .. text .. unicode.sub(row[1], x+length)
+    row[2] = row[2]:sub(1, x-1) .. string.rep(style, length) .. row[2]:sub(x+length)
   end
 end
 
 local function present()
   for y = 1, H do
-    local row, previous = canvas[y], displayed[y] or {}
-    local x = 1
-    while x <= W do
-      local cell, old = row[x], previous[x]
-      if old == cell then
-        x = x+1
-      else
-        local start, text = x, {}
-        repeat
-          text[#text+1] = row[x]:sub(13)
-          x = x+1
-          local nextCell, nextOld = row[x], previous[x]
-          if x > W or nextCell:sub(1,12) ~= cell:sub(1,12)
-            or nextOld == nextCell then break end
-        until false
-        gpu.setBackground(tonumber(cell:sub(1,6), 16))
-        gpu.setForeground(tonumber(cell:sub(7,12), 16))
-        gpu.set(start, y, table.concat(text))
+    local row, previous = canvas[y], displayed[y]
+    if not previous or row[1] ~= previous[1] or row[2] ~= previous[2] then
+      local function unchanged(x)
+        return previous and row[2]:byte(x) == previous[2]:byte(x)
+          and unicode.sub(row[1], x, x) == unicode.sub(previous[1], x, x)
+      end
+      local x = 1
+      while x <= W do
+        if unchanged(x) then x = x+1
+        else
+          local start, style = x, row[2]:byte(x)
+          repeat x = x+1
+          until x > W or row[2]:byte(x) ~= style or unchanged(x)
+          gpu.setBackground(paintStyles[style].bg)
+          gpu.setForeground(paintStyles[style].fg)
+          gpu.set(start, y, unicode.sub(row[1], start, x-1))
+        end
       end
     end
   end
@@ -634,6 +691,7 @@ local function draw(generation, consumption, unassigned)
   button(17, top+1, "[>]", function() itemPage = math.min(pages, itemPage+1) end)
   button(W-13, top, "[Все МЭ]", function()
     browsing, networkPage, notice = true, 1, ""
+    searchText, searching = "", false
     aeLast = nil
   end)
   write(22, top+1, itemPage .. "/" .. pages .. " | " .. aeStatus .. " | шт/период", colors.dim, W-25)
@@ -672,18 +730,38 @@ local function draw(generation, consumption, unassigned)
   if browsing then
     buttons = {}
     frame(2, 1, W-2, H-1, "Все предметы МЭ-сети")
-    button(4, 2, "[Назад]", function() browsing = false end)
+    button(4, 2, "[Назад]", function() browsing, networkItems = false, {} end)
     local size = math.max(1, math.floor((H-7)/2))
-    local total = math.max(1, math.ceil(#networkItems/size))
+    local query, found, visible = searchLower(searchText), 0, {}
+    local first = (networkPage-1)*size+1
+    for _, entry in ipairs(networkItems) do
+      if matchesSearch(entry, query) then
+        found = found+1
+        if found >= first and #visible < size then visible[#visible+1] = entry end
+      end
+    end
+    local total = math.max(1, math.ceil(found/size))
+    if networkPage > total then
+      -- Снимок сети мог измениться; не оставлять пустую последнюю страницу.
+      networkPage, first, visible = total, (total-1)*size+1, {}
+      local index = 0
+      for _, entry in ipairs(networkItems) do
+        if matchesSearch(entry, query) then
+          index = index+1
+          if index >= first and #visible < size then visible[#visible+1] = entry end
+        end
+      end
+    end
     networkPage = math.max(1, math.min(networkPage, total))
     button(13, 2, "[<]", function() networkPage = math.max(1, networkPage-1) end)
     button(18, 2, "[>]", function() networkPage = math.min(total, networkPage+1) end)
-    write(23, 2, networkPage .. "/" .. total .. " | " .. aeStatus, colors.dim, W-26)
+    write(23, 2, networkPage .. "/" .. total .. " | " .. found .. " | " .. aeStatus, colors.dim, W-26)
     write(4, 3, "Название / ID", colors.dim, W-33)
     right(W-28, 3, 13, "Хранится", colors.dim)
     if #networkItems == 0 then write(4, 4, "В сети нет предметов или нет связи", colors.dim, W-7) end
+    if #networkItems > 0 and found == 0 then write(4, 4, "Ничего не найдено", colors.dim, W-7) end
     for row = 1, size do
-      local entry = networkItems[(networkPage-1)*size+row]
+      local entry = visible[row]
       if entry then
         local y = 4+(row-1)*2
         write(4, y, entry.label, colors.text, W-33)
@@ -695,13 +773,19 @@ local function draw(generation, consumption, unassigned)
         end
         if tracked then write(W-13, y, "В списке", colors.dim, 10)
         else button(W-13, y, "[Добавить]", function()
+          searching = false
           input = entry.key
           askName()
         end) end
       end
     end
-    write(4, H-3, "Варианты NBT одного ID@meta суммируются.", colors.dim, W-7)
-    write(4, H-2, "Esc: назад | [Добавить]: имя и наблюдение", colors.dim, W-7)
+    button(4, H-3, "[Поиск]", function() searching = true end)
+    local fieldW = W-27
+    local visibleQuery = unicode.sub(searchText, math.max(1, unicode.len(searchText)-fieldW+2))
+    write(12, H-3, visibleQuery .. (searching and "_" or ""), colors.text, fieldW)
+    button(W-11, H-3, "[Сброс]", function() setSearch(""); searching = true end)
+    write(4, H-2, searching and "Введите имя/ID | Enter/Esc: готово" or
+      "/: поиск | Esc: назад | [Добавить]: имя", colors.dim, W-7)
   end
   if input ~= nil and inputMode == "name" then
     buttons = {} -- Окно перехватывает нажатия, скрытая таблица не активна.
@@ -731,6 +815,8 @@ local function handleEvent(e, address, a, b)
   elseif e == "clipboard" and input ~= nil then
     local text = tostring(a):gsub(inputMode == "name" and "%c" or "[%s%c]", "")
     input = unicode.sub(input .. text, 1, inputMode == "name" and 64 or 160)
+  elseif e == "clipboard" and browsing and searching then
+    setSearch(searchText .. tostring(a))
   elseif e == "key_down" then
     if input ~= nil then
       if b == 1 then input, pendingItem = nil, nil
@@ -742,7 +828,15 @@ local function handleEvent(e, address, a, b)
         and unicode.len(input) < (inputMode == "name" and 64 or 160) then
         input = input .. unicode.char(a)
       end
-    elseif b == 1 and browsing then browsing = false
+    elseif browsing and searching then
+      if b == 1 or b == 28 or a == 13 then searching = false
+      elseif b == 14 or a == 8 then
+        setSearch(unicode.len(searchText) > 0 and unicode.sub(searchText,1,unicode.len(searchText)-1) or "")
+      elseif a and a >= 32 and a <= 0x10FFFF and not (a >= 0xD800 and a <= 0xDFFF) then
+        setSearch(searchText .. unicode.char(a))
+      end
+    elseif browsing and a == 47 then searching = true
+    elseif b == 1 and browsing then browsing, networkItems = false, {}
     elseif a == 113 or a == 81 then return false
     elseif a == 97 or a == 65 then startAdding() end
   end

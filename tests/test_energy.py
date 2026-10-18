@@ -24,6 +24,7 @@ local bg, fg = 123, 456
 local cells, screens, messages, fills, screenFills = {}, {}, {}, {}, {}
 local writes, screenWrites = {}, {}
 local cellColors, screenColors = {}, {}
+local aeQueries = {}
 local step = 1
 local now = 0
 local savedFiles = TEST_FILES or {}
@@ -111,9 +112,17 @@ package.preload.component = function()
       if TEST_ENERGY_ONLY and address == '376e9d0b-0a9f-4ebc-a2f4-1b582cfbdf05' then
         return {getOfferedEnergy=function() return 123 end, getSinkTier=function() return 4 end}
       end
-      if address == 'ae' or address == 'ae2' then return {getItemsInNetwork=function()
+      if address == 'ae' or address == 'ae2' then return {getItemsInNetwork=function(filter)
+        aeQueries[#aeQueries+1] = filter or false
         local snapshot=TEST_AE[step]
         if snapshot == 'error' then error('offline') end
+        if filter and type(snapshot) == 'table' then
+          local result = {}
+          for _,stack in pairs(snapshot) do
+            if type(stack)~='table' or stack.name==filter.name then result[#result+1]=stack end
+          end
+          return result
+        end
         return snapshot
       end} end
       return {getAverage = function()
@@ -596,3 +605,85 @@ run("unchanged network browser does not redraw on polling", "local TEST_W,TEST_H
     "local TEST_EVENTS={{'touch','screen',47,16},{'timer'},{'timer'}}",
     restore + "; contains(screens[2],'Все предметы МЭ-сети'); "
     "assert(#screenWrites[3]==0 and #screenWrites[4]==0,'unchanged browser repainted')", config)
+
+run("main screen requests each tracked ID once per poll", "local TEST_W,TEST_H=120,40; "
+    "local FLOWS={{},{},{}}; local TEST_AE={}; for i=1,3 do TEST_AE[i]={"
+    "{name='mod:alloy',damage=0,label='Alloy',size=10},"
+    "{name='mod:alloy',damage=1,label='Alloy',size=30},"
+    "{name='mod:untracked',size=999}} end",
+    restore + "; assert(#aeQueries==2,'duplicate or missing filtered queries'); "
+    "for _,query in ipairs(aeQueries) do assert(query and query.name=='mod:alloy') end; "
+    "contains(screenLine(3,19),'40'); contains(screenLine(3,20),'30')", config,
+    transform=lambda code: code.replace('trackedItems = {}', 'trackedItems = {"mod:alloy","mod:alloy@1"}'))
+
+run("startup without tracked items does not load ME inventory", "local TEST_W,TEST_H=120,40; "
+    "local FLOWS={{},{},{}}; local TEST_AE={{},{},{}}",
+    restore + "; assert(#aeQueries==0,'unnecessary full-network query')", config)
+
+search_setup = (
+    "local TEST_W,TEST_H=80,25; local TEST_DT=0.5; local FLOWS={}; local TEST_AE={}; "
+    "for step=1,14 do FLOWS[step]={}; TEST_AE[step]={"
+    "{name='mod:copper',damage=2,label='МЕДНЫЙ слиток',size=22},"
+    "{name='mod:iron',damage=0,label='Железо',size=33},"
+    "{name='mod:brush',damage=0,label='Ёршик',size=44}} end; "
+)
+run("search Russian names regardless of case and add filtered item", search_setup +
+    "local TEST_EVENTS={{'touch','screen',67,16},{'touch','screen',4,22},"
+    "{'clipboard','keyboard','медный'},{'key_down','keyboard',13,28},"
+    "{'touch','screen',67,4},{'clipboard','keyboard','Моя медь'},"
+    "{'key_down','keyboard',13,28},{'interrupted'}}",
+    restore + "; contains(screenLine(4,4),'МЕДНЫЙ'); contains(screenLine(4,5),'mod:copper@2'); "
+    "assert(not screens[4]:find('mod:iron',1,true)); contains(screens[6],'Название предмета'); "
+    "assert(savedFiles['/home/energy-items.txt']=='mod:copper@2\\tМоя медь\\n'); "
+    "assert(#aeQueries==2 and aeQueries[1]==false and aeQueries[2].name=='mod:copper','unexpected search query')", config)
+
+run("search ID with metadata and clear filter", search_setup +
+    "local TEST_EVENTS={{'touch','screen',67,16},{'key_down','keyboard',47,0},"
+    "{'clipboard','keyboard','MOD:COPPER@2'},{'touch','screen',69,22},"
+    "{'key_down','keyboard',13,28},{'interrupted'}}",
+    restore + "; contains(screenLine(4,5),'mod:copper@2'); "
+    "assert(not screens[4]:find('mod:iron@0',1,true)); "
+    "contains(screens[5],'mod:iron@0'); contains(screens[5],'mod:brush@0'); "
+    "assert(#aeQueries==1)", config)
+
+run("search Cyrillic typing Yo backspace and literal patterns", search_setup +
+    "local TEST_EVENTS={{'touch','screen',67,16},{'key_down','keyboard',47,0},"
+    "{'key_down','keyboard',1105,0},{'key_down','keyboard',1088,0},"
+    "{'key_down','keyboard',8,14},{'clipboard','keyboard','['},"
+    "{'key_down','keyboard',8,14},{'key_down','keyboard',0,1},{'interrupted'}}",
+    restore + "; contains(screenLine(4,4),'Ёршик'); contains(screenLine(6,4),'Ёршик'); "
+    "contains(screens[7],'Ничего не найдено'); contains(screenLine(8,4),'Ёршик'); "
+    "contains(screens[9],'Все предметы МЭ-сети')", config)
+
+run("search retains filter when cancelling add and across network polling", search_setup +
+    "local TEST_TIMES={0,1,2,3,4,5,11,12,13,14,15,16,17,18}; "
+    "local TEST_EVENTS={{'touch','screen',67,16},{'key_down','keyboard',47,0},"
+    "{'clipboard','keyboard','ЖЕЛЕЗО'},{'touch','screen',67,4},"
+    "{'key_down','keyboard',0,1},{'timer'},{'interrupted'}}",
+    restore + "; contains(screenLine(6,5),'mod:iron@0'); contains(screenLine(7,5),'mod:iron@0'); "
+    "assert(not screens[7]:find('mod:copper',1,true)); assert(#aeQueries==2)", config)
+
+run("search matches saved custom Russian names", search_setup +
+    "local TEST_FILES={['/home/energy-items.txt']='mod:iron@0\\tОсобый металл\\n'}; "
+    "local TEST_EVENTS={{'touch','screen',67,16},{'key_down','keyboard',47,0},"
+    "{'clipboard','keyboard','ОСОБЫЙ'},{'key_down','keyboard',13,28},{'interrupted'}}",
+    restore + "; contains(screenLine(4,5),'mod:iron@0'); contains(screenLine(4,4),'В списке'); "
+    "assert(not screens[4]:find('mod:copper',1,true))", config)
+
+run("search matches custom name tracked without metadata", search_setup +
+    "local TEST_FILES={['/home/energy-items.txt']='mod:iron\\tОсобый металл\\n'}; "
+    "local TEST_EVENTS={{'touch','screen',67,16},{'key_down','keyboard',47,0},"
+    "{'clipboard','keyboard','ОСОБЫЙ'},{'key_down','keyboard',13,28},{'interrupted'}}",
+    restore + "; contains(screenLine(4,5),'mod:iron@0'); "
+    "assert(not screens[4]:find('mod:copper',1,true))", config)
+
+run("search resets current page and paginates filtered results", "local TEST_W,TEST_H=60,25; "
+    "local TEST_DT=0.5; local FLOWS={}; local TEST_AE={}; for step=1,10 do "
+    "FLOWS[step]={}; TEST_AE[step]={}; for i=1,60 do TEST_AE[step][i]={"
+    "name=string.format('mod:item_%02d',i),size=i,label=(i%2==0 and 'Even' or 'Odd')} end end; "
+    "local TEST_EVENTS={{'touch','screen',47,16},{'touch','screen',18,2},"
+    "{'key_down','keyboard',47,0},{'clipboard','keyboard','EVEN'},"
+    "{'key_down','keyboard',13,28},{'touch','screen',18,2},{'interrupted'}}",
+    restore + "; contains(screenLine(3,2),'2/7'); contains(screenLine(5,2),'1/4'); "
+    "contains(screenLine(5,5),'mod:item_02'); contains(screenLine(7,2),'2/4'); "
+    "contains(screenLine(7,5),'mod:item_20'); assert(#aeQueries==1)", config)
