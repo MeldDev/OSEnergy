@@ -95,6 +95,7 @@ package.preload.component = function()
       local keys = {}
       if kind == 'average_counter' then
         for address in pairs(FLOWS[step]) do keys[#keys+1] = address end
+        if TEST_BEE_MOCK and FLOWS[step].b == nil then keys[#keys+1] = 'b' end
       elseif kind == 'me_controller' and TEST_AE then keys=TEST_AE_ADDRS or {'ae'} end
       table.sort(keys)
       local index = 0
@@ -111,6 +112,7 @@ package.preload.component = function()
       end} end
       return {getAverage = function()
         local value = FLOWS[step][address]
+        if address == 'b' and value == nil then value = 0 end
         if value == 'error' then error('disconnected') end
         return value
       end}
@@ -160,7 +162,7 @@ def run(name, setup, checks, config=None, arguments="", use_actual_config=False,
     code = re.sub(r'(^\s*aeAddress\s*=\s*)"[^"]*"', r'\1""', source,
                   count=1, flags=re.MULTILINE)
     if not use_actual_config:
-        for key in ("reactors", "solar", "wind", "molecular", "machines"):
+        for key in ("reactors", "solar", "wind", "molecular", "machines", "bees"):
             addresses = (config or {}).get(key, "")
             code = re.sub(rf"(^\s*{key}\s*=\s*)\{{[^}}]*\}}",
                           lambda match: match[1] + "{" + addresses + "}", code,
@@ -170,7 +172,7 @@ def run(name, setup, checks, config=None, arguments="", use_actual_config=False,
         code = re.sub(r"(screenHeight\s*=\s*)\d+", r"\g<1>TEST_H", code, count=1)
     if transform:
         code = transform(code)
-    lua = setup + "\n" + MOCKS + "\nlocal function program(...)\n" + code
+    lua = "local TEST_BEE_MOCK=" + str((config or {}).get("bees") == '"b"').lower() + "\n" + setup + "\n" + MOCKS + "\nlocal function program(...)\n" + code
     lua += "\nend\nlocal ok, err = pcall(program" + arguments + ")\n" + checks
     state = lib.luaL_newstate()
     assert state, "Cannot create Lua state"
@@ -187,7 +189,7 @@ def run(name, setup, checks, config=None, arguments="", use_actual_config=False,
 
 
 config = dict(reactors='"r1", "r2"', solar='"s"', wind='"w"',
-              molecular='"m"', machines='"c"')
+              molecular='"m"', machines='"c"', bees='"b"')
 restore = ("assert(sw == 40 and sh == 15 and bg == 123 and fg == 456); assert(ok, err); "
            "assert(not table.concat(messages):find('Ошибка:',1,true), table.concat(messages))")
 for width, height in [(60, 25), (80, 25), (100, 30), (160, 50)]:
@@ -226,7 +228,8 @@ run("actual inline addresses without external config",
     "['4b0f52a2-cdc4-4379-9234-5482be20016b']=50,"
     "['668fa7db-af7f-4308-8414-098a19039a1d']=25,"
     "['346a78af-d715-4cab-aa6e-df79d9778e0f']=80,"
-    "['64a4254a-f063-4f9a-b28e-d9e3096f63e1']=20}}",
+    "['64a4254a-f063-4f9a-b28e-d9e3096f63e1']=20,"
+    "['6fae6d5f-10c8-489e-87a4-4ae2f5afb49a']=0}}",
     restore + "; contains(screens[1], 'Баланс: 275 EU/t'); contains(screens[1], '375 EU/t')",
     use_actual_config=True)
 run("larger text via default resolution", "local TEST_W, TEST_H=160,50; "
@@ -282,7 +285,7 @@ run("AE hour history", "local TEST_W,TEST_H=120,40; local TEST_DT=60; "
 run("add via clipboard and delete via touch", "local TEST_W,TEST_H=80,25; "
     "local FLOWS={{},{},{},{},{},{}}; local TEST_EVENTS={"
     "{'key_down','keyboard',97,30},{'clipboard','keyboard','minecraft:gold_ingot'},"
-    "{'key_down','keyboard',13,28},{'key_down','keyboard',13,28},{'touch','screen',74,18}}",
+    "{'key_down','keyboard',13,28},{'key_down','keyboard',13,28},{'touch','screen',74,19}}",
     restore + "; contains(screens[5], 'Золотой слиток'); "
     "assert(savedFiles['/home/energy-items.txt']==''); contains(screens[6], 'Добавьте предмет')", config)
 
@@ -368,11 +371,11 @@ for amounts, expected, color in [([100, 110, 146], "+36", "0x3FB950"),
         "local FLOWS={{},{},{}}; local TEST_AE={" + ",".join(stack(n) for n in amounts) + "}",
         restore + "; contains(screens[3], 'Хранилище'); "
         "assert(not screens[3]:find('minecraft:iron_ingot',1,true)); "
-        f"local found=0; for _,v in ipairs(screenWrites[3]) do if v.y==18 and v.text=='{expected}' "
+        f"local found=0; for _,v in ipairs(screenWrites[3]) do if v.y==19 and v.text=='{expected}' "
         f"and v.color=={color} then found=found+1 end end; assert(found==1,'wrong signed column/color'); "
         "local lines={}; for line in screens[3]:gmatch('[^\\n]+') do lines[#lines+1]=line end; "
-        "assert(lines[18]:find('Железный слиток',1,true)); assert(not lines[18]:find('/',1,true)); "
-        "assert(lines[17]:find('Хранится',1,true)); "
+        "assert(lines[19]:find('Железный слиток',1,true)); assert(not lines[19]:find('/',1,true)); "
+        "assert(lines[18]:find('Хранится',1,true)); "
         "assert(lines[22]:find('История выработки',1,true))", config, transform=track)
 
 run("server localized mod name", "local TEST_W,TEST_H=80,25; local FLOWS={{}}; "
@@ -458,7 +461,7 @@ run("distinct period totals after more than one hour", "local TEST_W,TEST_H=120,
     "local FLOWS={}; local TEST_AE={}; for i=1,121 do FLOWS[i]={}; "
     "TEST_AE[i]={{name='minecraft:iron_ingot',size=1000+i*200}} end",
     restore + "; local found={}; for _,v in ipairs(screenWrites[121]) do "
-    "if v.y==18 and v.color==0x3FB950 then found[v.text]=true end end; "
+    "if v.y==19 and v.color==0x3FB950 then found[v.text]=true end end; "
     "assert(found['+200'] and found['+2000'] and found['+12000'],'periods normalized incorrectly'); "
     "contains(screens[121],'шт/период')", config, transform=track)
 
@@ -467,14 +470,14 @@ run("period totals with changing flow and history pruning", "local TEST_W,TEST_H
     "for i=1,81 do if i>1 then stock=stock+(i>71 and -30 or 100) end; "
     "FLOWS[i]={}; TEST_AE[i]={{name='minecraft:iron_ingot',size=stock}} end",
     restore + "; local found={}; for _,v in ipairs(screenWrites[81]) do "
-    "if v.y==18 then found[v.text]=v.color end end; "
+    "if v.y==19 then found[v.text]=v.color end end; "
     "assert(found['-30']==0xF85149 and found['-300']==0xF85149 and found['+4700']==0x3FB950,"
     "'wrong rolling totals after flow change')", config, transform=track)
 
 run("no predictions before a full period", "local TEST_W,TEST_H=80,25; local TEST_DT=10; "
     "local FLOWS={{},{},{}}; local TEST_AE={" + stack(100) + "," + stack(200) + "," + stack(500) + "}",
     restore + "; local missing=0; for _,v in ipairs(screenWrites[3]) do "
-    "if v.y==18 and v.text=='—' then missing=missing+1 end end; assert(missing==3); "
+    "if v.y==19 and v.text=='—' then missing=missing+1 end end; assert(missing==3); "
     "assert(not screens[3]:find('+',1,true) or screens[3]:find('[+ ID]',1,true))", config, transform=track)
 
 run("all rolling periods refresh every ten seconds", "local TEST_W,TEST_H=120,40; "
@@ -482,8 +485,77 @@ run("all rolling periods refresh every ten seconds", "local TEST_W,TEST_H=120,40
     "for i=1,9 do FLOWS[i]={} end; local TEST_AE={" +
     ",".join(stack(n) for n in [100,110,500,501,700,701,800,999,850]) + "}",
     restore + "; local function rowValues(step) local values={}; "
-    "for _,v in ipairs(screenWrites[step]) do if v.y==18 then values[v.text]=true end end; return values end; "
+    "for _,v in ipairs(screenWrites[step]) do if v.y==19 then values[v.text]=true end end; return values end; "
     "local a,b,c=rowValues(7),rowValues(8),rowValues(9); "
     "assert(a['+100'] and a['+300'] and a['+700']); "
     "assert(b['+100'] and b['+300'] and b['+700'] and b['800']); "
     "assert(c['+149'] and c['+349'] and c['+740'] and c['850'])", config, transform=track)
+
+run("bees count toward consumption and balance", "local TEST_W,TEST_H=80,25; "
+    "local FLOWS={{r1=100,r2=200,s=50,w=25,m=80,c=20,b=30}}",
+    restore + "; local lines={}; for line in screens[1]:gmatch('[^\\n]+') do lines[#lines+1]=line end; "
+    "contains(lines[7],'Пчёлы'); contains(lines[7],'30 EU/t'); contains(lines[7],'600 EU/s'); "
+    "contains(lines[9],'130 EU/t'); contains(lines[10],'245 EU/t')", config)
+
+run("bee counter disconnect makes balance incomplete", "local TEST_W,TEST_H=80,25; "
+    "local FLOWS={{r1=100,r2=200,s=50,w=25,m=80,c=20,b='error'}}",
+    restore + "; contains(screens[1],'Пчёлы'); contains(screens[1],'Баланс: нет полных данных'); "
+    "contains(screens[1],'~ 100 EU/t')", config)
+
+for width, height in [(60,25), (80,25), (120,40), (160,50)]:
+    run(f"network browser add and persist Russian name {width}",
+        f"local TEST_W,TEST_H={width},{height}; local FLOWS={{{{}},{{}},{{}},{{}},{{}},{{}}}}; "
+        "local TEST_AE={}; for i=1,6 do TEST_AE[i]={"
+        "{name='mod:alloy',damage=2,label='Alloy',size=20},"
+        "{name='mod:alloy',damage=2,label='Alloy',size=5}} end; "
+        f"local TEST_EVENTS={{{{'touch','screen',{width-13},16}},"
+        f"{{'touch','screen',{width-13},4}},"
+        "{'clipboard','keyboard','Мой сплав'},{'key_down','keyboard',13,28}}",
+        restore + "; contains(screens[2],'Все предметы МЭ-сети'); contains(screens[2],'mod:alloy@2'); "
+        "contains(screens[2],'25'); contains(screens[3],'Хотите добавить русское название?'); "
+        "contains(screens[5],'Мой сплав'); assert(not screens[5]:find('Все предметы МЭ-сети',1,true)); "
+        "assert(savedFiles['/home/energy-items.txt']=='mod:alloy@2\\tМой сплав\\n')", config)
+
+run("network browser cancel preserves browser and does not save", "local TEST_W,TEST_H=80,25; "
+    "local FLOWS={{},{},{},{}}; local TEST_AE={}; for i=1,4 do "
+    "TEST_AE[i]={{name='mod:alloy',label='Alloy',size=20}} end; "
+    "local TEST_EVENTS={{'touch','screen',67,16},{'touch','screen',67,4},{'key_down','keyboard',0,1}}",
+    restore + "; contains(screens[4],'Все предметы МЭ-сети'); "
+    "assert(not screens[4]:find('Хотите добавить русское название?',1,true)); "
+    "assert(savedFiles['/home/energy-items.txt']==nil)", config)
+
+run("network browser No keeps network name and prevents duplicate", "local TEST_W,TEST_H=80,25; "
+    "local FLOWS={{},{},{},{},{}}; local TEST_AE={}; for i=1,5 do "
+    "TEST_AE[i]={{name='mod:alloy',label='Alloy',size=20}} end; "
+    "local TEST_EVENTS={{'touch','screen',67,16},{'touch','screen',67,4},"
+    "{'touch','screen',26,15},{'touch','screen',67,16}}",
+    restore + "; contains(screens[4],'Alloy'); contains(screens[5],'В списке'); "
+    "for _,v in ipairs(screenWrites[5]) do assert(v.y~=4 or v.text~='[Добавить]') end; "
+    "assert(savedFiles['/home/energy-items.txt']=='mod:alloy\\n')", config)
+
+run("network browser pagination reaches last metadata variant", "local TEST_W,TEST_H=60,25; "
+    "local FLOWS={{},{},{},{},{},{}}; local TEST_AE={}; for step=1,6 do TEST_AE[step]={}; "
+    "for i=0,19 do TEST_AE[step][i+1]={name='mod:item',damage=i,label='Item',size=i} end end; "
+    "local TEST_EVENTS={{'touch','screen',47,16},{'touch','screen',18,2},"
+    "{'touch','screen',18,2},{'touch','screen',47,6},{'key_down','keyboard',13,28}}",
+    restore + "; contains(screens[2],'1/3'); contains(screens[4],'3/3'); "
+    "contains(screens[5],'mod:item@9'); assert(savedFiles['/home/energy-items.txt']=='mod:item@9\\n')", config)
+
+run("network browser clears failed snapshot and restores connection", "local TEST_W,TEST_H=80,25; "
+    "local TEST_DT=10; local FLOWS={{},{},{},{},{}}; local TEST_AE={"
+    "{{name='mod:alloy',label='Alloy',size=20}},'error',{},"
+    "{{name='mod:alloy',label='Alloy',size=30}},{{name='mod:alloy',size=40}}}; "
+    "local TEST_EVENTS={{'touch','screen',67,16}}",
+    restore + "; contains(screens[2],'AE2: ошибка чтения'); "
+    "for _,v in ipairs(screenWrites[2]) do assert(v.y~=4 or v.text~='[Добавить]') end; "
+    "contains(screens[3],'В сети нет предметов'); "
+    "contains(screens[4],'Alloy'); contains(screens[4],'30')", config)
+
+run("network browser save failure keeps name dialog", "local TEST_W,TEST_H=80,25; "
+    "local TEST_SAVE_FAIL=true; local FLOWS={{},{},{},{},{}}; local TEST_AE={}; "
+    "for i=1,5 do TEST_AE[i]={{name='mod:alloy',size=20}} end; "
+    "local TEST_EVENTS={{'touch','screen',67,16},{'touch','screen',67,4},"
+    "{'key_down','keyboard',13,28},{'interrupted'}}",
+    restore + "; contains(screens[4],'Не сохранено: disk full'); "
+    "contains(screens[4],'Хотите добавить русское название?'); "
+    "assert(savedFiles['/home/energy-items.txt']==nil)", config)

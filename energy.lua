@@ -6,6 +6,7 @@ local config = {
   wind = {"668fa7db-af7f-4308-8414-098a19039a1d"},
   molecular = {"346a78af-d715-4cab-aa6e-df79d9778e0f"},
   machines = {"64a4254a-f063-4f9a-b28e-d9e3096f63e1"},
+  bees = {"6fae6d5f-10c8-489e-87a4-4ae2f5afb49a"},
   updateInterval = 0.5, -- Секунды между обновлениями
   screenWidth = 120,   -- Ограничивается возможностями GPU
   screenHeight = 40,
@@ -123,7 +124,8 @@ local groups = {
   {key = "solar", name = "Солнечные панели", kind = "generation"},
   {key = "wind", name = "Ветрогенераторы", kind = "generation"},
   {key = "molecular", name = "Молекулярный преобразователь", kind = "consumption"},
-  {key = "machines", name = "Механизмы", kind = "consumption"}
+  {key = "machines", name = "Механизмы", kind = "consumption"},
+  {key = "bees", name = "Пчёлы", kind = "consumption"}
 }
 
 -- Совместимость: единственный счётчик при пустой настройке — реакторы.
@@ -172,6 +174,7 @@ local input, notice, aeStatus, aeLast, aeSource = nil, "", "ожидание", n
 local inputMode, pendingItem = "id", nil
 local addedFeedback
 local history = {}
+local networkItems, networkPage, browsing = {}, 1, false
 
 local function itemName(key, id, label)
   local names = config.itemNames or {}
@@ -282,6 +285,7 @@ local function finishAdding(useName)
   if name == "" then name = nil end
   if editItems(pendingItem, nil, name) then
     input, pendingItem, inputMode = nil, nil, "id"
+    browsing = false
   end
 end
 
@@ -308,6 +312,7 @@ end
 local function readAE(now)
   if aeLast and now - aeLast < config.aeInterval then return end
   aeLast = now
+  networkItems = {} -- При потере связи не показываем устаревший список.
   local ok, proxy, address = pcall(aeProxy)
   if not ok or not proxy then
     aeStatus = ok and address or "AE2: ошибка подключения"
@@ -329,6 +334,25 @@ local function readAE(now)
     end
   end
   aeStatus = "AE2: подключено"
+  local byKey = {}
+  for _, stack in pairs(stacks) do
+    -- NBT-варианты суммируются, как и в основном списке наблюдения.
+    local damage = stack.damage
+    local suffix = type(damage) == "number" and damage >= 0 and damage % 1 == 0
+      and ("@" .. string.format("%.0f", damage)) or ""
+    local entry = parseItem(stack.name .. suffix)
+    if entry then
+      local existing = byKey[entry.key]
+      if existing then existing.count = existing.count + stack.size
+      else
+        entry.count = stack.size
+        entry.label = itemName(entry.key, entry.id, stack.label)
+        byKey[entry.key] = entry
+        networkItems[#networkItems + 1] = entry
+      end
+    end
+  end
+  table.sort(networkItems, function(a, b) return a.key < b.key end)
   for _, item in ipairs(items) do
     local count = 0
     for _, stack in pairs(stacks) do
@@ -537,29 +561,29 @@ end
 local function draw(generation, consumption, unassigned)
   buttons = {}
   rect(1, 1, W, H, colors.bg)
-  frame(2, 1, W - 2, 10, "Энергосеть | TPS " .. config.ticksPerSecond)
+  frame(2, 1, W - 2, 11, "Энергосеть | TPS " .. config.ticksPerSecond)
   for index, group in ipairs(groups) do
     local y = index + 1
     local color = group.kind == "generation" and colors.green or colors.yellow
     drawPowerRow(y, group.name, group.online > 0 and group.value or nil,
       group.complete, group.status, color)
   end
-  drawPowerRow(7, "Общая выработка", generation.hasData and generation.value or nil,
+  drawPowerRow(8, "Общая выработка", generation.hasData and generation.value or nil,
     generation.complete, "нет данных", colors.green)
-  drawPowerRow(8, "Общий расход", consumption.hasData and consumption.value or nil,
+  drawPowerRow(9, "Общий расход", consumption.hasData and consumption.value or nil,
     consumption.complete, "нет данных", colors.yellow)
   local complete = generation.complete and consumption.complete
-  drawPowerRow(9, "Баланс:", complete and generation.value-consumption.value or nil,
+  drawPowerRow(10, "Баланс:", complete and generation.value-consumption.value or nil,
     true, "нет полных данных", colors.cyan)
 
-  frame(2, 11, W-2, 4, "Молекулярный преобразователь (оценка)")
+  frame(2, 12, W-2, 4, "Молекулярный преобразователь (оценка)")
   local duration, rate = matterEstimate()
-  write(4, 12, "1 материя: " .. duration, colors.cyan, W-7)
-  write(4, 13, "В минуту: " .. rate, colors.cyan, W-7)
+  write(4, 13, "1 материя: " .. duration, colors.cyan, W-7)
+  write(4, 14, "В минуту: " .. rate, colors.cyan, W-7)
 
   local graphH = H >= 30 and 3 or 1
   local graphTop = H-graphH-2
-  local top = 15
+  local top = 16
   frame(2, top, W-2, graphTop-top, "Хранилище")
   button(4, top+1, "[+ ID]", startAdding)
   local pageSize = math.max(1, graphTop-top-4)
@@ -567,6 +591,10 @@ local function draw(generation, consumption, unassigned)
   itemPage = math.max(1, math.min(itemPage, pages))
   button(12, top+1, "[<]", function() itemPage = math.max(1, itemPage-1) end)
   button(17, top+1, "[>]", function() itemPage = math.min(pages, itemPage+1) end)
+  button(W-13, top, "[Все МЭ]", function()
+    browsing, networkPage, notice = true, 1, ""
+    aeLast = nil
+  end)
   write(22, top+1, itemPage .. "/" .. pages .. " | " .. aeStatus .. " | шт/период", colors.dim, W-25)
   local rateW = W >= 100 and 12 or (W >= 80 and 10 or 8)
   local stockW = W >= 100 and 14 or (W >= 80 and 12 or 9)
@@ -600,6 +628,40 @@ local function draw(generation, consumption, unassigned)
   if input == nil and notice == "" and unassigned > 0 then footer = "Не привязано: " .. unassigned .. " | " .. footer end
   if input == nil and notice == "" and autoReactor then footer = "Один счётчик | " .. footer end
   write(2,H,footer,colors.dim,W-2,colors.bg)
+  if browsing then
+    buttons = {}
+    frame(2, 1, W-2, H-1, "Все предметы МЭ-сети")
+    button(4, 2, "[Назад]", function() browsing = false end)
+    local size = math.max(1, math.floor((H-7)/2))
+    local total = math.max(1, math.ceil(#networkItems/size))
+    networkPage = math.max(1, math.min(networkPage, total))
+    button(13, 2, "[<]", function() networkPage = math.max(1, networkPage-1) end)
+    button(18, 2, "[>]", function() networkPage = math.min(total, networkPage+1) end)
+    write(23, 2, networkPage .. "/" .. total .. " | " .. aeStatus, colors.dim, W-26)
+    write(4, 3, "Название / ID", colors.dim, W-33)
+    right(W-28, 3, 13, "Хранится", colors.dim)
+    if #networkItems == 0 then write(4, 4, "В сети нет предметов или нет связи", colors.dim, W-7) end
+    for row = 1, size do
+      local entry = networkItems[(networkPage-1)*size+row]
+      if entry then
+        local y = 4+(row-1)*2
+        write(4, y, entry.label, colors.text, W-33)
+        write(4, y+1, entry.key, colors.dim, W-7)
+        right(W-28, y, 13, fmtCount(entry.count), colors.text)
+        local tracked = false
+        for _, item in ipairs(items) do
+          if item.key == entry.key then tracked = true; break end
+        end
+        if tracked then write(W-13, y, "В списке", colors.dim, 10)
+        else button(W-13, y, "[Добавить]", function()
+          input = entry.key
+          askName()
+        end) end
+      end
+    end
+    write(4, H-3, "Варианты NBT одного ID@meta суммируются.", colors.dim, W-7)
+    write(4, H-2, "Esc: назад | [Добавить]: имя и наблюдение", colors.dim, W-7)
+  end
   if input ~= nil and inputMode == "name" then
     buttons = {} -- Окно перехватывает нажатия, скрытая таблица не активна.
     local w, h = math.min(62, W-4), 9
@@ -638,6 +700,7 @@ local function handleEvent(e, address, a, b)
         and unicode.len(input) < (inputMode == "name" and 64 or 160) then
         input = input .. unicode.char(a)
       end
+    elseif b == 1 and browsing then browsing = false
     elseif a == 113 or a == 81 then return false
     elseif a == 97 or a == 65 then startAdding() end
   end
