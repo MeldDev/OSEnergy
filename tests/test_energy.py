@@ -230,7 +230,7 @@ restore = ("assert(sw == 40 and sh == 15 and bg == 123 and fg == 456); assert(ok
            "assert(not table.concat(messages):find('Ошибка:',1,true), table.concat(messages))")
 run("version identifies installed file without starting monitor",
     "local TEST_W,TEST_H=80,25; local FLOWS={{}}",
-    restore + "; contains(table.concat(messages),'2026-10-18-no-gc'); assert(#screens==0)",
+    restore + "; contains(table.concat(messages),'2026-10-22-item-ids'); assert(#screens==0)",
     arguments=', "--version"')
 for width, height in [(60, 25), (80, 25), (100, 30), (160, 50)]:
     run(f"totals and layout {width}x{height}",

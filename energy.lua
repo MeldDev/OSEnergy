@@ -1,4 +1,4 @@
-local version = "2026-10-18-no-gc"
+local version = "2026-10-22-item-ids"
 if (...) == "--version" then print(version); return end
 
 -- Настройки: адреса average_counter по категориям.
@@ -212,8 +212,8 @@ local function itemName(key, id, label)
 end
 
 local function parseItem(text)
-  local id, damage = text:match("^([%w_%.%-]+:[%w_%.%/:%-]+)@(%d+)$")
-  if not id then id = text:match("^([%w_%.%-]+:[%w_%.%/:%-]+)$") end
+  local id, damage = text:match("^([%w_%.|%-]+:[%w_%.%/: %-]+)@(%d+)$")
+  if not id then id = text:match("^([%w_%.|%-]+:[%w_%.%/: %-]+)$") end
   if not id then return nil end
   -- Точное известное соответствие; регистр ID предметов модов не меняем.
   if id == "minecraft:blockLapis" then

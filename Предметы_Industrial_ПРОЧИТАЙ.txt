@@ -1,0 +1,257 @@
+﻿КАТАЛОГ ПРЕДМЕТОВ INDUSTRIAL 1.7.10 ДЛЯ ENERGY
+
+Источник: C:\Users\DESKTOP\McSkill\clients\Industrial_1.7.10
+Уникальных строк: 9477. Пространств имён модов: 70.
+Основной файл: Предметы_Industrial_для_energy.txt.
+Формат каждой строки: Русское название [mod:item@meta]. Кодировка: UTF-8.
+Список отсортирован по моду и русскому названию. Поиск: Ctrl+F.
+
+КАК ДОБАВЛЯТЬ В ENERGY
+В поле «+ ID» вставляйте только содержимое квадратных скобок.
+Например: minecraft:iron_ingot или minecraft:dye@4.
+Затем укажите русское имя из списка. Energy сохранит его и будет показывать изменение количества.
+Этот каталог — справочник. Не копируйте его целиком в /home/energy-items.txt: там другой формат.
+Не рекомендуется одновременно отслеживать тысячи предметов: выбирайте нужные.
+Суффикс @число различает варианты. ID без @ в energy суммирует все значения damage.
+Регистр, точки, двоеточия и символ | в ID необходимо сохранять.
+
+ИСТОЧНИКИ И ГРАНИЦЫ ПОЛНОТЫ
+Прочитаны архивы mods и nestedmods, доступные ресурс-паки и переводы config/txloader.
+ID и известные варианты взяты из config/AppliedEnergistics2/recipes/items.csv.
+Выгрузка AE2 содержит 11660 строк; повторяющиеся ID объединены.
+Дополнительно включены 229 базовых ID из config/gamedata_snapshot.json, отсутствующих в выгрузке.
+Они отдельно перечислены в Предметы_дополнение_из_реестра.txt; их варианты по meta могут быть не перечислены.
+Включены также технические, скрытые и творческие предметы: не каждый можно получить в выживании.
+Наличие в локальном реестре не гарантирует доступность на конкретном сервере.
+Выгрузка AE2 датирована 15.10.2026. Это полный каталог найденных локальных ID и известных вариантов,
+но не доказательство полноты всех актуальных вариантов предметов на сервере.
+Пчёлы, саженцы, жидкости в ёмкостях, зачарования и другие NBT-разновидности могут иметь одинаковый ID@meta.
+Текущая energy не различает NBT. Такие разновидности объединены по ID; отображается одно имя.
+
+НАЗВАНИЯ
+Использованы русские названия выгрузки и доступных файлов локализации модов.
+Для 1049 строк без перевода добавлены русские пояснения; они не являются официальной локализацией.
+Эти строки отдельно перечислены в Предметы_русские_пояснения.txt.
+Полностью нерасшифрованных названий: 0. Они помечены «Предмет без перевода».
+
+В energy.lua до версии 2026-10-22-item-ids не принимались 235 строк этого каталога.
+Причины: символ | в пространстве имён и пробелы в имени предмета.
+Парсер в C:\Lua\energy.lua обновлён: теперь эти ID BuildCraft, ProjectRed и BiblioCraft допустимы.
+Если в игровом компьютере старая версия energy.lua, обновите её из C:\Lua. ID нельзя изменять.
+
+КОЛИЧЕСТВО СТРОК ПО МОДАМ
+AdvancedSolarPanel: 30
+ae2stuff: 96
+ae2wct: 5
+AFSU: 2
+appliedenergistics2: 407
+Avaritia: 43
+Baubles: 1
+BiblioCraft: 309
+BinnieCore: 38
+Botany: 266
+BuildCraft|Builders: 9
+BuildCraft|Compat: 1
+BuildCraft|Core: 20
+BuildCraft|Energy: 5
+BuildCraft|Factory: 8
+BuildCraft|Robotics: 5
+BuildCraft|Silicon: 18
+BuildCraft|Transport: 83
+CarpentersBlocks: 27
+chisel: 1373
+CompactSolars: 4
+computronics: 42
+customnpcs: 533
+DraconicEvolution: 107
+DragonsRadioMod: 4
+drive_events: 17
+drivetrades: 1
+dwcity: 1034
+DwQuests: 46
+EnderIO: 273
+etfuturum: 291
+ExtraBees: 68
+ExtraTrees: 120
+ExtraUtilities: 416
+Forestry: 617
+ForgeMicroblock: 16
+ForgeRelocation: 1
+Genetics: 29
+GraviSuite: 22
+IC2: 446
+IC2NuclearControl: 24
+IronChest: 17
+jgendustry: 57
+MCFrames: 2
+metadrive: 294
+metathermal: 3
+metatweaker: 46
+metawarputils: 4
+minecraft: 555
+MineFactoryReloaded: 278
+msbingoblocks: 2
+OpenBlocks: 125
+OpenComputers: 149
+OpenPeripheral: 7
+opensecurity: 24
+PowerUtils: 5
+ProjRed|Core: 5
+ProjRed|Expansion: 9
+ProjRed|Exploration: 48
+ProjRed|Fabrication: 3
+ProjRed|Illumination: 12
+ProjRed|Integration: 1
+ProjRed|Transmission: 2
+ProjRed|Transportation: 3
+ThermalDynamics: 47
+ThermalExpansion: 38
+ThermalFoundation: 248
+UniDict: 4
+universalsingularities: 73
+Ztones: 559
+
+АРХИВЫ: число файлов перевода (0 — переводов нет; -1 — заглушка или не ZIP)
+mods\++unimixins-all-1.7.10-0.3.1.jar: 0
+mods\+DriveEvents-1.7.10-1.0.0-client-shadow.jar: 2
+mods\+txloader-1.8.4.jar: 0
+mods\1.7.10\CodeChickenCore-1.4.22.jar: 2
+mods\1.7.10\ForgeMultipart-client-1.7.10-1.2.0.347-universal.jar: 2
+mods\1.7.10\ForgeRelocation-0.3.1.jar: 1
+mods\1.7.10\MrTJPCore-1.3.7.jar: 0
+mods\AdvancedSolarPanel-1.7.10-3.5.1-client.jar: 2
+mods\AE2-client.jar: 2
+mods\ae2fc-1.2.21-gtnh.jar: 0
+mods\AFSU-1.2.3a-Freeza.jar: 2
+mods\AmdGLFix-1.7.10-1.0.jar: 0
+mods\appliedenergistics2-rv3-beta-6.jar: 0
+mods\archaicfix-0.7.9.jar: 0
+mods\AsieLib-0.6.0-master+51efb0d828-dirty.jar: 2
+mods\AsyncMipmap-1.7.10-1.0.0-obf.jar: 0
+mods\Avaritia-1.13.jar: 2
+mods\Baubles-CLIENT-1.7.10-1.0.1.10.jar: 2
+mods\beebetteratbees-0.4.4-GTNH.jar: 1
+mods\BiblioCraft-1.11.7.jar: 2
+mods\binnie-mods-1.7.10-2.0.22.7.jar: 10
+mods\BrandonsCore-1.0.0.12.jar: 0
+mods\bugtorch-1.2.14.jar: 1
+mods\buildcraft-7.1.23-client.jar: 2
+mods\buildcraft-compat-7.1.7-client.jar: 2
+mods\Carpenters-Blocks-3.3.8.1.jar: 2
+mods\Chisel-2.9.5.11.jar: 2
+mods\CoFHCore-[1.7.10]3.1.4-329-client.jar: 2
+mods\common-lib-1.1.18.jar: 0
+mods\CompactSolars-1.7.10-4.4.39.315.jar: 2
+mods\component-lib-1.5.2.jar: 0
+mods\Computronics-1.7.10-1.6.5.jar: 2
+mods\coretweaks-0.3.4.7-GTNH.jar: 1
+mods\Cosmetic-Wings-1.7.10-0.4.2.17.jar: 1
+mods\CosmeticArmorReworked-1.7.10-v6b.jar: 1
+mods\CraftTweaker-1.7.10-3.2.2-GTNH-legacy.jar: 0
+mods\creativecore-v1.3.24-mc1.7.10.jar: 0
+mods\CustomNPCs-1.8.6-client.jar: 2
+mods\Draconic-Evolution-1.7.10-1.0.2h.jar: 2
+mods\DragonsRadio-1.7.10-client.jar: 2
+mods\drive_monolit-1.1.0-client.jar: 0
+mods\drivetrades-1.0.0-client.jar: 1
+mods\DwCity-2.23-client-final.jar: 2
+mods\DwCore-1.2-client-final.jar: 0
+mods\DwQuests-1.2-client-final.jar: 2
+mods\elegant-networking-1.7.10-3.14.jar: 0
+mods\EnderCore-0.2.0.39_beta.jar: 2
+mods\EnderIO-2.3.0.429_beta.jar: 2
+mods\entityculling-1.6.4-mc1.7.10.jar: 0
+mods\essentials-1.0.0-client.jar: 0
+mods\Et_Futurum_Requiem-2.4.3-client.jar: 2
+mods\ExtraCells-1.7.10-2.3.14b200-JavaEdition-client.jar: 0
+mods\extrautilities-1.2.12.jar: 2
+mods\FontFix-1.7.10.jar: 0
+mods\forestry_1.7.10-4.2.16.64-client.jar: 2
+mods\ForgeNBTEdit-universal-1.0.0.test.jar: 0
+mods\FpsReducer-mc1.7.10-1.10.3.jar: 1
+mods\GeckoLib-1.7.10-1.0.0-shadow.jar: 0
+mods\Gendustry-1.1-JavaEdition-client.jar: 2
+mods\GraviSuite-1.7.10-2.0.3-client-daniorio.jar: 2
+mods\gtnhlib-0.6.16.jar: 0
+mods\hodgepodge-2.6.13.jar: 1
+mods\industrialcraft-2-2.2.827-experimental-client-daniorio.jar: 4
+mods\inventorytweaks-1.7.1.jar: 2
+mods\ironchest-6.062.742-CLIENT.jar: 2
+mods\jarjar-0.3.7-beta.jar: 0
+mods\journeymap-1.7.10-5.2.8-unlimited.jar: 2
+mods\LanguagePatcher-1.7.10.jar: 0
+mods\LFTeam-AE2Stuff-1.7.10-client.jar: 2
+mods\LuxinfineAdditionalCapacitors-4.1-client.jar: 0
+mods\LuxinfineAE2Hooks-6.8-client.jar: 0
+mods\LuxinfineContents-3.0-client.jar: 0
+mods\LuxinfineDinnerboneRemover-1.7.10-client.jar: 0
+mods\LuxinfineEnderAdditionals-6.2-client.jar: 0
+mods\LuxinfineFMLLogActivator-1.7.10-1.0-client.jar: 0
+mods\LuxinfineHelper-1.7.10-1.3.5-client.jar: 2
+mods\LuxinfineNetworkErrorDebug-1.1-client.jar: 0
+mods\LuxinfineNetworkOptimize-1.7.10-client.jar: 0
+mods\LuxinfinePacketUnlimitter-1.7.10-client.jar: 0
+mods\LuxinfineSaPOptimizer-1.7.10-client.jar: 0
+mods\lwjgl3ify-3.0.39-meta.jar: 0
+mods\macro-keybind-0.10.12.jar: 1
+mods\metacontentfactory-client.jar: 0
+mods\metadrive-1.0.0-client.jar: 2
+mods\MetaDriveFixes-1.7.10-1.0.0-client.jar: 2
+mods\metahandshakepatcher-1.0.0-client.jar: 0
+mods\metalib-2.1.0.jar: 0
+mods\metalib-2.1.3-client.jar: 0
+mods\metalocker-1.2.0-client.jar: 1
+mods\metaprices-1.0.0-client.jar: 1
+mods\metastartmod-skydrive-1.0.0.jar: 1
+mods\metathermal-1.0.0-client.jar: 2
+mods\metatweaker-1.0.0-client.jar: 1
+mods\metaui-1.0.5-client.jar: 0
+mods\metaui-skydrive-1.7.10-1.7.12.jar: 0
+mods\MetaWarpUtils-1.0.0-client.jar: 1
+mods\metaworlds-1.0.0-client.jar: 1
+mods\MineFactoryReloaded-[1.7.10]2.8.2B1-201.jar: 0
+mods\MineTuner-1.3.jar: 0
+mods\MixedMod-1.4-client.jar: 0
+mods\modernsplash-1.7.10-1.2.1.jar: 0
+mods\ModTweaker2-0.11.0.jar: 0
+mods\MouseTweaks-2.4.20-GTNH (1).jar: 0
+mods\MSCore-1.7.10-1.0.35-client.jar: 0
+mods\MSCustomize-1.7.10-1.0.0-client.jar: 0
+mods\MSGifts-1.7.10-1.0.10-client.jar: 2
+mods\MSShop-1.7.10-1.0.17-client.jar: 0
+mods\NbtJsonFix-1.7.10-1.0.jar: 0
+mods\neiaddons-1.12.15-DEV-mc1.7.10.jar: 2
+mods\NettyPatch-0.3.3.jar: 0
+mods\NotEnoughItems-2.7.59-GTNH-patched.jar: 2
+mods\NuclearControl-2.4.3a-client.jar: 2
+mods\ObjectStreamBlocker-1.7.10-1.1.jar: 0
+mods\OFNoChunkLoading-1.7.10-1.0.jar: 0
+mods\OFNoFastRender-1.7.10.jar: 0
+mods\OpenBlocks-1.7.10-1.6.jar: 2
+mods\OpenComputers-MC1.7.10-1.8.0-snapshot-20250407+unknown-universal.jar: 2
+mods\OpenModsLib-1.7.10-0.10.jar: 2
+mods\OpenPeripheral-1.7.10-AIO-8.jar: 3
+mods\OpenSecurity-1.7.10-1.0-99.jar: 1
+mods\OptiFine_1.7.10_HD_U_E7.jar: 2
+mods\PowerUtils.jar: 2
+mods\ProjectRed-4.7.0pre13.3.jar: 2
+mods\redirectionor-1.8.for.1.7.10.jar: 0
+mods\SourEngine-3.0.0-client.jar: 0
+mods\spark-1.7.10-client.jar: 0
+mods\tabbychat-1.12.2.jar: 2
+mods\tabmod.jar: 0
+mods\ThaumcraftApi-1.7.10-4.2.3.5.jar: 0
+mods\ThermalDynamics-[1.7.10]1.2.1-172-client.jar: 2
+mods\ThermalExpansion-[1.7.10]4.1.5-248-client.jar: 2
+mods\ThermalFoundation-[1.7.10]1.2.6-118-client.jar: 2
+mods\UniDict-1.7.10-2.9.2.jar: 0
+mods\UniversalSingularities[Version 8]-1.7.10.jar: 1
+mods\Waila-1.5.8-client.jar: 2
+mods\WirelessCraftingTerminal-1.7.10-client.jar: 2
+mods\worldborder-1.0.0-client.jar: 2
+mods\WorldEditCUI-1.7.10-1.0.0.jar: 0
+mods\zs-cui-1.0.jar: 0
+mods\zset-2.0.0-client.jar: 1
+mods\Ztones-1.7.10-2.2.1-client.jar: 1
+mods\carpentersblocks\CarpentersBlocksCachedResources.zip: 0
+resourcepacks\DwCity-Pack.zip: 0
