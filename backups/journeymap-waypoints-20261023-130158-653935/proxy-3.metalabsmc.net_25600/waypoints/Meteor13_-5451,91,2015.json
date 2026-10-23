@@ -1,0 +1,17 @@
+{
+  "id": "Meteor13_-5451,91,2015",
+  "name": "Meteor13",
+  "icon": "waypoint-normal.png",
+  "x": -5451,
+  "y": 91,
+  "z": 2015,
+  "r": 115,
+  "g": 236,
+  "b": 137,
+  "enable": true,
+  "type": "Normal",
+  "origin": "JourneyMap",
+  "dimensions": [
+    0
+  ]
+}

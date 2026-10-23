@@ -1,0 +1,17 @@
+{
+  "id": "meteor12_2266,76,1997",
+  "name": "meteor12",
+  "icon": "waypoint-normal.png",
+  "x": 2266,
+  "y": 76,
+  "z": 1997,
+  "r": 153,
+  "g": 203,
+  "b": 147,
+  "enable": true,
+  "type": "Normal",
+  "origin": "JourneyMap",
+  "dimensions": [
+    0
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "id": "жите_-5318,70,-5359",
+  "name": "жите",
+  "icon": "waypoint-normal.png",
+  "x": -5318,
+  "y": 70,
+  "z": -5359,
+  "r": 141,
+  "g": 61,
+  "b": 251,
+  "enable": true,
+  "type": "Normal",
+  "origin": "JourneyMap",
+  "dimensions": [
+    0
+  ]
+}

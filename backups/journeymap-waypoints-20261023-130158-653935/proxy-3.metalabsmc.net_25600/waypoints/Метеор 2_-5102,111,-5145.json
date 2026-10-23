@@ -1,0 +1,17 @@
+{
+  "id": "Метеор 2_-5102,111,-5145",
+  "name": "Метеор 2",
+  "icon": "waypoint-normal.png",
+  "x": -5102,
+  "y": 111,
+  "z": -5145,
+  "r": 50,
+  "g": 48,
+  "b": 243,
+  "enable": true,
+  "type": "Normal",
+  "origin": "JourneyMap",
+  "dimensions": [
+    0
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "id": "Смерть 14:43:38 22.10.2026_290,81,6509",
+  "name": "Смерть 14:43:38 22.10.2026",
+  "icon": "waypoint-death.png",
+  "x": 290,
+  "y": 81,
+  "z": 6509,
+  "r": 63,
+  "g": 233,
+  "b": 31,
+  "enable": true,
+  "type": "Death",
+  "origin": "JourneyMap",
+  "dimensions": [
+    -100
+  ]
+}

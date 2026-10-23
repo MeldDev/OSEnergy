@@ -1,0 +1,17 @@
+{
+  "id": "Meteor4_5245,75,-5868",
+  "name": "Meteor4",
+  "icon": "waypoint-normal.png",
+  "x": 5245,
+  "y": 75,
+  "z": -5868,
+  "r": 50,
+  "g": 146,
+  "b": 218,
+  "enable": true,
+  "type": "Normal",
+  "origin": "JourneyMap",
+  "dimensions": [
+    0
+  ]
+}
