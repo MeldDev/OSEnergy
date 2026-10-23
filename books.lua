@@ -3,8 +3,8 @@ local config = {
   transposerAddress = "", -- Empty: select the only transposer; otherwise address/prefix.
   aeAddress = "",         -- Only used by --network; address/prefix of the ME component.
   inputSide = "up",
-  singleSide = "west",    -- Exactly one enchantment: keep chest.
-  rejectSide = "east",    -- More than two enchantments: disposal chest.
+  singleSide = "south",   -- Exactly one enchantment: keep chest.
+  rejectSide = "north",   -- All other books: disposal chest.
   interval = 3,
 }
 
@@ -18,6 +18,7 @@ local function isBook(stack)
 end
 
 -- Missing enchantments on an enchanted book means unknown, never zero.
+-- Only a confirmed count of one is kept; all other books go to disposal.
 -- hasTag and enchantment levels cannot tell us the number of enchantments.
 local function enchantmentCount(stack)
   if stack.enchantments == nil then
@@ -42,8 +43,7 @@ end
 
 local function destination(count)
   if count == 1 then return config.singleSide, "ХРАНЕНИЕ" end
-  if count and count > 2 then return config.rejectSide, "УТИЛИЗАЦИЯ" end
-  return nil, count == nil and "НЕИЗВЕСТНО: оставить" or "ОСТАВИТЬ"
+  return config.rejectSide, "УТИЛИЗАЦИЯ"
 end
 
 local function selectComponent(prefix, predicate, description)
@@ -103,7 +103,7 @@ local function sorter()
     local slots = inventory(input, config.inputSide .. " (вход)")
     inventory(single, config.singleSide .. " (хранение)")
     inventory(reject, config.rejectSide .. " (утилизация)")
-    local moved, held = 0, 0
+    local moved, blocked = 0, 0
     for slot = 1, slots do
       local stack, reason = tp.getStackInSlot(input, slot)
       assert(reason == nil, "Не удалось прочитать слот " .. slot .. ": " .. tostring(reason))
@@ -120,23 +120,22 @@ local function sorter()
           if amount > 0 then
             print("Слот " .. slot .. ": " .. describe(stack, count) .. " -> " .. action)
           else
+            blocked = blocked + (stack.size or 1)
             print("Слот " .. slot .. ": перенос в " .. target .. " не выполнен. Проверьте место/доступ.")
           end
-        else
-          held = held + (stack.size or 1)
         end
       end
       if slot % 16 == 0 then os.sleep(0) end
     end
-    if move then print("Перемещено: " .. moved .. "; оставлено книг 0/2/?: " .. held) end
+    if move then print("Перемещено: " .. moved .. "; не удалось перенести книг: " .. blocked) end
   end
   if mode == "--check" then
     print("Проверка. Предметы не перемещаются.")
     scan(false)
     return
   end
-  print("Сортировка: 1 чар -> " .. config.singleSide .. "; 3+ -> " .. config.rejectSide)
-  print("Книги 0/2/? остаются во входном сундуке. Выход: Ctrl+C.")
+  print("Сортировка: 1 чар -> " .. config.singleSide .. "; остальные книги -> " .. config.rejectSide)
+  print("Книги без распознанных чар тоже идут в утилизацию. Выход: Ctrl+C.")
   repeat
     scan(true)
     if mode == "--once" then return end

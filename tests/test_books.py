@@ -6,7 +6,7 @@ from lupa.lua53 import LuaRuntime as Lua53
 SOURCE = (Path(__file__).resolve().parents[1] / "books.lua").read_text(encoding="utf-8")
 MOCKS = r'''
 logs, errors, moves, inventory = {}, {}, {}, {}
-sizes = {[1]=27, [4]=27, [5]=27}
+sizes = {[1]=27, [2]=27, [3]=27}
 types = {tp="transposer", me="me_controller"}
 local function book(count, level)
   local stack = {name="minecraft:enchanted_book", size=1, hasTag=true}
@@ -38,7 +38,7 @@ local tp = {
     return inventory[slot]
   end,
   transferItem=function(src,dest,count,slot)
-    assert(src==1 and (dest==4 or dest==5) and count==1)
+    assert(src==1 and (dest==2 or dest==3) and count==1)
     if transferFailure then return nil,"not enough energy" end
     moves[#moves+1]={slot=slot,dest=dest}
     if full then return 0 end
@@ -63,7 +63,7 @@ package.preload.component=function() return {
   end,
   proxy=function(address) return types[address]=="transposer" and tp or me end
 } end
-package.preload.sides=function() return {up=1,west=4,east=5} end
+package.preload.sides=function() return {up=1,north=2,south=3,west=4,east=5} end
 print=function(message) logs[#logs+1]=tostring(message) end
 io.stderr={write=function(_,message) errors[#errors+1]=message end}
 os.sleep=function() end
@@ -80,16 +80,16 @@ def run(runtime, mode, setup="", check=""):
 
 for runtime in (Lua52, Lua53):
     run(runtime, "--once", check=r'''
-      assert(#errors==0 and #moves==4)
-      assert(moves[1].slot==1 and moves[1].dest==4)
-      assert(moves[2].slot==3 and moves[2].dest==5)
-      assert(moves[3].slot==4 and moves[3].dest==5)
-      assert(moves[4].slot==8 and moves[4].dest==4)
-      for _,slot in ipairs({2,5,6,7,9,10,11}) do assert(inventory[slot]) end
+      assert(#errors==0 and #moves==10)
+      for _,move in ipairs(moves) do
+        assert(move.dest==((move.slot==1 or move.slot==8) and 3 or 2))
+        assert(inventory[move.slot]==nil)
+      end
+      assert(inventory[7], 'non-book must remain')
     ''')
     run(runtime, "--check", check="assert(#moves==0 and #errors==0 and #logs>5)")
-    run(runtime, "--once", "full=true", "assert(#moves==4 and inventory[1] and inventory[3] and #errors==0)")
-    run(runtime, "--once", "sizes[5]=nil", "assert(#moves==0 and #errors==1)")
+    run(runtime, "--once", "full=true", "assert(#moves==10 and inventory[1] and inventory[2] and inventory[3] and #errors==0)")
+    run(runtime, "--once", "sizes[2]=nil", "assert(#moves==0 and #errors==1)")
     run(runtime, "--once", "readFailure=true", "assert(#moves==0 and #errors==1)")
     run(runtime, "--once", "transferFailure=true", "assert(#moves==0 and #errors==1 and inventory[1])")
     run(runtime, "--once", "types.tp2='transposer'", "assert(#moves==0 and #errors==1)")
