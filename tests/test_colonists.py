@@ -241,6 +241,18 @@ for Runtime in (Lua52, Lua53):
           TEST_COMMAND({kind="offer",target=2,give="wood",want="grain",giveN=1,wantN=1})
           TEST_RENDER(nil)
           captures.board=screenCells; screenCells={}
+          host.game.phase="roll"; TEST_SYNC(); TEST_RENDER(nil)
+          captures.roll=screenCells; screenCells={}
+          local function rollButton()
+            for _,b in ipairs(TEST_INSPECT().buttons) do if b.label=="БРОСИТЬ КУБИКИ" then return b end end
+            error("top roll button missing")
+          end
+          local b=rollButton(); assert(b.h==3 and b.y<=3)
+          local revision=host.game.revision
+          b.fn(); assert(host.game.revision==revision+1 and host.game.phase~="roll")
+          host.game.turn=2; host.game.phase="roll"; TEST_SYNC(); TEST_RENDER(nil)
+          revision=host.game.revision; rollButton().fn(); assert(host.game.revision==revision)
+          host.game.turn=1; host.game.phase="build"; TEST_SYNC()
           TEST_RENDER({kind="help"}); captures.help=screenCells; screenCells={}
           TEST_RENDER({kind="ports"}); captures.ports=screenCells; screenCells={}
           TEST_RENDER({kind="trade",give=1,want=2,giveN=1,wantN=1,target=2})
@@ -259,7 +271,7 @@ for Runtime in (Lua52, Lua53):
     ''')
     instrumented = SOURCE.replace(
         'local ok,reason=xpcall(main,debug.traceback)',
-        '''TEST_INSPECT=function() return {host=host, snapshot=snapshot,pending=pending,screen=screen} end
+        '''TEST_INSPECT=function() return {host=host, snapshot=snapshot,pending=pending,screen=screen,buttons=buttons} end
 TEST_COMMAND=command
 TEST_SYNC=function() acceptState(host:state(1)) end
 TEST_RENDER=function(m) modal=m; previous={}; render() end
@@ -273,7 +285,7 @@ local ok,reason=xpcall(main,debug.traceback)''')
         lua.execute('for i=0,15 do assert(palette[i]==i) end')
         if Runtime is Lua53 and width != 100:
             from PIL import Image, ImageDraw, ImageFont
-            cells = lua.globals().captures.board
+            cells = lua.globals().captures.roll
             image = Image.new('RGB', (width*10, height*20))
             draw = ImageDraw.Draw(image)
             font = ImageFont.truetype('C:/Windows/Fonts/consola.ttf', 16)
@@ -284,7 +296,11 @@ local ok,reason=xpcall(main,debug.traceback)''')
                     cell = cells[y][x]
                     px, py = (x-1)*10, (y-1)*20
                     draw.rectangle((px, py, px+9, py+19), fill=rgb(cell[3]))
-                    draw.text((px, py), cell[1], font=font, fill=rgb(cell[2]))
+                    if cell[1] in ('▄', '▀'):
+                        block_y = py+10 if cell[1] == '▄' else py
+                        draw.rectangle((px, block_y, px+9, block_y+9), fill=rgb(cell[2]))
+                    else:
+                        draw.text((px, py), cell[1], font=font, fill=rgb(cell[2]))
             filename = 'colonists-preview.png' if width == 160 else f'colonists-preview-{width}.png'
             image.save(ROOT / filename)
     lua.execute('step=0; fail=true; errors={}')
@@ -330,7 +346,7 @@ local ok,reason=xpcall(main,debug.traceback)''')
           for _,r in ipairs(Core.resources) do server.game:give(2,r,4) end
           respond({{address="host",body=server:state(2)}}); clientStage=2
         elseif clientStage==2 and info.snapshot and info.snapshot.game then
-          clientStage=3; return "touch","screen",57,12,0,"player"
+          clientStage=3; return "touch","screen",57,14,0,"player"
         elseif clientStage==3 then
           for eid=1,72 do if server.game:canRoad(2,eid,false) then chosenEdge=eid; break end end
           assert(chosenEdge)

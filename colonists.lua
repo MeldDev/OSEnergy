@@ -514,6 +514,11 @@ local function button(x,y,w,s,fn,bg)
   rect(x,y,w,1,bg or color.panel); center(x,y,w,s,color.text)
   buttons[#buttons+1]={x=x,y=y,w=w,h=1,fn=fn,label=s}
 end
+local function largeButton(x,y,w,s,fn,enabled)
+  rect(x,y,w,3,enabled and color.wood or color.panel)
+  center(x,y+1,w,s,enabled and color.text or color.muted)
+  buttons[#buttons+1]={x=x,y=y,w=w,h=3,label=s,fn=enabled and fn or function() end}
+end
 local function flush()
   for y=1,H do
     local x=1
@@ -605,17 +610,27 @@ local function drawBoard(s)
   for id,t in ipairs(geometry.tiles) do
     local x,y=boardPosition(t); local terrain=s.tiles[id]
     if spacious then
-      -- Small, separated hex faces; the shoreline is left open around them.
-      rect(x-2,y-2,5,1,color[terrain.resource])
-      rect(x-4,y-1,9,3,color[terrain.resource])
-      rect(x-2,y+2,5,1,color[terrain.resource])
-      center(x-4,y-1,9,labels[terrain.resource],color.bg)
-      center(x-4,y+1,9,s.robber==id and "R" or tostring(terrain.number or "--"),color.text)
-      buttons[#buttons+1]={x=x-4,y=y-2,w=9,h=5,fn=function() tileClick(id) end}
+      -- Symmetric point-up hexagons; half blocks soften the top and bottom.
+      local terrainColor=color[terrain.resource]
+      text(x-1,y-3,"▄▄▄",terrainColor,color.bg)
+      rect(x-3,y-2,7,1,terrainColor)
+      text(x-3,y-2,"▄",terrainColor,color.bg); text(x+3,y-2,"▄",terrainColor,color.bg)
+      rect(x-5,y-1,11,3,terrainColor)
+      rect(x-3,y+2,7,1,terrainColor)
+      text(x-3,y+2,"▀",terrainColor,color.bg); text(x+3,y+2,"▀",terrainColor,color.bg)
+      text(x-1,y+3,"▀▀▀",terrainColor,color.bg)
+      center(x-5,y-1,11,labels[terrain.resource],color.bg)
+      local token=s.robber==id and " R " or " "..tostring(terrain.number or "--").." "
+      local tokenX=x-math.floor(unicode.len(token)/2)
+      text(tokenX,y+1,token,(terrain.number==6 or terrain.number==8) and playerColors[2] or color.text,color.panel)
+      buttons[#buttons+1]={x=x-5,y=y-2,w=11,h=5,fn=function() tileClick(id) end}
     else
-      rect(x-2,y-1,5,2,color[terrain.resource])
-      center(x-2,y-1,5,short[terrain.resource],color.bg)
-      center(x-2,y,5,s.robber==id and "R" or tostring(terrain.number or "--"),color.text)
+      local terrainColor=color[terrain.resource]
+      rect(x-1,y-1,3,2,terrainColor)
+      text(x-2,y-1,"▄",terrainColor,color.bg); text(x+2,y-1,"▄",terrainColor,color.bg)
+      text(x-2,y,"▀",terrainColor,color.bg); text(x+2,y,"▀",terrainColor,color.bg)
+      center(x-1,y-1,3,short[terrain.resource],color.bg)
+      center(x-1,y,3,s.robber==id and "R" or tostring(terrain.number or "--"),color.text)
       buttons[#buttons+1]={x=x-2,y=y-1,w=5,h=2,fn=function() tileClick(id) end}
     end
   end
@@ -777,17 +792,26 @@ local function render()
   elseif screen=="game" then
     local s=snapshot.game; local p=s.players[you]
     if s.phase=="setup" then tool=s.setupRoad and "road" or "settlement" end
-    text(3,3,s.players[s.turn].name.."  /  "..phaseNames[s.phase],playerColors[s.turn],nil,boardWidth-3)
+    local hy=spacious and 3 or 2
+    local rollW=spacious and 35 or 25
+    local rollX=W-rollW-3
+    rect(3,hy,W-5,spacious and 4 or 3,color.panel)
+    text(5,hy,"Ход игрока: "..s.players[s.turn].name..(s.turn==you and "  /  ВЫ" or ""),playerColors[s.turn],nil,rollX-7)
+    local diceLabel=s.dice and "  /  "..s.dice[1].." + "..s.dice[2].." = "..(s.dice[1]+s.dice[2]) or ""
+    text(5,hy+2,phaseNames[s.phase]..(not spacious and diceLabel or ""),color.muted,nil,rollX-7)
+    largeButton(rollX,hy,rollW,"БРОСИТЬ КУБИКИ",function() command({kind="roll"}) end,
+      you==s.turn and s.phase=="roll" and not pending and not s.winner)
+    if spacious and s.dice then center(rollX,hy+3,rollW,"Выпало: "..s.dice[1].." + "..s.dice[2].." = "..(s.dice[1]+s.dice[2]),color.gold) end
     drawBoard(s)
     local px=panelX+2; local pw=W-panelX-4
-    local playerY=spacious and 5 or 3
-    rect(panelX,playerY,pw+4,spacious and (#s.players*2+2) or 5,color.panel)
+    local playerY=spacious and 9 or 5
+    rect(panelX,playerY,pw+4,spacious and (#s.players*2+1) or 5,color.panel)
     for id,player in ipairs(s.players) do
       local row=playerY+(spacious and id*2-1 or id)
       text(px,row,id.." "..unicode.sub(player.name,1,spacious and 18 or 10),playerColors[id],nil,pw-9)
       text(W-12,row,player.score.." оч. "..player.count.." к.",color.muted,nil,11)
     end
-    local ry=spacious and 18 or 9
+    local ry=spacious and 18 or 11
     local columns=spacious and 5 or 3
     local cw=math.floor((pw+1)/columns)
     for i,r in ipairs(Core.resources) do
@@ -798,7 +822,7 @@ local function render()
         text(x+1,y+2,tostring(p.hand[r]),color.gold)
       else text(x,y,unicode.sub(labels[r],1,1)..":"..p.hand[r],color.text,nil,cw-1) end
     end
-    local buildY=spacious and 27 or 12
+    local buildY=spacious and 27 or 14
     local bw=math.floor((pw-2)/3)
     local function selectTool(kind,message) tool=kind; setNotice(message) end
     button(px,buildY,bw,spacious and "1  Дорога" or "1 Дор.",function() selectTool("road","Лес + глина. Выберите ребро.") end,tool=="road" and color.edge or nil)
@@ -809,14 +833,13 @@ local function render()
       local costs={road="1 лес + 1 глина",settlement="Лес, глина, шерсть, зерно",city="2 зерна + 3 руды"}
       text(px,29,costs[tool],color.muted,nil,pw)
     end
-    local ay=spacious and 34 or 14
+    local ay=spacious and 34 or 16
     local aw=math.floor((pw-2)/2)
-    button(px,ay,aw,"Кубики"..(s.dice and " "..s.dice[1].."+"..s.dice[2] or ""),function() command({kind="roll"}) end)
-    button(px+aw+2,ay,aw,"Конец хода",function() command({kind="end"}) end,color.edge)
+    button(px,ay,pw,"Завершить ход",function() command({kind="end"}) end,color.edge)
     button(px,ay+(spacious and 3 or 2),aw,"Обмен",openTrade)
     button(px+aw+2,ay+(spacious and 3 or 2),aw,"Карты "..#p.cards,openCards)
     button(px,ay+(spacious and 6 or 4),pw,"Купить карту",function() command({kind="buy"}) end)
-    local specialY=spacious and 43 or 20
+    local specialY=spacious and 43 or 22
     if s.phase=="discard" and s.discards[you] then
       button(px,specialY,pw,"Сбросить "..s.discards[you].." карт",function() modal={kind="discard",cards={}} end,color.brick)
     elseif s.offer and (s.offer.target==you or s.turn==you) then
