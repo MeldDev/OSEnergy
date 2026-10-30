@@ -464,7 +464,12 @@ if args[1]=="--help" then
 end
 local modem=component.modem
 if not modem then io.stderr:write("Connect a network card (modem). Internet cards are not modems.\n"); return end
-local W,H=math.min(100,maxW),math.min(32,maxH)
+-- Use the full tier-3 grid: characters are smaller on the physical monitor.
+local W,H=math.min(160,maxW),math.min(50,maxH)
+local spacious=W>=120 and H>=42
+local boardWidth=spacious and math.floor(W*0.60)-2 or 52
+local panelX=boardWidth+3
+local showNodes=false
 local oldW,oldH=gpu.getResolution()
 local oldFG,oldFP=gpu.getForeground(); local oldBG,oldBP=gpu.getBackground()
 local oldDepth=gpu.getDepth(); local oldPalette={}
@@ -506,8 +511,8 @@ local function center(x,y,w,s,fg,bg)
   s=unicode.sub(s,1,w); text(x+math.floor((w-unicode.len(s))/2),y,s,fg,bg,w)
 end
 local function button(x,y,w,s,fn,bg)
-  rect(x,y,w,1,bg or color.edge); center(x,y,w,s,color.text)
-  buttons[#buttons+1]={x=x,y=y,w=w,h=1,fn=fn}
+  rect(x,y,w,1,bg or color.panel); center(x,y,w,s,color.text)
+  buttons[#buttons+1]={x=x,y=y,w=w,h=1,fn=fn,label=s}
 end
 local function flush()
   for y=1,H do
@@ -572,14 +577,19 @@ local function openCards()
   modal={kind="cards",resource=1,resource2=2}
 end
 local function boardPosition(n)
-  return 27+n.x*2, math.floor((H-25)/2)+13+n.y
+  if spacious then return math.floor(boardWidth/2)+n.x*3,math.floor(H/2)+n.y*2 end
+  return 27+n.x*2,math.floor((H-25)/2)+13+n.y
 end
 local function gameHelper(s)
   return setmetatable({g=geometry,nodes=s.nodes,roads=s.roads,setupNode=s.setupNode},Game)
 end
 local function tileClick(id)
   local s=snapshot.game
-  if you~=s.turn or s.phase~="robber" then setNotice("Буква гекса: "..string.char(64+id)); return end
+  if you~=s.turn or s.phase~="robber" then
+    local t=s.tiles[id]
+    setNotice("Гекс "..string.char(64+id)..": "..labels[t.resource]..(t.number and " / добыча при "..t.number or "") )
+    return
+  end
   local found={}
   for _,node in ipairs(geometry.tiles[id].nodes) do
     local n=s.nodes[node]
@@ -594,12 +604,20 @@ local function drawBoard(s)
   local helper=gameHelper(s)
   for id,t in ipairs(geometry.tiles) do
     local x,y=boardPosition(t); local terrain=s.tiles[id]
-    rect(x-2,y-1,6,3,color[terrain.resource])
-    center(x-2,y-1,6,short[terrain.resource],color.bg)
-    center(x-2,y,6,string.char(64+id).." "..(terrain.number or "--"),
-      (terrain.number==6 or terrain.number==8) and color.text or color.bg)
-    if s.robber==id then center(x-2,y+1,6,"[R]",color.text,color.edge) end
-    buttons[#buttons+1]={x=x-2,y=y-1,w=6,h=3,fn=function() tileClick(id) end}
+    if spacious then
+      -- Small, separated hex faces; the shoreline is left open around them.
+      rect(x-2,y-2,5,1,color[terrain.resource])
+      rect(x-4,y-1,9,3,color[terrain.resource])
+      rect(x-2,y+2,5,1,color[terrain.resource])
+      center(x-4,y-1,9,labels[terrain.resource],color.bg)
+      center(x-4,y+1,9,s.robber==id and "R" or tostring(terrain.number or "--"),color.text)
+      buttons[#buttons+1]={x=x-4,y=y-2,w=9,h=5,fn=function() tileClick(id) end}
+    else
+      rect(x-2,y-1,5,2,color[terrain.resource])
+      center(x-2,y-1,5,short[terrain.resource],color.bg)
+      center(x-2,y,5,s.robber==id and "R" or tostring(terrain.number or "--"),color.text)
+      buttons[#buttons+1]={x=x-2,y=y-1,w=5,h=2,fn=function() tileClick(id) end}
+    end
   end
   for id,e in ipairs(geometry.edges) do
     local ax,ay=boardPosition(geometry.nodes[e.a]); local bx,by=boardPosition(geometry.nodes[e.b])
@@ -608,8 +626,16 @@ local function drawBoard(s)
       ((s.phase=="setup" and s.setupRoad and helper:canRoad(you,id,true)) or
        (s.phase=="build" and helper:canRoad(you,id,false)))
     local bg=owner and playerColors[owner] or legal and color.gold or color.edge
-    text(x,y,ax==bx and "|" or (ay==by and "--" or (ay<by and "\\" or "/")),owner and color.bg or bg)
-    if owner then rect(x,y,ax==bx and 1 or 2,1,bg) end
+    if spacious then
+      local steps=math.max(math.abs(bx-ax),math.abs(by-ay))
+      for step=2,steps-2 do
+        local xx=math.floor(ax+(bx-ax)*step/steps+0.5)
+        local yy=math.floor(ay+(by-ay)*step/steps+0.5)
+        text(xx,yy,owner and "=" or ".",bg)
+      end
+    else
+      text(x,y,owner and "=" or (legal and "+" or "."),bg)
+    end
     buttons[#buttons+1]={x=x-1,y=y,w=3,h=1,fn=function() command({kind="road",id=id}) end}
   end
   for id,n in ipairs(geometry.nodes) do
@@ -618,9 +644,12 @@ local function drawBoard(s)
       ((s.phase=="setup" and not s.setupRoad and helper:canSettle(you,id,true)) or
        (s.phase=="build" and helper:canSettle(you,id,false)))) or
       (tool=="city" and s.phase=="build" and building and building.owner==you and not building.city))
-    local bg=building and playerColors[building.owner] or legal and color.gold or color.panel
-    text(x,y,building and (building.city and "C" or "S")..building.owner or string.format("%02d",id),
-      (building or legal) and color.bg or (n.port and color.gold or color.muted),bg)
+    local fg=building and playerColors[building.owner] or legal and color.gold or color.muted
+    local symbol=building and (building.city and "C" or "s") or legal and "+" or "."
+    if showNodes then
+      text(x,y,building and symbol..building.owner or string.format("%02d",id),fg,color.bg)
+    else text(x,y,symbol,fg,color.bg) end
+    if spacious and n.port then text(x-1,y,"'",color.gold,color.bg) end
     buttons[#buttons+1]={x=x,y=y,w=2,h=1,fn=function()
       command({kind=tool=="city" and "city" or "settlement",id=id})
     end}
@@ -636,7 +665,7 @@ local function showModal()
   local s=snapshot.game; local p=s.players[you]
   if m.kind=="help" then
     local lines={"КОЛОНИСТЫ / СПРАВКА","Цель: 10 победных очков в свой ход.",
-      "Узел 01..54: S = поселение, C = город.","Клик по ребру: дорога; по гексу: разбойник.",
+      "s = поселение, C = город; N включает номера.","Клик по ребру: дорога; по гексу: разбойник.",
       "Золотые узлы/рёбра: допустимые места.","Дорога: 1 лес + 1 глина.",
       "Поселение: лес + глина + шерсть + зерно.","Город: 2 зерна + 3 руды; даёт 2 очка.",
       "Карта: шерсть + зерно + руда.","Карты развития — через кнопку «Карты».",
@@ -713,8 +742,8 @@ local function showModal()
 end
 local function render()
   frame={}; buttons={}; rect(1,1,W,H,color.bg)
-  text(3,1,"К О Л О Н И С Т Ы",color.gold)
-  text(W-27,1,"OC / NETWORK BOARD GAME",color.muted)
+  text(3,1,"Колонисты",color.gold)
+  text(W-15,1,"Сетевая игра",color.muted)
   if screen=="menu" or screen=="search" or screen=="direct" or screen=="connecting" then
     local x=math.floor((W-56)/2)
     rect(x,4,56,H-7,color.panel)
@@ -748,45 +777,59 @@ local function render()
   elseif screen=="game" then
     local s=snapshot.game; local p=s.players[you]
     if s.phase=="setup" then tool=s.setupRoad and "road" or "settlement" end
-    text(3,3,"Ход: "..s.players[s.turn].name.." / "..phaseNames[s.phase],playerColors[s.turn],nil,50)
+    text(3,3,s.players[s.turn].name.."  /  "..phaseNames[s.phase],playerColors[s.turn],nil,boardWidth-3)
     drawBoard(s)
-    rect(54,3,W-55,H-5,color.panel)
+    local px=panelX+2; local pw=W-panelX-4
+    local playerY=spacious and 5 or 3
+    rect(panelX,playerY,pw+4,spacious and (#s.players*2+2) or 5,color.panel)
     for id,player in ipairs(s.players) do
-      text(56,3+id,id.." "..unicode.sub(player.name,1,10).." "..player.score.." VP / "..player.count.." карт",playerColors[id],nil,W-57)
+      local row=playerY+(spacious and id*2-1 or id)
+      text(px,row,id.." "..unicode.sub(player.name,1,spacious and 18 or 10),playerColors[id],nil,pw-9)
+      text(W-12,row,player.score.." оч. "..player.count.." к.",color.muted,nil,11)
     end
-    text(56,9,"ВАШИ РЕСУРСЫ",color.gold)
-    local hand={}; for _,r in ipairs(Core.resources) do hand[#hand+1]=short[r]..":"..p.hand[r] end
-    text(56,10,table.concat(hand," "),nil,nil,W-57)
-    if W<95 then text(56,10,"Л:"..p.hand.wood.." Г:"..p.hand.brick.." Ш:"..p.hand.wool.." З:"..p.hand.grain.." Р:"..p.hand.ore) end
-    local bw=W-57
-    button(56,12,bw,(tool=="road" and "> " or "").."ДОРОГА [1]",function() tool="road"; setNotice("Лес + глина. Выберите ребро.") end)
-    button(56,13,bw,(tool=="settlement" and "> " or "").."ПОСЕЛЕНИЕ [2]",function() tool="settlement"; setNotice("Лес + глина + шерсть + зерно. Выберите узел.") end)
-    button(56,14,bw,(tool=="city" and "> " or "").."ГОРОД [3]",function() tool="city"; setNotice("2 зерна + 3 руды. Выберите своё поселение.") end)
-    button(56,16,bw,"КУБИКИ"..(s.dice and " / "..s.dice[1].." + "..s.dice[2] or ""),function() command({kind="roll"}) end)
-    button(56,17,bw,"ТОРГОВЛЯ",openTrade)
-    button(56,18,bw,"КУПИТЬ КАРТУ",function() command({kind="buy"}) end)
-    button(56,19,bw,"КАРТЫ / "..#p.cards,openCards)
-    button(56,20,bw,"ЗАВЕРШИТЬ ХОД",function() command({kind="end"}) end)
+    local ry=spacious and 18 or 9
+    local columns=spacious and 5 or 3
+    local cw=math.floor((pw+1)/columns)
+    for i,r in ipairs(Core.resources) do
+      local x=px+((i-1)%columns)*cw; local y=ry+math.floor((i-1)/columns)*(spacious and 3 or 1)
+      if spacious then
+        rect(x,y,cw-1,4,color.panel)
+        text(x+1,y,labels[r],color.muted,nil,cw-2)
+        text(x+1,y+2,tostring(p.hand[r]),color.gold)
+      else text(x,y,unicode.sub(labels[r],1,1)..":"..p.hand[r],color.text,nil,cw-1) end
+    end
+    local buildY=spacious and 27 or 12
+    local bw=math.floor((pw-2)/3)
+    local function selectTool(kind,message) tool=kind; setNotice(message) end
+    button(px,buildY,bw,spacious and "1  Дорога" or "1 Дор.",function() selectTool("road","Лес + глина. Выберите ребро.") end,tool=="road" and color.edge or nil)
+    button(px+bw+1,buildY,bw,spacious and "2  Поселение" or "2 Пос.",function() selectTool("settlement","Лес + глина + шерсть + зерно. Выберите узел.") end,tool=="settlement" and color.edge or nil)
+    button(px+(bw+1)*2,buildY,bw,spacious and "3  Город" or "3 Гор.",function() selectTool("city","2 зерна + 3 руды. Выберите своё поселение.") end,tool=="city" and color.edge or nil)
+    if spacious then
+      text(px,25,"Строительство",color.muted)
+      local costs={road="1 лес + 1 глина",settlement="Лес, глина, шерсть, зерно",city="2 зерна + 3 руды"}
+      text(px,29,costs[tool],color.muted,nil,pw)
+    end
+    local ay=spacious and 34 or 14
+    local aw=math.floor((pw-2)/2)
+    button(px,ay,aw,"Кубики"..(s.dice and " "..s.dice[1].."+"..s.dice[2] or ""),function() command({kind="roll"}) end)
+    button(px+aw+2,ay,aw,"Конец хода",function() command({kind="end"}) end,color.edge)
+    button(px,ay+(spacious and 3 or 2),aw,"Обмен",openTrade)
+    button(px+aw+2,ay+(spacious and 3 or 2),aw,"Карты "..#p.cards,openCards)
+    button(px,ay+(spacious and 6 or 4),pw,"Купить карту",function() command({kind="buy"}) end)
+    local specialY=spacious and 43 or 20
     if s.phase=="discard" and s.discards[you] then
-      button(56,21,bw,"СБРОСИТЬ "..s.discards[you].." КАРТ",function() modal={kind="discard",cards={}} end,color.brick)
+      button(px,specialY,pw,"Сбросить "..s.discards[you].." карт",function() modal={kind="discard",cards={}} end,color.brick)
     elseif s.offer and (s.offer.target==you or s.turn==you) then
-      button(56,21,bw,"ОБМЕН / ПОСМОТРЕТЬ",function() modal={kind="incoming"} end,color.wood)
+      button(px,specialY,pw,"Предложение обмена",function() modal={kind="incoming"} end,color.wood)
     end
     if H>=29 then
-      if s.offer then
-        local o=s.offer
-        text(56,23,"Обмен: "..o.giveN.." "..short[o.give].." > "..o.wantN.." "..short[o.want],color.gold,nil,bw)
-        text(56,24,"С игроком: "..s.players[o.target].name,color.muted,nil,bw)
-        button(56,25,bw,"ОТКЛОНИТЬ ОБМЕН",function() command({kind="reject"}) end)
-      else
-        text(56,23,"Дорога: "..tostring(s.longest or "--").." / Армия: "..tostring(s.army or "--"),color.muted,nil,bw)
-        text(56,24,"S:"..p.settlements.."/5 C:"..p.cities.."/4 Д:"..p.roads.."/15",color.muted,nil,bw)
-      end
-      for i=math.max(1,#s.log-2),#s.log do text(3,H-6+i-math.max(1,#s.log-2),s.log[i],color.muted,nil,49) end
+      text(px,spacious and 46 or 23,"s "..p.settlements.."/5   C "..p.cities.."/4   Д "..p.roads.."/15",color.muted,nil,pw)
+      if #s.log>0 then text(3,H-5,s.log[#s.log],color.muted,nil,boardWidth-3) end
     end
-    button(3,H-2,16,"H / ПРАВИЛА",function() modal={kind="help"} end)
-    button(21,H-2,14,"ПОРТЫ",function() modal={kind="ports"} end)
-    text(37,H-2,"Q: выход",color.muted)
+    button(3,H-2,12,"H Правила",function() modal={kind="help"} end)
+    button(17,H-2,10,"Порты",function() modal={kind="ports"} end)
+    button(29,H-2,11,"N Номера",function() showNodes=not showNodes end)
+    text(43,H-2,"Q Выход",color.muted)
     if s.winner then
       rect(12,9,40,5,color.panel); center(12,10,40,"ПОБЕДА / 10 ОЧКОВ",color.gold)
       center(12,12,40,s.players[s.winner].name,playerColors[s.winner])
@@ -833,7 +876,8 @@ local function main()
       elseif snapshot and snapshot.game then
         if e[4]==35 then modal={kind="help"}
         elseif not modal then
-          if e[4]==2 then tool="road" elseif e[4]==3 then tool="settlement" elseif e[4]==4 then tool="city" end
+          if e[4]==2 then tool="road" elseif e[4]==3 then tool="settlement" elseif e[4]==4 then tool="city"
+          elseif e[4]==49 then showNodes=not showNodes end
         end
       end
     elseif e[1]=="touch" then

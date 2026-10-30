@@ -265,30 +265,32 @@ TEST_SYNC=function() acceptState(host:state(1)) end
 TEST_RENDER=function(m) modal=m; previous={}; render() end
 local ok,reason=xpcall(main,debug.traceback)''')
     run = lua.eval('function(source) local f=assert(load(source)); f("host","Алексей") end')
-    for width in (100, 80):
-        lua.execute(f'maxW={width}; maxH={32 if width == 100 else 25}; step=0; errors={{}}; fail=false')
+    for width in (160, 100, 80):
+        height = {160: 50, 100: 32, 80: 25}[width]
+        lua.execute(f'maxW={width}; maxH={height}; step=0; errors={{}}; fail=false')
         run(instrumented)
         lua.execute('assert(#errors==0, table.concat(errors)); assert(width==100 and height==32 and blink and strength==64 and not opened)')
         lua.execute('for i=0,15 do assert(palette[i]==i) end')
-        if Runtime is Lua53 and width == 100:
+        if Runtime is Lua53 and width != 100:
             from PIL import Image, ImageDraw, ImageFont
             cells = lua.globals().captures.board
-            image = Image.new('RGB', (1200, 704))
+            image = Image.new('RGB', (width*10, height*20))
             draw = ImageDraw.Draw(image)
-            font = ImageFont.truetype('C:/Windows/Fonts/consola.ttf', 18)
+            font = ImageFont.truetype('C:/Windows/Fonts/consola.ttf', 16)
             def rgb(c):
                 return ((int(c) >> 16) & 255, (int(c) >> 8) & 255, int(c) & 255)
-            for y in range(1, 33):
-                for x in range(1, 101):
+            for y in range(1, height+1):
+                for x in range(1, width+1):
                     cell = cells[y][x]
-                    px, py = (x-1)*12, (y-1)*22
-                    draw.rectangle((px, py, px+11, py+21), fill=rgb(cell[3]))
+                    px, py = (x-1)*10, (y-1)*20
+                    draw.rectangle((px, py, px+9, py+19), fill=rgb(cell[3]))
                     draw.text((px, py), cell[1], font=font, fill=rgb(cell[2]))
-            image.save(ROOT / 'colonists-preview.png')
+            filename = 'colonists-preview.png' if width == 160 else f'colonists-preview-{width}.png'
+            image.save(ROOT / filename)
     lua.execute('step=0; fail=true; errors={}')
     run(instrumented)
     lua.execute('assert(#errors==1 and width==100 and height==32 and blink and strength==64 and not opened)')
-    print(Runtime.__module__, '80x25/100x32 UI, modem join, modals, cleanup: OK')
+    print(Runtime.__module__, '80x25/100x32/160x50 UI, modem join, modals, cleanup: OK')
     # Exercise the real client runtime, discovery, join, a lost response and retry.
     lua.execute(r'''
       maxW,maxH=100,32; fail=false; errors={}; pendingEvents={}; clientStage=0; pulls=0
