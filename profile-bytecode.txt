@@ -1,0 +1,177 @@
+﻿Compiled from "IConfigurableItem.java"
+public class com.brandon3055.draconicevolution.common.utills.IConfigurableItem$ProfileHelper {
+  public com.brandon3055.draconicevolution.common.utills.IConfigurableItem$ProfileHelper();
+    Code:
+       0: aload_0
+       1: invokespecial #12                 // Method java/lang/Object."<init>":()V
+       4: return
+
+  public static net.minecraft.nbt.NBTTagCompound getProfileCompound(net.minecraft.item.ItemStack);
+    Code:
+       0: aload_0
+       1: ldc           #18                 // String ConfigProfile
+       3: iconst_0
+       4: invokestatic  #24                 // Method com/brandon3055/brandonscore/common/utills/ItemNBTHelper.getInteger:(Lnet/minecraft/item/ItemStack;Ljava/lang/String;I)I
+       7: istore_1
+       8: aload_0
+       9: invokestatic  #27                 // Method com/brandon3055/brandonscore/common/utills/ItemNBTHelper.getCompound:(Lnet/minecraft/item/ItemStack;)Lnet/minecraft/nbt/NBTTagCompound;
+      12: astore_2
+      13: aload_2
+      14: ldc           #29                 // String ConfigProfiles
+      16: invokevirtual #35                 // Method net/minecraft/nbt/NBTTagCompound.func_74764_b:(Ljava/lang/String;)Z
+      19: ifne          78
+      22: aload_2
+      23: ldc           #29                 // String ConfigProfiles
+      25: bipush        10
+      27: invokevirtual #39                 // Method net/minecraft/nbt/NBTTagCompound.func_150295_c:(Ljava/lang/String;I)Lnet/minecraft/nbt/NBTTagList;
+      30: invokevirtual #45                 // Method net/minecraft/nbt/NBTTagList.func_74745_c:()I
+      33: iconst_5
+      34: if_icmpge     78
+      37: new           #41                 // class net/minecraft/nbt/NBTTagList
+      40: dup
+      41: invokespecial #46                 // Method net/minecraft/nbt/NBTTagList."<init>":()V
+      44: astore_3
+      45: iconst_0
+      46: istore        4
+      48: iload         4
+      50: iconst_5
+      51: if_icmpge     71
+      54: aload_3
+      55: new           #31                 // class net/minecraft/nbt/NBTTagCompound
+      58: dup
+      59: invokespecial #49                 // Method net/minecraft/nbt/NBTTagCompound."<init>":()V
+      62: invokevirtual #53                 // Method net/minecraft/nbt/NBTTagList.func_74742_a:(Lnet/minecraft/nbt/NBTBase;)V
+      65: iinc          4, 1
+      68: goto          48
+      71: aload_2
+      72: ldc           #29                 // String ConfigProfiles
+      74: aload_3
+      75: invokevirtual #57                 // Method net/minecraft/nbt/NBTTagCompound.func_74782_a:(Ljava/lang/String;Lnet/minecraft/nbt/NBTBase;)V
+      78: aload_2
+      79: ldc           #29                 // String ConfigProfiles
+      81: bipush        10
+      83: invokevirtual #39                 // Method net/minecraft/nbt/NBTTagCompound.func_150295_c:(Ljava/lang/String;I)Lnet/minecraft/nbt/NBTTagList;
+      86: iload_1
+      87: invokevirtual #61                 // Method net/minecraft/nbt/NBTTagList.func_150305_b:(I)Lnet/minecraft/nbt/NBTTagCompound;
+      90: areturn
+
+  public static void setBoolean(net.minecraft.item.ItemStack, java.lang.String, boolean);
+    Code:
+       0: aload_0
+       1: invokestatic  #74                 // Method getProfileCompound:(Lnet/minecraft/item/ItemStack;)Lnet/minecraft/nbt/NBTTagCompound;
+       4: aload_1
+       5: iload_2
+       6: invokevirtual #78                 // Method net/minecraft/nbt/NBTTagCompound.func_74757_a:(Ljava/lang/String;Z)V
+       9: return
+
+  public static void setInteger(net.minecraft.item.ItemStack, java.lang.String, int);
+    Code:
+       0: aload_0
+       1: invokestatic  #74                 // Method getProfileCompound:(Lnet/minecraft/item/ItemStack;)Lnet/minecraft/nbt/NBTTagCompound;
+       4: aload_1
+       5: iload_2
+       6: invokevirtual #88                 // Method net/minecraft/nbt/NBTTagCompound.func_74768_a:(Ljava/lang/String;I)V
+       9: return
+
+  public static void setFloat(net.minecraft.item.ItemStack, java.lang.String, float);
+    Code:
+       0: aload_0
+       1: invokestatic  #74                 // Method getProfileCompound:(Lnet/minecraft/item/ItemStack;)Lnet/minecraft/nbt/NBTTagCompound;
+       4: aload_1
+       5: fload_2
+       6: invokevirtual #94                 // Method net/minecraft/nbt/NBTTagCompound.func_74776_a:(Ljava/lang/String;F)V
+       9: return
+
+  public static void setDouble(net.minecraft.item.ItemStack, java.lang.String, double);
+    Code:
+       0: aload_0
+       1: invokestatic  #74                 // Method getProfileCompound:(Lnet/minecraft/item/ItemStack;)Lnet/minecraft/nbt/NBTTagCompound;
+       4: aload_1
+       5: dload_2
+       6: invokevirtual #102                // Method net/minecraft/nbt/NBTTagCompound.func_74780_a:(Ljava/lang/String;D)V
+       9: return
+
+  public static void setString(net.minecraft.item.ItemStack, java.lang.String, java.lang.String);
+    Code:
+       0: aload_0
+       1: invokestatic  #74                 // Method getProfileCompound:(Lnet/minecraft/item/ItemStack;)Lnet/minecraft/nbt/NBTTagCompound;
+       4: aload_1
+       5: aload_2
+       6: invokevirtual #110                // Method net/minecraft/nbt/NBTTagCompound.func_74778_a:(Ljava/lang/String;Ljava/lang/String;)V
+       9: return
+
+  public static boolean getBoolean(net.minecraft.item.ItemStack, java.lang.String, boolean);
+    Code:
+       0: aload_0
+       1: invokestatic  #74                 // Method getProfileCompound:(Lnet/minecraft/item/ItemStack;)Lnet/minecraft/nbt/NBTTagCompound;
+       4: aload_1
+       5: invokevirtual #35                 // Method net/minecraft/nbt/NBTTagCompound.func_74764_b:(Ljava/lang/String;)Z
+       8: ifeq          22
+      11: aload_0
+      12: invokestatic  #74                 // Method getProfileCompound:(Lnet/minecraft/item/ItemStack;)Lnet/minecraft/nbt/NBTTagCompound;
+      15: aload_1
+      16: invokevirtual #116                // Method net/minecraft/nbt/NBTTagCompound.func_74767_n:(Ljava/lang/String;)Z
+      19: goto          23
+      22: iload_2
+      23: ireturn
+
+  public static int getInteger(net.minecraft.item.ItemStack, java.lang.String, int);
+    Code:
+       0: aload_0
+       1: invokestatic  #74                 // Method getProfileCompound:(Lnet/minecraft/item/ItemStack;)Lnet/minecraft/nbt/NBTTagCompound;
+       4: aload_1
+       5: invokevirtual #35                 // Method net/minecraft/nbt/NBTTagCompound.func_74764_b:(Ljava/lang/String;)Z
+       8: ifeq          22
+      11: aload_0
+      12: invokestatic  #74                 // Method getProfileCompound:(Lnet/minecraft/item/ItemStack;)Lnet/minecraft/nbt/NBTTagCompound;
+      15: aload_1
+      16: invokevirtual #121                // Method net/minecraft/nbt/NBTTagCompound.func_74762_e:(Ljava/lang/String;)I
+      19: goto          23
+      22: iload_2
+      23: ireturn
+
+  public static float getFloat(net.minecraft.item.ItemStack, java.lang.String, float);
+    Code:
+       0: aload_0
+       1: invokestatic  #74                 // Method getProfileCompound:(Lnet/minecraft/item/ItemStack;)Lnet/minecraft/nbt/NBTTagCompound;
+       4: aload_1
+       5: invokevirtual #35                 // Method net/minecraft/nbt/NBTTagCompound.func_74764_b:(Ljava/lang/String;)Z
+       8: ifeq          22
+      11: aload_0
+      12: invokestatic  #74                 // Method getProfileCompound:(Lnet/minecraft/item/ItemStack;)Lnet/minecraft/nbt/NBTTagCompound;
+      15: aload_1
+      16: invokevirtual #127                // Method net/minecraft/nbt/NBTTagCompound.func_74760_g:(Ljava/lang/String;)F
+      19: goto          23
+      22: fload_2
+      23: freturn
+
+  public static double getDouble(net.minecraft.item.ItemStack, java.lang.String, double);
+    Code:
+       0: aload_0
+       1: invokestatic  #74                 // Method getProfileCompound:(Lnet/minecraft/item/ItemStack;)Lnet/minecraft/nbt/NBTTagCompound;
+       4: aload_1
+       5: invokevirtual #35                 // Method net/minecraft/nbt/NBTTagCompound.func_74764_b:(Ljava/lang/String;)Z
+       8: ifeq          22
+      11: aload_0
+      12: invokestatic  #74                 // Method getProfileCompound:(Lnet/minecraft/item/ItemStack;)Lnet/minecraft/nbt/NBTTagCompound;
+      15: aload_1
+      16: invokevirtual #133                // Method net/minecraft/nbt/NBTTagCompound.func_74769_h:(Ljava/lang/String;)D
+      19: goto          23
+      22: dload_2
+      23: dreturn
+
+  public static java.lang.String getString(net.minecraft.item.ItemStack, java.lang.String, java.lang.String);
+    Code:
+       0: aload_0
+       1: invokestatic  #74                 // Method getProfileCompound:(Lnet/minecraft/item/ItemStack;)Lnet/minecraft/nbt/NBTTagCompound;
+       4: aload_1
+       5: invokevirtual #35                 // Method net/minecraft/nbt/NBTTagCompound.func_74764_b:(Ljava/lang/String;)Z
+       8: ifeq          22
+      11: aload_0
+      12: invokestatic  #74                 // Method getProfileCompound:(Lnet/minecraft/item/ItemStack;)Lnet/minecraft/nbt/NBTTagCompound;
+      15: aload_1
+      16: invokevirtual #139                // Method net/minecraft/nbt/NBTTagCompound.func_74779_i:(Ljava/lang/String;)Ljava/lang/String;
+      19: goto          23
+      22: aload_2
+      23: areturn
+}

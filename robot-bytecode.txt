@@ -1,0 +1,2204 @@
+﻿Compiled from "Player.scala"
+public class li.cil.oc.server.agent.Player extends net.minecraftforge.common.util.FakePlayer {
+  private final li.cil.oc.api.internal.Agent agent;
+
+  private net.minecraftforge.common.util.ForgeDirection facing;
+
+  private net.minecraftforge.common.util.ForgeDirection side;
+
+  private net.minecraft.item.ItemStack customItemInUseBecauseMinecraftIsBloodyStupidAndMakesRandomMethodsClientSided;
+
+  public static scala.Option<java.util.UUID> determineUUID$default$1();
+    Code:
+       0: getstatic     #92                 // Field li/cil/oc/server/agent/Player$.MODULE$:Lli/cil/oc/server/agent/Player$;
+       3: invokevirtual #94                 // Method li/cil/oc/server/agent/Player$.determineUUID$default$1:()Lscala/Option;
+       6: areturn
+
+  public static void detectInventoryPlayerChanges(li.cil.oc.server.agent.Player);
+    Code:
+       0: getstatic     #92                 // Field li/cil/oc/server/agent/Player$.MODULE$:Lli/cil/oc/server/agent/Player$;
+       3: aload_0
+       4: invokevirtual #98                 // Method li/cil/oc/server/agent/Player$.detectInventoryPlayerChanges:(Lli/cil/oc/server/agent/Player;)V
+       7: return
+
+  public static void setInventoryPlayerItems(li.cil.oc.server.agent.Player);
+    Code:
+       0: getstatic     #92                 // Field li/cil/oc/server/agent/Player$.MODULE$:Lli/cil/oc/server/agent/Player$;
+       3: aload_0
+       4: invokevirtual #101                // Method li/cil/oc/server/agent/Player$.setInventoryPlayerItems:(Lli/cil/oc/server/agent/Player;)V
+       7: return
+
+  public static void updatePositionAndRotation(li.cil.oc.server.agent.Player, net.minecraftforge.common.util.ForgeDirection, net.minecraftforge.common.util.ForgeDirection);
+    Code:
+       0: getstatic     #92                 // Field li/cil/oc/server/agent/Player$.MODULE$:Lli/cil/oc/server/agent/Player$;
+       3: aload_0
+       4: aload_1
+       5: aload_2
+       6: invokevirtual #105                // Method li/cil/oc/server/agent/Player$.updatePositionAndRotation:(Lli/cil/oc/server/agent/Player;Lnet/minecraftforge/common/util/ForgeDirection;Lnet/minecraftforge/common/util/ForgeDirection;)V
+       9: return
+
+  public static java.util.UUID determineUUID(scala.Option<java.util.UUID>);
+    Code:
+       0: getstatic     #92                 // Field li/cil/oc/server/agent/Player$.MODULE$:Lli/cil/oc/server/agent/Player$;
+       3: aload_0
+       4: invokevirtual #109                // Method li/cil/oc/server/agent/Player$.determineUUID:(Lscala/Option;)Ljava/util/UUID;
+       7: areturn
+
+  public static com.mojang.authlib.GameProfile profileFor(li.cil.oc.api.internal.Agent);
+    Code:
+       0: getstatic     #92                 // Field li/cil/oc/server/agent/Player$.MODULE$:Lli/cil/oc/server/agent/Player$;
+       3: aload_0
+       4: invokevirtual #113                // Method li/cil/oc/server/agent/Player$.profileFor:(Lli/cil/oc/api/internal/Agent;)Lcom/mojang/authlib/GameProfile;
+       7: areturn
+
+  public void li$cil$oc$server$agent$Player$$super$attackTargetEntityWithCurrentItem(net.minecraft.entity.Entity);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: invokespecial #118                // Method net/minecraft/entity/player/EntityPlayer.func_71059_n:(Lnet/minecraft/entity/Entity;)V
+       5: return
+
+  public li.cil.oc.api.internal.Agent agent();
+    Code:
+       0: aload_0
+       1: getfield      #125                // Field agent:Lli/cil/oc/api/internal/Agent;
+       4: areturn
+
+  public net.minecraftforge.common.util.ForgeDirection facing();
+    Code:
+       0: aload_0
+       1: getfield      #128                // Field facing:Lnet/minecraftforge/common/util/ForgeDirection;
+       4: areturn
+
+  public void facing_$eq(net.minecraftforge.common.util.ForgeDirection);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #128                // Field facing:Lnet/minecraftforge/common/util/ForgeDirection;
+       5: return
+
+  public net.minecraftforge.common.util.ForgeDirection side();
+    Code:
+       0: aload_0
+       1: getfield      #132                // Field side:Lnet/minecraftforge/common/util/ForgeDirection;
+       4: areturn
+
+  public void side_$eq(net.minecraftforge.common.util.ForgeDirection);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #132                // Field side:Lnet/minecraftforge/common/util/ForgeDirection;
+       5: return
+
+  public net.minecraft.item.ItemStack customItemInUseBecauseMinecraftIsBloodyStupidAndMakesRandomMethodsClientSided();
+    Code:
+       0: aload_0
+       1: getfield      #136                // Field customItemInUseBecauseMinecraftIsBloodyStupidAndMakesRandomMethodsClientSided:Lnet/minecraft/item/ItemStack;
+       4: areturn
+
+  public void customItemInUseBecauseMinecraftIsBloodyStupidAndMakesRandomMethodsClientSided_$eq(net.minecraft.item.ItemStack);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #136                // Field customItemInUseBecauseMinecraftIsBloodyStupidAndMakesRandomMethodsClientSided:Lnet/minecraft/item/ItemStack;
+       5: return
+
+  public net.minecraft.world.World world();
+    Code:
+       0: aload_0
+       1: invokevirtual #142                // Method agent:()Lli/cil/oc/api/internal/Agent;
+       4: invokeinterface #146,  1          // InterfaceMethod li/cil/oc/api/internal/Agent.world:()Lnet/minecraft/world/World;
+       9: areturn
+
+  public net.minecraft.util.ChunkCoordinates func_82114_b();
+    Code:
+       0: getstatic     #153                // Field li/cil/oc/util/BlockPosition$.MODULE$:Lli/cil/oc/util/BlockPosition$;
+       3: aload_0
+       4: invokevirtual #142                // Method agent:()Lli/cil/oc/api/internal/Agent;
+       7: invokevirtual #157                // Method li/cil/oc/util/BlockPosition$.apply:(Lli/cil/oc/api/network/EnvironmentHost;)Lli/cil/oc/util/BlockPosition;
+      10: invokevirtual #162                // Method li/cil/oc/util/BlockPosition.toChunkCoordinates:()Lnet/minecraft/util/ChunkCoordinates;
+      13: areturn
+
+  public float getDefaultEyeHeight();
+    Code:
+       0: fconst_0
+       1: freturn
+
+  public java.lang.String getDisplayName();
+    Code:
+       0: aload_0
+       1: invokevirtual #142                // Method agent:()Lli/cil/oc/api/internal/Agent;
+       4: invokeinterface #169,  1          // InterfaceMethod li/cil/oc/api/internal/Agent.name:()Ljava/lang/String;
+       9: areturn
+
+  public <Type extends net.minecraft.entity.Entity> scala.Option<Type> closestEntity(net.minecraftforge.common.util.ForgeDirection, scala.reflect.ClassTag<Type>);
+    Code:
+       0: getstatic     #153                // Field li/cil/oc/util/BlockPosition$.MODULE$:Lli/cil/oc/util/BlockPosition$;
+       3: aload_0
+       4: invokevirtual #142                // Method agent:()Lli/cil/oc/api/internal/Agent;
+       7: invokevirtual #157                // Method li/cil/oc/util/BlockPosition$.apply:(Lli/cil/oc/api/network/EnvironmentHost;)Lli/cil/oc/util/BlockPosition;
+      10: aload_1
+      11: invokevirtual #175                // Method li/cil/oc/util/BlockPosition.offset:(Lnet/minecraftforge/common/util/ForgeDirection;)Lli/cil/oc/util/BlockPosition;
+      14: invokevirtual #179                // Method li/cil/oc/util/BlockPosition.bounds:()Lnet/minecraft/util/AxisAlignedBB;
+      17: astore_3
+      18: getstatic     #184                // Field scala/Option$.MODULE$:Lscala/Option$;
+      21: aload_0
+      22: invokevirtual #185                // Method world:()Lnet/minecraft/world/World;
+      25: getstatic     #190                // Field scala/reflect/package$.MODULE$:Lscala/reflect/package$;
+      28: aload_2
+      29: invokevirtual #194                // Method scala/reflect/package$.classTag:(Lscala/reflect/ClassTag;)Lscala/reflect/ClassTag;
+      32: invokeinterface #200,  1          // InterfaceMethod scala/reflect/ClassTag.runtimeClass:()Ljava/lang/Class;
+      37: aload_3
+      38: aload_0
+      39: invokevirtual #206                // Method net/minecraft/world/World.func_72857_a:(Ljava/lang/Class;Lnet/minecraft/util/AxisAlignedBB;Lnet/minecraft/entity/Entity;)Lnet/minecraft/entity/Entity;
+      42: invokevirtual #209                // Method scala/Option$.apply:(Ljava/lang/Object;)Lscala/Option;
+      45: new           #49                 // class li/cil/oc/server/agent/Player$$anonfun$closestEntity$1
+      48: dup
+      49: aload_0
+      50: invokespecial #212                // Method li/cil/oc/server/agent/Player$$anonfun$closestEntity$1."<init>":(Lli/cil/oc/server/agent/Player;)V
+      53: invokevirtual #218                // Method scala/Option.map:(Lscala/Function1;)Lscala/Option;
+      56: areturn
+
+  public <Type extends net.minecraft.entity.Entity> net.minecraftforge.common.util.ForgeDirection closestEntity$default$1();
+    Code:
+       0: aload_0
+       1: invokevirtual #224                // Method facing:()Lnet/minecraftforge/common/util/ForgeDirection;
+       4: areturn
+
+  public <Type extends net.minecraft.entity.Entity> scala.collection.mutable.Buffer<Type> entitiesOnSide(net.minecraftforge.common.util.ForgeDirection, scala.reflect.ClassTag<Type>);
+    Code:
+       0: aload_0
+       1: getstatic     #153                // Field li/cil/oc/util/BlockPosition$.MODULE$:Lli/cil/oc/util/BlockPosition$;
+       4: aload_0
+       5: invokevirtual #142                // Method agent:()Lli/cil/oc/api/internal/Agent;
+       8: invokevirtual #157                // Method li/cil/oc/util/BlockPosition$.apply:(Lli/cil/oc/api/network/EnvironmentHost;)Lli/cil/oc/util/BlockPosition;
+      11: aload_1
+      12: invokevirtual #175                // Method li/cil/oc/util/BlockPosition.offset:(Lnet/minecraftforge/common/util/ForgeDirection;)Lli/cil/oc/util/BlockPosition;
+      15: aload_2
+      16: invokevirtual #230                // Method entitiesInBlock:(Lli/cil/oc/util/BlockPosition;Lscala/reflect/ClassTag;)Lscala/collection/mutable/Buffer;
+      19: areturn
+
+  public <Type extends net.minecraft.entity.Entity> scala.collection.mutable.Buffer<Type> entitiesInBlock(li.cil.oc.util.BlockPosition, scala.reflect.ClassTag<Type>);
+    Code:
+       0: getstatic     #236                // Field scala/collection/convert/WrapAsScala$.MODULE$:Lscala/collection/convert/WrapAsScala$;
+       3: aload_0
+       4: invokevirtual #185                // Method world:()Lnet/minecraft/world/World;
+       7: getstatic     #190                // Field scala/reflect/package$.MODULE$:Lscala/reflect/package$;
+      10: aload_2
+      11: invokevirtual #194                // Method scala/reflect/package$.classTag:(Lscala/reflect/ClassTag;)Lscala/reflect/ClassTag;
+      14: invokeinterface #200,  1          // InterfaceMethod scala/reflect/ClassTag.runtimeClass:()Ljava/lang/Class;
+      19: aload_1
+      20: invokevirtual #179                // Method li/cil/oc/util/BlockPosition.bounds:()Lnet/minecraft/util/AxisAlignedBB;
+      23: invokevirtual #240                // Method net/minecraft/world/World.func_72872_a:(Ljava/lang/Class;Lnet/minecraft/util/AxisAlignedBB;)Ljava/util/List;
+      26: invokevirtual #244                // Method scala/collection/convert/WrapAsScala$.asScalaBuffer:(Ljava/util/List;)Lscala/collection/mutable/Buffer;
+      29: new           #55                 // class li/cil/oc/server/agent/Player$$anonfun$entitiesInBlock$1
+      32: dup
+      33: aload_0
+      34: invokespecial #245                // Method li/cil/oc/server/agent/Player$$anonfun$entitiesInBlock$1."<init>":(Lli/cil/oc/server/agent/Player;)V
+      37: getstatic     #250                // Field scala/collection/mutable/Buffer$.MODULE$:Lscala/collection/mutable/Buffer$;
+      40: invokevirtual #254                // Method scala/collection/mutable/Buffer$.canBuildFrom:()Lscala/collection/generic/CanBuildFrom;
+      43: invokeinterface #259,  3          // InterfaceMethod scala/collection/mutable/Buffer.map:(Lscala/Function1;Lscala/collection/generic/CanBuildFrom;)Ljava/lang/Object;
+      48: checkcast     #256                // class scala/collection/mutable/Buffer
+      51: areturn
+
+  private scala.collection.mutable.Buffer<net.minecraft.entity.item.EntityItem> adjacentItems();
+    Code:
+       0: getstatic     #236                // Field scala/collection/convert/WrapAsScala$.MODULE$:Lscala/collection/convert/WrapAsScala$;
+       3: aload_0
+       4: invokevirtual #185                // Method world:()Lnet/minecraft/world/World;
+       7: ldc_w         #266                // class net/minecraft/entity/item/EntityItem
+      10: getstatic     #153                // Field li/cil/oc/util/BlockPosition$.MODULE$:Lli/cil/oc/util/BlockPosition$;
+      13: aload_0
+      14: invokevirtual #142                // Method agent:()Lli/cil/oc/api/internal/Agent;
+      17: invokevirtual #157                // Method li/cil/oc/util/BlockPosition$.apply:(Lli/cil/oc/api/network/EnvironmentHost;)Lli/cil/oc/util/BlockPosition;
+      20: invokevirtual #179                // Method li/cil/oc/util/BlockPosition.bounds:()Lnet/minecraft/util/AxisAlignedBB;
+      23: ldc2_w        #267                // double 2.0d
+      26: ldc2_w        #267                // double 2.0d
+      29: ldc2_w        #267                // double 2.0d
+      32: invokevirtual #274                // Method net/minecraft/util/AxisAlignedBB.func_72314_b:(DDD)Lnet/minecraft/util/AxisAlignedBB;
+      35: invokevirtual #240                // Method net/minecraft/world/World.func_72872_a:(Ljava/lang/Class;Lnet/minecraft/util/AxisAlignedBB;)Ljava/util/List;
+      38: invokevirtual #244                // Method scala/collection/convert/WrapAsScala$.asScalaBuffer:(Ljava/util/List;)Lscala/collection/mutable/Buffer;
+      41: new           #51                 // class li/cil/oc/server/agent/Player$$anonfun$adjacentItems$1
+      44: dup
+      45: aload_0
+      46: invokespecial #275                // Method li/cil/oc/server/agent/Player$$anonfun$adjacentItems$1."<init>":(Lli/cil/oc/server/agent/Player;)V
+      49: getstatic     #250                // Field scala/collection/mutable/Buffer$.MODULE$:Lscala/collection/mutable/Buffer$;
+      52: invokevirtual #254                // Method scala/collection/mutable/Buffer$.canBuildFrom:()Lscala/collection/generic/CanBuildFrom;
+      55: invokeinterface #259,  3          // InterfaceMethod scala/collection/mutable/Buffer.map:(Lscala/Function1;Lscala/collection/generic/CanBuildFrom;)Ljava/lang/Object;
+      60: checkcast     #256                // class scala/collection/mutable/Buffer
+      63: areturn
+
+  private void collectDroppedItems(scala.collection.Iterable<net.minecraft.entity.item.EntityItem>);
+    Code:
+       0: aload_0
+       1: invokespecial #279                // Method adjacentItems:()Lscala/collection/mutable/Buffer;
+       4: astore_2
+       5: aload_2
+       6: aload_1
+       7: invokeinterface #283,  2          // InterfaceMethod scala/collection/mutable/Buffer.$minus$minus:(Lscala/collection/GenTraversableOnce;)Lscala/collection/mutable/Buffer;
+      12: astore_3
+      13: aload_3
+      14: invokeinterface #287,  1          // InterfaceMethod scala/collection/mutable/Buffer.nonEmpty:()Z
+      19: ifeq          36
+      22: aload_3
+      23: new           #67                 // class li/cil/oc/server/agent/Player$$anonfun$collectDroppedItems$1
+      26: dup
+      27: aload_0
+      28: invokespecial #288                // Method li/cil/oc/server/agent/Player$$anonfun$collectDroppedItems$1."<init>":(Lli/cil/oc/server/agent/Player;)V
+      31: invokeinterface #292,  2          // InterfaceMethod scala/collection/mutable/Buffer.foreach:(Lscala/Function1;)V
+      36: return
+
+  public void func_71059_n(net.minecraft.entity.Entity);
+    Code:
+       0: aload_0
+       1: aload_0
+       2: invokevirtual #142                // Method agent:()Lli/cil/oc/api/internal/Agent;
+       5: invokeinterface #301,  1          // InterfaceMethod li/cil/oc/api/internal/Agent.equipmentInventory:()Lnet/minecraft/inventory/IInventory;
+      10: iconst_0
+      11: new           #75                 // class li/cil/oc/server/agent/Player$$anonfun$attackTargetEntityWithCurrentItem$1
+      14: dup
+      15: aload_0
+      16: aload_1
+      17: invokespecial #304                // Method li/cil/oc/server/agent/Player$$anonfun$attackTargetEntityWithCurrentItem$1."<init>":(Lli/cil/oc/server/agent/Player;Lnet/minecraft/entity/Entity;)V
+      20: aload_0
+      21: invokespecial #307                // Method callUsingItemInSlot$default$4:()Z
+      24: invokespecial #311                // Method callUsingItemInSlot:(Lnet/minecraft/inventory/IInventory;ILscala/Function1;Z)Ljava/lang/Object;
+      27: pop
+      28: return
+
+  public boolean func_70998_m(net.minecraft.entity.Entity);
+    Code:
+       0: getstatic     #320                // Field net/minecraftforge/common/MinecraftForge.EVENT_BUS:Lcpw/mods/fml/common/eventhandler/EventBus;
+       3: new           #322                // class net/minecraftforge/event/entity/player/EntityInteractEvent
+       6: dup
+       7: aload_0
+       8: aload_1
+       9: invokespecial #325                // Method net/minecraftforge/event/entity/player/EntityInteractEvent."<init>":(Lnet/minecraft/entity/player/EntityPlayer;Lnet/minecraft/entity/Entity;)V
+      12: invokevirtual #331                // Method cpw/mods/fml/common/eventhandler/EventBus.post:(Lcpw/mods/fml/common/eventhandler/Event;)Z
+      15: goto          64
+      18: astore_3
+      19: getstatic     #338                // Field scala/Predef$.MODULE$:Lscala/Predef$;
+      22: aload_3
+      23: invokevirtual #342                // Method java/lang/Throwable.getStackTrace:()[Ljava/lang/StackTraceElement;
+      26: checkcast     #344                // class "[Ljava/lang/Object;"
+      29: invokevirtual #348                // Method scala/Predef$.refArrayOps:([Ljava/lang/Object;)Lscala/collection/mutable/ArrayOps;
+      32: new           #20                 // class li/cil/oc/server/agent/Player$$anonfun$1
+      35: dup
+      36: aload_0
+      37: invokespecial #349                // Method li/cil/oc/server/agent/Player$$anonfun$1."<init>":(Lli/cil/oc/server/agent/Player;)V
+      40: invokeinterface #355,  2          // InterfaceMethod scala/collection/mutable/ArrayOps.exists:(Lscala/Function1;)Z
+      45: ifne          63
+      48: getstatic     #360                // Field li/cil/oc/OpenComputers$.MODULE$:Lli/cil/oc/OpenComputers$;
+      51: invokevirtual #364                // Method li/cil/oc/OpenComputers$.log:()Lorg/apache/logging/log4j/Logger;
+      54: ldc_w         #366                // String Some event handler screwed up!
+      57: aload_3
+      58: invokeinterface #372,  3          // InterfaceMethod org/apache/logging/log4j/Logger.warn:(Ljava/lang/String;Ljava/lang/Throwable;)V
+      63: iconst_0
+      64: istore_2
+      65: iload_2
+      66: ifne          106
+      69: aload_0
+      70: aload_0
+      71: invokevirtual #142                // Method agent:()Lli/cil/oc/api/internal/Agent;
+      74: invokeinterface #301,  1          // InterfaceMethod li/cil/oc/api/internal/Agent.equipmentInventory:()Lnet/minecraft/inventory/IInventory;
+      79: iconst_0
+      80: new           #47                 // class li/cil/oc/server/agent/Player$$anonfun$interactWith$1
+      83: dup
+      84: aload_0
+      85: aload_1
+      86: invokespecial #375                // Method li/cil/oc/server/agent/Player$$anonfun$interactWith$1."<init>":(Lli/cil/oc/server/agent/Player;Lnet/minecraft/entity/Entity;)V
+      89: aload_0
+      90: invokespecial #307                // Method callUsingItemInSlot$default$4:()Z
+      93: invokespecial #311                // Method callUsingItemInSlot:(Lnet/minecraft/inventory/IInventory;ILscala/Function1;Z)Ljava/lang/Object;
+      96: invokestatic  #381                // Method scala/runtime/BoxesRunTime.unboxToBoolean:(Ljava/lang/Object;)Z
+      99: ifeq          106
+     102: iconst_1
+     103: goto          107
+     106: iconst_0
+     107: ireturn
+    Exception table:
+       from    to  target type
+           0    18    18   any
+
+  public scala.Enumeration$Value activateBlockOrUseItem(int, int, int, int, float, float, float, double);
+    Code:
+       0: new           #389                // class java/lang/Object
+       3: dup
+       4: invokespecial #392                // Method java/lang/Object."<init>":()V
+       7: astore        10
+       9: aload_0
+      10: aload_0
+      11: invokevirtual #142                // Method agent:()Lli/cil/oc/api/internal/Agent;
+      14: invokeinterface #301,  1          // InterfaceMethod li/cil/oc/api/internal/Agent.equipmentInventory:()Lnet/minecraft/inventory/IInventory;
+      19: iconst_0
+      20: new           #69                 // class li/cil/oc/server/agent/Player$$anonfun$activateBlockOrUseItem$1
+      23: dup
+      24: aload_0
+      25: iload_1
+      26: iload_2
+      27: iload_3
+      28: iload         4
+      30: fload         5
+      32: fload         6
+      34: fload         7
+      36: dload         8
+      38: aload         10
+      40: invokespecial #395                // Method li/cil/oc/server/agent/Player$$anonfun$activateBlockOrUseItem$1."<init>":(Lli/cil/oc/server/agent/Player;IIIIFFFDLjava/lang/Object;)V
+      43: aload_0
+      44: invokespecial #307                // Method callUsingItemInSlot$default$4:()Z
+      47: invokespecial #311                // Method callUsingItemInSlot:(Lnet/minecraft/inventory/IInventory;ILscala/Function1;Z)Ljava/lang/Object;
+      50: checkcast     #22                 // class scala/Enumeration$Value
+      53: goto          76
+      56: astore        11
+      58: aload         11
+      60: invokevirtual #399                // Method scala/runtime/NonLocalReturnControl.key:()Ljava/lang/Object;
+      63: aload         10
+      65: if_acmpne     77
+      68: aload         11
+      70: invokevirtual #402                // Method scala/runtime/NonLocalReturnControl.value:()Ljava/lang/Object;
+      73: checkcast     #22                 // class scala/Enumeration$Value
+      76: areturn
+      77: aload         11
+      79: athrow
+    Exception table:
+       from    to  target type
+           9    56    56   Class scala/runtime/NonLocalReturnControl
+
+  public boolean useEquippedItem(double);
+    Code:
+       0: aload_0
+       1: aload_0
+       2: invokevirtual #142                // Method agent:()Lli/cil/oc/api/internal/Agent;
+       5: invokeinterface #301,  1          // InterfaceMethod li/cil/oc/api/internal/Agent.equipmentInventory:()Lnet/minecraft/inventory/IInventory;
+      10: iconst_0
+      11: new           #57                 // class li/cil/oc/server/agent/Player$$anonfun$useEquippedItem$1
+      14: dup
+      15: aload_0
+      16: dload_1
+      17: invokespecial #417                // Method li/cil/oc/server/agent/Player$$anonfun$useEquippedItem$1."<init>":(Lli/cil/oc/server/agent/Player;D)V
+      20: aload_0
+      21: invokespecial #307                // Method callUsingItemInSlot$default$4:()Z
+      24: invokespecial #311                // Method callUsingItemInSlot:(Lnet/minecraft/inventory/IInventory;ILscala/Function1;Z)Ljava/lang/Object;
+      27: invokestatic  #381                // Method scala/runtime/BoxesRunTime.unboxToBoolean:(Ljava/lang/Object;)Z
+      30: ireturn
+
+  public boolean li$cil$oc$server$agent$Player$$tryUseItem(net.minecraft.item.ItemStack, double);
+    Code:
+       0: aload_0
+       1: invokevirtual #422                // Method func_71041_bz:()V
+       4: aload_1
+       5: ifnull        382
+       8: aload_1
+       9: getfield      #427                // Field net/minecraft/item/ItemStack.field_77994_a:I
+      12: iconst_0
+      13: if_icmple     382
+      16: aload_0
+      17: aload_1
+      18: invokevirtual #431                // Method li$cil$oc$server$agent$Player$$isItemUseAllowed:(Lnet/minecraft/item/ItemStack;)Z
+      21: ifeq          382
+      24: aload_1
+      25: getfield      #427                // Field net/minecraft/item/ItemStack.field_77994_a:I
+      28: istore        4
+      30: aload_1
+      31: ifnonnull     38
+      34: iconst_0
+      35: goto          42
+      38: aload_1
+      39: invokevirtual #435                // Method net/minecraft/item/ItemStack.func_77960_j:()I
+      42: istore        5
+      44: aload_1
+      45: invokevirtual #438                // Method net/minecraft/item/ItemStack.func_77942_o:()Z
+      48: ifeq          61
+      51: aload_1
+      52: invokevirtual #442                // Method net/minecraft/item/ItemStack.func_77978_p:()Lnet/minecraft/nbt/NBTTagCompound;
+      55: invokevirtual #448                // Method net/minecraft/nbt/NBTTagCompound.func_74737_b:()Lnet/minecraft/nbt/NBTBase;
+      58: goto          62
+      61: aconst_null
+      62: astore        6
+      64: getstatic     #455                // Field scala/math/package$.MODULE$:Lscala/math/package$;
+      67: iconst_0
+      68: getstatic     #455                // Field scala/math/package$.MODULE$:Lscala/math/package$;
+      71: aload_1
+      72: invokevirtual #458                // Method net/minecraft/item/ItemStack.func_77988_m:()I
+      75: dload_2
+      76: bipush        20
+      78: i2d
+      79: dmul
+      80: d2i
+      81: invokevirtual #462                // Method scala/math/package$.min:(II)I
+      84: invokevirtual #465                // Method scala/math/package$.max:(II)I
+      87: istore        7
+      89: aload_0
+      90: invokevirtual #224                // Method facing:()Lnet/minecraftforge/common/util/ForgeDirection;
+      93: astore        8
+      95: aload_0
+      96: aload_0
+      97: getfield      #468                // Field field_70165_t:D
+     100: aload         8
+     102: getfield      #473                // Field net/minecraftforge/common/util/ForgeDirection.offsetX:I
+     105: i2d
+     106: ldc2_w        #474                // double 0.6d
+     109: dmul
+     110: dadd
+     111: putfield      #476                // Field net/minecraft/entity/Entity.field_70165_t:D
+     114: aload_0
+     115: aload_0
+     116: getfield      #479                // Field field_70163_u:D
+     119: aload         8
+     121: getfield      #482                // Field net/minecraftforge/common/util/ForgeDirection.offsetY:I
+     124: i2d
+     125: ldc2_w        #474                // double 0.6d
+     128: dmul
+     129: dadd
+     130: putfield      #483                // Field net/minecraft/entity/Entity.field_70163_u:D
+     133: aload_0
+     134: aload_0
+     135: getfield      #486                // Field field_70161_v:D
+     138: aload         8
+     140: getfield      #489                // Field net/minecraftforge/common/util/ForgeDirection.offsetZ:I
+     143: i2d
+     144: ldc2_w        #474                // double 0.6d
+     147: dmul
+     148: dadd
+     149: putfield      #490                // Field net/minecraft/entity/Entity.field_70161_v:D
+     152: aload_1
+     153: aload_0
+     154: invokevirtual #185                // Method world:()Lnet/minecraft/world/World;
+     157: aload_0
+     158: invokevirtual #494                // Method net/minecraft/item/ItemStack.func_77957_a:(Lnet/minecraft/world/World;Lnet/minecraft/entity/player/EntityPlayer;)Lnet/minecraft/item/ItemStack;
+     161: astore        9
+     163: aload_0
+     164: invokevirtual #497                // Method func_71039_bw:()Z
+     167: ifeq          200
+     170: aload_0
+     171: invokevirtual #499                // Method customItemInUseBecauseMinecraftIsBloodyStupidAndMakesRandomMethodsClientSided:()Lnet/minecraft/item/ItemStack;
+     174: invokevirtual #458                // Method net/minecraft/item/ItemStack.func_77988_m:()I
+     177: iload         7
+     179: isub
+     180: istore        10
+     182: aload_0
+     183: invokevirtual #499                // Method customItemInUseBecauseMinecraftIsBloodyStupidAndMakesRandomMethodsClientSided:()Lnet/minecraft/item/ItemStack;
+     186: aload_0
+     187: invokevirtual #185                // Method world:()Lnet/minecraft/world/World;
+     190: aload_0
+     191: iload         10
+     193: invokevirtual #503                // Method net/minecraft/item/ItemStack.func_77974_b:(Lnet/minecraft/world/World;Lnet/minecraft/entity/player/EntityPlayer;I)V
+     196: aload_0
+     197: invokevirtual #422                // Method func_71041_bz:()V
+     200: aload_0
+     201: aload_0
+     202: getfield      #468                // Field field_70165_t:D
+     205: aload         8
+     207: getfield      #473                // Field net/minecraftforge/common/util/ForgeDirection.offsetX:I
+     210: i2d
+     211: ldc2_w        #474                // double 0.6d
+     214: dmul
+     215: dsub
+     216: putfield      #476                // Field net/minecraft/entity/Entity.field_70165_t:D
+     219: aload_0
+     220: aload_0
+     221: getfield      #479                // Field field_70163_u:D
+     224: aload         8
+     226: getfield      #482                // Field net/minecraftforge/common/util/ForgeDirection.offsetY:I
+     229: i2d
+     230: ldc2_w        #474                // double 0.6d
+     233: dmul
+     234: dsub
+     235: putfield      #483                // Field net/minecraft/entity/Entity.field_70163_u:D
+     238: aload_0
+     239: aload_0
+     240: getfield      #486                // Field field_70161_v:D
+     243: aload         8
+     245: getfield      #489                // Field net/minecraftforge/common/util/ForgeDirection.offsetZ:I
+     248: i2d
+     249: ldc2_w        #474                // double 0.6d
+     252: dmul
+     253: dsub
+     254: putfield      #490                // Field net/minecraft/entity/Entity.field_70161_v:D
+     257: aload_0
+     258: invokevirtual #142                // Method agent:()Lli/cil/oc/api/internal/Agent;
+     261: invokeinterface #507,  1          // InterfaceMethod li/cil/oc/api/internal/Agent.machine:()Lli/cil/oc/api/machine/Machine;
+     266: iload         7
+     268: i2d
+     269: ldc2_w        #508                // double 20.0d
+     272: ddiv
+     273: invokeinterface #514,  3          // InterfaceMethod li/cil/oc/api/machine/Machine.pause:(D)Z
+     278: pop
+     279: aload         9
+     281: aload_1
+     282: astore        12
+     284: dup
+     285: ifnonnull     297
+     288: pop
+     289: aload         12
+     291: ifnull        305
+     294: goto          348
+     297: aload         12
+     299: invokevirtual #517                // Method java/lang/Object.equals:(Ljava/lang/Object;)Z
+     302: ifeq          348
+     305: aload         9
+     307: ifnull        344
+     310: aload_0
+     311: iload         4
+     313: iload         5
+     315: aload         9
+     317: invokespecial #521                // Method sizeOrDamageChanged$1:(IILnet/minecraft/item/ItemStack;)Z
+     320: ifne          348
+     323: aload_0
+     324: aload         6
+     326: aload         9
+     328: invokespecial #525                // Method tagChanged$1:(Lnet/minecraft/nbt/NBTBase;Lnet/minecraft/item/ItemStack;)Z
+     331: ifne          348
+     334: getstatic     #530                // Field li/cil/oc/integration/util/PortalGun$.MODULE$:Lli/cil/oc/integration/util/PortalGun$;
+     337: aload_1
+     338: invokevirtual #533                // Method li/cil/oc/integration/util/PortalGun$.isStandardPortalGun:(Lnet/minecraft/item/ItemStack;)Z
+     341: ifne          348
+     344: iconst_0
+     345: goto          349
+     348: iconst_1
+     349: istore        11
+     351: iload         11
+     353: ifeq          373
+     356: aload_0
+     357: invokevirtual #142                // Method agent:()Lli/cil/oc/api/internal/Agent;
+     360: invokeinterface #301,  1          // InterfaceMethod li/cil/oc/api/internal/Agent.equipmentInventory:()Lnet/minecraft/inventory/IInventory;
+     365: iconst_0
+     366: aload         9
+     368: invokeinterface #539,  3          // InterfaceMethod net/minecraft/inventory/IInventory.func_70299_a:(ILnet/minecraft/item/ItemStack;)V
+     373: iload         11
+     375: ifeq          382
+     378: iconst_1
+     379: goto          383
+     382: iconst_0
+     383: ireturn
+
+  public boolean placeBlock(int, int, int, int, int, float, float, float);
+    Code:
+       0: new           #389                // class java/lang/Object
+       3: dup
+       4: invokespecial #392                // Method java/lang/Object."<init>":()V
+       7: astore        9
+       9: aload_0
+      10: aload_0
+      11: invokevirtual #142                // Method agent:()Lli/cil/oc/api/internal/Agent;
+      14: invokeinterface #553,  1          // InterfaceMethod li/cil/oc/api/internal/Agent.mainInventory:()Lnet/minecraft/inventory/IInventory;
+      19: iload_1
+      20: new           #43                 // class li/cil/oc/server/agent/Player$$anonfun$placeBlock$1
+      23: dup
+      24: aload_0
+      25: iload_2
+      26: iload_3
+      27: iload         4
+      29: iload         5
+      31: fload         6
+      33: fload         7
+      35: fload         8
+      37: aload         9
+      39: invokespecial #556                // Method li/cil/oc/server/agent/Player$$anonfun$placeBlock$1."<init>":(Lli/cil/oc/server/agent/Player;IIIIFFFLjava/lang/Object;)V
+      42: iconst_0
+      43: invokespecial #311                // Method callUsingItemInSlot:(Lnet/minecraft/inventory/IInventory;ILscala/Function1;Z)Ljava/lang/Object;
+      46: invokestatic  #381                // Method scala/runtime/BoxesRunTime.unboxToBoolean:(Ljava/lang/Object;)Z
+      49: goto          69
+      52: astore        10
+      54: aload         10
+      56: invokevirtual #399                // Method scala/runtime/NonLocalReturnControl.key:()Ljava/lang/Object;
+      59: aload         9
+      61: if_acmpne     70
+      64: aload         10
+      66: invokevirtual #559                // Method scala/runtime/NonLocalReturnControl.value$mcZ$sp:()Z
+      69: ireturn
+      70: aload         10
+      72: athrow
+    Exception table:
+       from    to  target type
+           9    52    52   Class scala/runtime/NonLocalReturnControl
+
+  public double clickBlock(int, int, int, int, boolean);
+    Code:
+       0: new           #389                // class java/lang/Object
+       3: dup
+       4: invokespecial #392                // Method java/lang/Object."<init>":()V
+       7: astore        6
+       9: aload_0
+      10: aload_0
+      11: invokevirtual #142                // Method agent:()Lli/cil/oc/api/internal/Agent;
+      14: invokeinterface #301,  1          // InterfaceMethod li/cil/oc/api/internal/Agent.equipmentInventory:()Lnet/minecraft/inventory/IInventory;
+      19: iconst_0
+      20: new           #45                 // class li/cil/oc/server/agent/Player$$anonfun$clickBlock$1
+      23: dup
+      24: aload_0
+      25: iload_1
+      26: iload_2
+      27: iload_3
+      28: iload         4
+      30: iload         5
+      32: aload         6
+      34: invokespecial #565                // Method li/cil/oc/server/agent/Player$$anonfun$clickBlock$1."<init>":(Lli/cil/oc/server/agent/Player;IIIIZLjava/lang/Object;)V
+      37: aload_0
+      38: invokespecial #307                // Method callUsingItemInSlot$default$4:()Z
+      41: invokespecial #311                // Method callUsingItemInSlot:(Lnet/minecraft/inventory/IInventory;ILscala/Function1;Z)Ljava/lang/Object;
+      44: invokestatic  #569                // Method scala/runtime/BoxesRunTime.unboxToDouble:(Ljava/lang/Object;)D
+      47: goto          67
+      50: astore        7
+      52: aload         7
+      54: invokevirtual #399                // Method scala/runtime/NonLocalReturnControl.key:()Ljava/lang/Object;
+      57: aload         6
+      59: if_acmpne     68
+      62: aload         7
+      64: invokevirtual #573                // Method scala/runtime/NonLocalReturnControl.value$mcD$sp:()D
+      67: dreturn
+      68: aload         7
+      70: athrow
+    Exception table:
+       from    to  target type
+           9    50    50   Class scala/runtime/NonLocalReturnControl
+
+  public boolean clickBlock$default$5();
+    Code:
+       0: iconst_0
+       1: ireturn
+
+  public boolean li$cil$oc$server$agent$Player$$isItemUseAllowed(net.minecraft.item.ItemStack);
+    Code:
+       0: aload_1
+       1: ifnull        61
+       4: getstatic     #580                // Field li/cil/oc/Settings$.MODULE$:Lli/cil/oc/Settings$;
+       7: invokevirtual #584                // Method li/cil/oc/Settings$.get:()Lli/cil/oc/Settings;
+      10: invokevirtual #589                // Method li/cil/oc/Settings.allowUseItemsWithDuration:()Z
+      13: ifne          24
+      16: aload_1
+      17: invokevirtual #458                // Method net/minecraft/item/ItemStack.func_77988_m:()I
+      20: iconst_0
+      21: if_icmpgt     65
+      24: getstatic     #530                // Field li/cil/oc/integration/util/PortalGun$.MODULE$:Lli/cil/oc/integration/util/PortalGun$;
+      27: aload_1
+      28: invokevirtual #592                // Method li/cil/oc/integration/util/PortalGun$.isPortalGun:(Lnet/minecraft/item/ItemStack;)Z
+      31: ifeq          44
+      34: getstatic     #530                // Field li/cil/oc/integration/util/PortalGun$.MODULE$:Lli/cil/oc/integration/util/PortalGun$;
+      37: aload_1
+      38: invokevirtual #533                // Method li/cil/oc/integration/util/PortalGun$.isStandardPortalGun:(Lnet/minecraft/item/ItemStack;)Z
+      41: ifeq          65
+      44: aload_1
+      45: new           #424                // class net/minecraft/item/ItemStack
+      48: dup
+      49: getstatic     #598                // Field net/minecraft/init/Items.field_151058_ca:Lnet/minecraft/item/Item;
+      52: invokespecial #601                // Method net/minecraft/item/ItemStack."<init>":(Lnet/minecraft/item/Item;)V
+      55: invokevirtual #604                // Method net/minecraft/item/ItemStack.func_77969_a:(Lnet/minecraft/item/ItemStack;)Z
+      58: ifne          65
+      61: iconst_1
+      62: goto          66
+      65: iconst_0
+      66: ireturn
+
+  public net.minecraft.entity.item.EntityItem func_71019_a(net.minecraft.item.ItemStack, boolean);
+    Code:
+       0: getstatic     #611                // Field li/cil/oc/util/InventoryUtils$.MODULE$:Lli/cil/oc/util/InventoryUtils$;
+       3: getstatic     #153                // Field li/cil/oc/util/BlockPosition$.MODULE$:Lli/cil/oc/util/BlockPosition$;
+       6: aload_0
+       7: invokevirtual #142                // Method agent:()Lli/cil/oc/api/internal/Agent;
+      10: invokevirtual #157                // Method li/cil/oc/util/BlockPosition$.apply:(Lli/cil/oc/api/network/EnvironmentHost;)Lli/cil/oc/util/BlockPosition;
+      13: aload_1
+      14: iload_2
+      15: ifeq          24
+      18: getstatic     #616                // Field scala/None$.MODULE$:Lscala/None$;
+      21: goto          34
+      24: getstatic     #184                // Field scala/Option$.MODULE$:Lscala/Option$;
+      27: aload_0
+      28: invokevirtual #224                // Method facing:()Lnet/minecraftforge/common/util/ForgeDirection;
+      31: invokevirtual #209                // Method scala/Option$.apply:(Ljava/lang/Object;)Lscala/Option;
+      34: getstatic     #611                // Field li/cil/oc/util/InventoryUtils$.MODULE$:Lli/cil/oc/util/InventoryUtils$;
+      37: invokevirtual #619                // Method li/cil/oc/util/InventoryUtils$.spawnStackInWorld$default$4:()Lscala/Option;
+      40: invokevirtual #623                // Method li/cil/oc/util/InventoryUtils$.spawnStackInWorld:(Lli/cil/oc/util/BlockPosition;Lnet/minecraft/item/ItemStack;Lscala/Option;Lscala/Option;)Lnet/minecraft/entity/item/EntityItem;
+      43: areturn
+
+  public boolean li$cil$oc$server$agent$Player$$shouldCancel(scala.Function0<net.minecraftforge.event.entity.player.PlayerInteractEvent>);
+    Code:
+       0: aload_1
+       1: invokeinterface #630,  1          // InterfaceMethod scala/Function0.apply:()Ljava/lang/Object;
+       6: checkcast     #632                // class net/minecraftforge/event/entity/player/PlayerInteractEvent
+       9: astore_3
+      10: aload_3
+      11: invokevirtual #635                // Method net/minecraftforge/event/entity/player/PlayerInteractEvent.isCanceled:()Z
+      14: ifne          77
+      17: aload_3
+      18: getfield      #639                // Field net/minecraftforge/event/entity/player/PlayerInteractEvent.useBlock:Lcpw/mods/fml/common/eventhandler/Event$Result;
+      21: getstatic     #642                // Field cpw/mods/fml/common/eventhandler/Event$Result.DENY:Lcpw/mods/fml/common/eventhandler/Event$Result;
+      24: astore        4
+      26: dup
+      27: ifnonnull     39
+      30: pop
+      31: aload         4
+      33: ifnull        77
+      36: goto          47
+      39: aload         4
+      41: invokevirtual #517                // Method java/lang/Object.equals:(Ljava/lang/Object;)Z
+      44: ifne          77
+      47: aload_3
+      48: getfield      #645                // Field net/minecraftforge/event/entity/player/PlayerInteractEvent.useItem:Lcpw/mods/fml/common/eventhandler/Event$Result;
+      51: getstatic     #642                // Field cpw/mods/fml/common/eventhandler/Event$Result.DENY:Lcpw/mods/fml/common/eventhandler/Event$Result;
+      54: astore        5
+      56: dup
+      57: ifnonnull     69
+      60: pop
+      61: aload         5
+      63: ifnull        77
+      66: goto          81
+      69: aload         5
+      71: invokevirtual #517                // Method java/lang/Object.equals:(Ljava/lang/Object;)Z
+      74: ifeq          81
+      77: iconst_1
+      78: goto          131
+      81: iconst_0
+      82: goto          131
+      85: astore_2
+      86: getstatic     #338                // Field scala/Predef$.MODULE$:Lscala/Predef$;
+      89: aload_2
+      90: invokevirtual #342                // Method java/lang/Throwable.getStackTrace:()[Ljava/lang/StackTraceElement;
+      93: checkcast     #344                // class "[Ljava/lang/Object;"
+      96: invokevirtual #348                // Method scala/Predef$.refArrayOps:([Ljava/lang/Object;)Lscala/collection/mutable/ArrayOps;
+      99: new           #77                 // class li/cil/oc/server/agent/Player$$anonfun$li$cil$oc$server$agent$Player$$shouldCancel$1
+     102: dup
+     103: aload_0
+     104: invokespecial #646                // Method li/cil/oc/server/agent/Player$$anonfun$li$cil$oc$server$agent$Player$$shouldCancel$1."<init>":(Lli/cil/oc/server/agent/Player;)V
+     107: invokeinterface #355,  2          // InterfaceMethod scala/collection/mutable/ArrayOps.exists:(Lscala/Function1;)Z
+     112: ifne          130
+     115: getstatic     #360                // Field li/cil/oc/OpenComputers$.MODULE$:Lli/cil/oc/OpenComputers$;
+     118: invokevirtual #364                // Method li/cil/oc/OpenComputers$.log:()Lorg/apache/logging/log4j/Logger;
+     121: ldc_w         #366                // String Some event handler screwed up!
+     124: aload_2
+     125: invokeinterface #372,  3          // InterfaceMethod org/apache/logging/log4j/Logger.warn:(Ljava/lang/String;Ljava/lang/Throwable;)V
+     130: iconst_0
+     131: ireturn
+    Exception table:
+       from    to  target type
+           0    85    85   any
+
+  private <T> T callUsingItemInSlot(net.minecraft.inventory.IInventory, int, scala.Function1<net.minecraft.item.ItemStack, T>, boolean);
+    Code:
+       0: aload_0
+       1: invokespecial #279                // Method adjacentItems:()Lscala/collection/mutable/Buffer;
+       4: astore        5
+       6: aload_1
+       7: iload_2
+       8: invokeinterface #654,  2          // InterfaceMethod net/minecraft/inventory/IInventory.func_70301_a:(I)Lnet/minecraft/item/ItemStack;
+      13: astore        6
+      15: aload         6
+      17: ifnonnull     24
+      20: aconst_null
+      21: goto          29
+      24: aload         6
+      26: invokevirtual #657                // Method net/minecraft/item/ItemStack.func_77946_l:()Lnet/minecraft/item/ItemStack;
+      29: astore        7
+      31: aload_0
+      32: getfield      #661                // Field field_71071_by:Lnet/minecraft/entity/player/InventoryPlayer;
+      35: aload_1
+      36: aload_0
+      37: invokevirtual #142                // Method agent:()Lli/cil/oc/api/internal/Agent;
+      40: invokeinterface #553,  1          // InterfaceMethod li/cil/oc/api/internal/Agent.mainInventory:()Lnet/minecraft/inventory/IInventory;
+      45: astore        8
+      47: dup
+      48: ifnonnull     60
+      51: pop
+      52: aload         8
+      54: ifnull        68
+      57: goto          72
+      60: aload         8
+      62: invokevirtual #517                // Method java/lang/Object.equals:(Ljava/lang/Object;)Z
+      65: ifeq          72
+      68: iload_2
+      69: goto          75
+      72: iload_2
+      73: iconst_m1
+      74: ixor
+      75: putfield      #668                // Field net/minecraft/entity/player/InventoryPlayer.field_70461_c:I
+      78: aload_3
+      79: aload         6
+      81: invokeinterface #671,  2          // InterfaceMethod scala/Function1.apply:(Ljava/lang/Object;)Ljava/lang/Object;
+      86: aload_0
+      87: getfield      #661                // Field field_71071_by:Lnet/minecraft/entity/player/InventoryPlayer;
+      90: iconst_0
+      91: putfield      #668                // Field net/minecraft/entity/player/InventoryPlayer.field_70461_c:I
+      94: aload_1
+      95: iload_2
+      96: invokeinterface #654,  2          // InterfaceMethod net/minecraft/inventory/IInventory.func_70301_a:(I)Lnet/minecraft/item/ItemStack;
+     101: astore        10
+     103: aload         7
+     105: aload         10
+     107: invokestatic  #675                // Method net/minecraft/item/ItemStack.func_77989_b:(Lnet/minecraft/item/ItemStack;Lnet/minecraft/item/ItemStack;)Z
+     110: ifeq          132
+     113: aload         7
+     115: aload         6
+     117: invokestatic  #675                // Method net/minecraft/item/ItemStack.func_77989_b:(Lnet/minecraft/item/ItemStack;Lnet/minecraft/item/ItemStack;)Z
+     120: ifne          132
+     123: aload_1
+     124: iload_2
+     125: aload         6
+     127: invokeinterface #539,  3          // InterfaceMethod net/minecraft/inventory/IInventory.func_70299_a:(ILnet/minecraft/item/ItemStack;)V
+     132: aload         10
+     134: ifnull        185
+     137: aload         10
+     139: getfield      #427                // Field net/minecraft/item/ItemStack.field_77994_a:I
+     142: iconst_0
+     143: if_icmpgt     154
+     146: aload_1
+     147: iload_2
+     148: aconst_null
+     149: invokeinterface #539,  3          // InterfaceMethod net/minecraft/inventory/IInventory.func_70299_a:(ILnet/minecraft/item/ItemStack;)V
+     154: iload         4
+     156: ifeq          185
+     159: aload         10
+     161: getfield      #427                // Field net/minecraft/item/ItemStack.field_77994_a:I
+     164: iconst_0
+     165: if_icmple     179
+     168: aload_0
+     169: aload         10
+     171: aload         7
+     173: invokespecial #679                // Method tryRepair:(Lnet/minecraft/item/ItemStack;Lnet/minecraft/item/ItemStack;)V
+     176: goto          185
+     179: aload_0
+     180: aload         10
+     182: invokestatic  #685                // Method net/minecraftforge/event/ForgeEventFactory.onPlayerDestroyItem:(Lnet/minecraft/entity/player/EntityPlayer;Lnet/minecraft/item/ItemStack;)V
+     185: aload_0
+     186: aload         5
+     188: invokespecial #687                // Method collectDroppedItems:(Lscala/collection/Iterable;)V
+     191: areturn
+     192: astore        9
+     194: aload_0
+     195: getfield      #661                // Field field_71071_by:Lnet/minecraft/entity/player/InventoryPlayer;
+     198: iconst_0
+     199: putfield      #668                // Field net/minecraft/entity/player/InventoryPlayer.field_70461_c:I
+     202: aload_1
+     203: iload_2
+     204: invokeinterface #654,  2          // InterfaceMethod net/minecraft/inventory/IInventory.func_70301_a:(I)Lnet/minecraft/item/ItemStack;
+     209: astore        10
+     211: aload         7
+     213: aload         10
+     215: invokestatic  #675                // Method net/minecraft/item/ItemStack.func_77989_b:(Lnet/minecraft/item/ItemStack;Lnet/minecraft/item/ItemStack;)Z
+     218: ifeq          240
+     221: aload         7
+     223: aload         6
+     225: invokestatic  #675                // Method net/minecraft/item/ItemStack.func_77989_b:(Lnet/minecraft/item/ItemStack;Lnet/minecraft/item/ItemStack;)Z
+     228: ifne          240
+     231: aload_1
+     232: iload_2
+     233: aload         6
+     235: invokeinterface #539,  3          // InterfaceMethod net/minecraft/inventory/IInventory.func_70299_a:(ILnet/minecraft/item/ItemStack;)V
+     240: aload         10
+     242: ifnull        293
+     245: aload         10
+     247: getfield      #427                // Field net/minecraft/item/ItemStack.field_77994_a:I
+     250: iconst_0
+     251: if_icmpgt     262
+     254: aload_1
+     255: iload_2
+     256: aconst_null
+     257: invokeinterface #539,  3          // InterfaceMethod net/minecraft/inventory/IInventory.func_70299_a:(ILnet/minecraft/item/ItemStack;)V
+     262: iload         4
+     264: ifeq          293
+     267: aload         10
+     269: getfield      #427                // Field net/minecraft/item/ItemStack.field_77994_a:I
+     272: iconst_0
+     273: if_icmple     287
+     276: aload_0
+     277: aload         10
+     279: aload         7
+     281: invokespecial #679                // Method tryRepair:(Lnet/minecraft/item/ItemStack;Lnet/minecraft/item/ItemStack;)V
+     284: goto          293
+     287: aload_0
+     288: aload         10
+     290: invokestatic  #685                // Method net/minecraftforge/event/ForgeEventFactory.onPlayerDestroyItem:(Lnet/minecraft/entity/player/EntityPlayer;Lnet/minecraft/item/ItemStack;)V
+     293: aload_0
+     294: aload         5
+     296: invokespecial #687                // Method collectDroppedItems:(Lscala/collection/Iterable;)V
+     299: aload         9
+     301: athrow
+    Exception table:
+       from    to  target type
+          78    86   192   any
+
+  private <T> boolean callUsingItemInSlot$default$4();
+    Code:
+       0: iconst_1
+       1: ireturn
+
+  private void tryRepair(net.minecraft.item.ItemStack, net.minecraft.item.ItemStack);
+    Code:
+       0: aload_1
+       1: ifnull        105
+       4: aload_2
+       5: ifnull        105
+       8: aload_1
+       9: invokevirtual #696                // Method net/minecraft/item/ItemStack.func_77973_b:()Lnet/minecraft/item/Item;
+      12: aload_2
+      13: invokevirtual #696                // Method net/minecraft/item/ItemStack.func_77973_b:()Lnet/minecraft/item/Item;
+      16: astore_3
+      17: dup
+      18: ifnonnull     29
+      21: pop
+      22: aload_3
+      23: ifnull        36
+      26: goto          105
+      29: aload_3
+      30: invokevirtual #517                // Method java/lang/Object.equals:(Ljava/lang/Object;)Z
+      33: ifeq          105
+      36: new           #64                 // class li/cil/oc/api/event/RobotUsedToolEvent$ComputeDamageRate
+      39: dup
+      40: aload_0
+      41: invokevirtual #142                // Method agent:()Lli/cil/oc/api/internal/Agent;
+      44: aload_2
+      45: aload_1
+      46: getstatic     #580                // Field li/cil/oc/Settings$.MODULE$:Lli/cil/oc/Settings$;
+      49: invokevirtual #584                // Method li/cil/oc/Settings$.get:()Lli/cil/oc/Settings;
+      52: invokevirtual #701                // Method li/cil/oc/Settings.itemDamageRate:()D
+      55: invokespecial #704                // Method li/cil/oc/api/event/RobotUsedToolEvent$ComputeDamageRate."<init>":(Lli/cil/oc/api/internal/Agent;Lnet/minecraft/item/ItemStack;Lnet/minecraft/item/ItemStack;D)V
+      58: astore        4
+      60: getstatic     #320                // Field net/minecraftforge/common/MinecraftForge.EVENT_BUS:Lcpw/mods/fml/common/eventhandler/EventBus;
+      63: aload         4
+      65: invokevirtual #331                // Method cpw/mods/fml/common/eventhandler/EventBus.post:(Lcpw/mods/fml/common/eventhandler/Event;)Z
+      68: pop
+      69: aload         4
+      71: invokevirtual #707                // Method li/cil/oc/api/event/RobotUsedToolEvent$ComputeDamageRate.getDamageRate:()D
+      74: iconst_1
+      75: i2d
+      76: dcmpg
+      77: ifge          105
+      80: getstatic     #320                // Field net/minecraftforge/common/MinecraftForge.EVENT_BUS:Lcpw/mods/fml/common/eventhandler/EventBus;
+      83: new           #59                 // class li/cil/oc/api/event/RobotUsedToolEvent$ApplyDamageRate
+      86: dup
+      87: aload_0
+      88: invokevirtual #142                // Method agent:()Lli/cil/oc/api/internal/Agent;
+      91: aload_2
+      92: aload_1
+      93: aload         4
+      95: invokevirtual #707                // Method li/cil/oc/api/event/RobotUsedToolEvent$ComputeDamageRate.getDamageRate:()D
+      98: invokespecial #708                // Method li/cil/oc/api/event/RobotUsedToolEvent$ApplyDamageRate."<init>":(Lli/cil/oc/api/internal/Agent;Lnet/minecraft/item/ItemStack;Lnet/minecraft/item/ItemStack;D)V
+     101: invokevirtual #331                // Method cpw/mods/fml/common/eventhandler/EventBus.post:(Lcpw/mods/fml/common/eventhandler/Event;)Z
+     104: pop
+     105: return
+
+  public boolean li$cil$oc$server$agent$Player$$tryPlaceBlockWhileHandlingFunnySpecialCases(net.minecraft.item.ItemStack, int, int, int, int, float, float, float);
+    Code:
+       0: aload_1
+       1: ifnull        207
+       4: aload_1
+       5: getfield      #427                // Field net/minecraft/item/ItemStack.field_77994_a:I
+       8: iconst_0
+       9: if_icmple     207
+      12: new           #35                 // class li/cil/oc/api/event/RobotPlaceBlockEvent$Pre
+      15: dup
+      16: aload_0
+      17: invokevirtual #142                // Method agent:()Lli/cil/oc/api/internal/Agent;
+      20: aload_1
+      21: aload_0
+      22: invokevirtual #185                // Method world:()Lnet/minecraft/world/World;
+      25: iload_2
+      26: iload_3
+      27: iload         4
+      29: invokespecial #715                // Method li/cil/oc/api/event/RobotPlaceBlockEvent$Pre."<init>":(Lli/cil/oc/api/internal/Agent;Lnet/minecraft/item/ItemStack;Lnet/minecraft/world/World;III)V
+      32: astore        9
+      34: getstatic     #320                // Field net/minecraftforge/common/MinecraftForge.EVENT_BUS:Lcpw/mods/fml/common/eventhandler/EventBus;
+      37: aload         9
+      39: invokevirtual #331                // Method cpw/mods/fml/common/eventhandler/EventBus.post:(Lcpw/mods/fml/common/eventhandler/Event;)Z
+      42: pop
+      43: aload         9
+      45: invokevirtual #716                // Method li/cil/oc/api/event/RobotPlaceBlockEvent$Pre.isCanceled:()Z
+      48: ifeq          55
+      51: iconst_0
+      52: goto          200
+      55: aload_0
+      56: getfield      #719                // Field field_70125_A:F
+      59: iconst_0
+      60: i2f
+      61: fcmpg
+      62: ifge          79
+      65: aload_0
+      66: aload_1
+      67: invokespecial #722                // Method isSomeKindOfPiston:(Lnet/minecraft/item/ItemStack;)Z
+      70: ifeq          79
+      73: ldc2_w        #723                // double 1.82d
+      76: goto          80
+      79: dconst_0
+      80: dstore        10
+      82: aload_0
+      83: aload_0
+      84: getfield      #468                // Field field_70165_t:D
+      87: aload_0
+      88: getfield      #479                // Field field_70163_u:D
+      91: dload         10
+      93: dsub
+      94: aload_0
+      95: getfield      #486                // Field field_70161_v:D
+      98: invokevirtual #728                // Method func_70107_b:(DDD)V
+     101: getstatic     #92                 // Field li/cil/oc/server/agent/Player$.MODULE$:Lli/cil/oc/server/agent/Player$;
+     104: aload_0
+     105: invokevirtual #101                // Method li/cil/oc/server/agent/Player$.setInventoryPlayerItems:(Lli/cil/oc/server/agent/Player;)V
+     108: aload_1
+     109: aload_0
+     110: aload_0
+     111: invokevirtual #185                // Method world:()Lnet/minecraft/world/World;
+     114: iload_2
+     115: iload_3
+     116: iload         4
+     118: iload         5
+     120: fload         6
+     122: fload         7
+     124: fload         8
+     126: invokevirtual #732                // Method net/minecraft/item/ItemStack.func_77943_a:(Lnet/minecraft/entity/player/EntityPlayer;Lnet/minecraft/world/World;IIIIFFF)Z
+     129: istore        12
+     131: getstatic     #92                 // Field li/cil/oc/server/agent/Player$.MODULE$:Lli/cil/oc/server/agent/Player$;
+     134: aload_0
+     135: invokevirtual #98                 // Method li/cil/oc/server/agent/Player$.detectInventoryPlayerChanges:(Lli/cil/oc/server/agent/Player;)V
+     138: aload_0
+     139: aload_0
+     140: getfield      #468                // Field field_70165_t:D
+     143: aload_0
+     144: getfield      #479                // Field field_70163_u:D
+     147: dload         10
+     149: dadd
+     150: aload_0
+     151: getfield      #486                // Field field_70161_v:D
+     154: invokevirtual #728                // Method func_70107_b:(DDD)V
+     157: iload         12
+     159: ifeq          194
+     162: getstatic     #320                // Field net/minecraftforge/common/MinecraftForge.EVENT_BUS:Lcpw/mods/fml/common/eventhandler/EventBus;
+     165: new           #40                 // class li/cil/oc/api/event/RobotPlaceBlockEvent$Post
+     168: dup
+     169: aload_0
+     170: invokevirtual #142                // Method agent:()Lli/cil/oc/api/internal/Agent;
+     173: aload_1
+     174: aload_0
+     175: invokevirtual #185                // Method world:()Lnet/minecraft/world/World;
+     178: iload_2
+     179: iload_3
+     180: iload         4
+     182: invokespecial #733                // Method li/cil/oc/api/event/RobotPlaceBlockEvent$Post."<init>":(Lli/cil/oc/api/internal/Agent;Lnet/minecraft/item/ItemStack;Lnet/minecraft/world/World;III)V
+     185: invokevirtual #331                // Method cpw/mods/fml/common/eventhandler/EventBus.post:(Lcpw/mods/fml/common/eventhandler/Event;)Z
+     188: invokestatic  #737                // Method scala/runtime/BoxesRunTime.boxToBoolean:(Z)Ljava/lang/Boolean;
+     191: goto          197
+     194: getstatic     #743                // Field scala/runtime/BoxedUnit.UNIT:Lscala/runtime/BoxedUnit;
+     197: pop
+     198: iload         12
+     200: ifeq          207
+     203: iconst_1
+     204: goto          208
+     207: iconst_0
+     208: ireturn
+
+  private boolean isSomeKindOfPiston(net.minecraft.item.ItemStack);
+    Code:
+       0: aload_1
+       1: invokevirtual #696                // Method net/minecraft/item/ItemStack.func_77973_b:()Lnet/minecraft/item/Item;
+       4: astore_2
+       5: aload_2
+       6: instanceof    #748                // class net/minecraft/item/ItemBlock
+       9: ifeq          46
+      12: aload_2
+      13: checkcast     #748                // class net/minecraft/item/ItemBlock
+      16: astore_3
+      17: aload_3
+      18: getfield      #752                // Field net/minecraft/item/ItemBlock.field_150939_a:Lnet/minecraft/block/Block;
+      21: astore        5
+      23: aload         5
+      25: ifnull        40
+      28: aload         5
+      30: instanceof    #754                // class net/minecraft/block/BlockPistonBase
+      33: ifeq          40
+      36: iconst_1
+      37: goto          41
+      40: iconst_0
+      41: istore        4
+      43: goto          49
+      46: iconst_0
+      47: istore        4
+      49: iload         4
+      51: ireturn
+
+  public void func_71008_a(net.minecraft.item.ItemStack, int);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: iload_2
+       3: invokespecial #763                // Method net/minecraft/entity/player/EntityPlayerMP.func_71008_a:(Lnet/minecraft/item/ItemStack;I)V
+       6: aload_0
+       7: aload_1
+       8: invokevirtual #765                // Method customItemInUseBecauseMinecraftIsBloodyStupidAndMakesRandomMethodsClientSided_$eq:(Lnet/minecraft/item/ItemStack;)V
+      11: return
+
+  public void func_71041_bz();
+    Code:
+       0: aload_0
+       1: invokespecial #767                // Method net/minecraft/entity/player/EntityPlayer.func_71041_bz:()V
+       4: aload_0
+       5: aconst_null
+       6: invokevirtual #765                // Method customItemInUseBecauseMinecraftIsBloodyStupidAndMakesRandomMethodsClientSided_$eq:(Lnet/minecraft/item/ItemStack;)V
+       9: return
+
+  public void func_71020_j(float);
+    Code:
+       0: getstatic     #580                // Field li/cil/oc/Settings$.MODULE$:Lli/cil/oc/Settings$;
+       3: invokevirtual #584                // Method li/cil/oc/Settings$.get:()Lli/cil/oc/Settings;
+       6: invokevirtual #772                // Method li/cil/oc/Settings.robotExhaustionCost:()D
+       9: iconst_0
+      10: i2d
+      11: dcmpl
+      12: ifle          79
+      15: aload_0
+      16: invokevirtual #142                // Method agent:()Lli/cil/oc/api/internal/Agent;
+      19: invokeinterface #507,  1          // InterfaceMethod li/cil/oc/api/internal/Agent.machine:()Lli/cil/oc/api/machine/Machine;
+      24: invokeinterface #776,  1          // InterfaceMethod li/cil/oc/api/machine/Machine.node:()Lli/cil/oc/api/network/Node;
+      29: astore_2
+      30: aload_2
+      31: instanceof    #778                // class li/cil/oc/api/network/Connector
+      34: ifeq          69
+      37: aload_2
+      38: checkcast     #778                // class li/cil/oc/api/network/Connector
+      41: astore_3
+      42: aload_3
+      43: getstatic     #580                // Field li/cil/oc/Settings$.MODULE$:Lli/cil/oc/Settings$;
+      46: invokevirtual #584                // Method li/cil/oc/Settings$.get:()Lli/cil/oc/Settings;
+      49: invokevirtual #772                // Method li/cil/oc/Settings.robotExhaustionCost:()D
+      52: dneg
+      53: fload_1
+      54: f2d
+      55: dmul
+      56: invokeinterface #782,  3          // InterfaceMethod li/cil/oc/api/network/Connector.changeBuffer:(D)D
+      61: invokestatic  #786                // Method scala/runtime/BoxesRunTime.boxToDouble:(D)Ljava/lang/Double;
+      64: astore        4
+      66: goto          74
+      69: getstatic     #743                // Field scala/runtime/BoxedUnit.UNIT:Lscala/runtime/BoxedUnit;
+      72: astore        4
+      74: aload         4
+      76: goto          82
+      79: getstatic     #743                // Field scala/runtime/BoxedUnit.UNIT:Lscala/runtime/BoxedUnit;
+      82: pop
+      83: getstatic     #320                // Field net/minecraftforge/common/MinecraftForge.EVENT_BUS:Lcpw/mods/fml/common/eventhandler/EventBus;
+      86: new           #790                // class li/cil/oc/api/event/RobotExhaustionEvent
+      89: dup
+      90: aload_0
+      91: invokevirtual #142                // Method agent:()Lli/cil/oc/api/internal/Agent;
+      94: fload_1
+      95: f2d
+      96: invokespecial #793                // Method li/cil/oc/api/event/RobotExhaustionEvent."<init>":(Lli/cil/oc/api/internal/Agent;D)V
+      99: invokevirtual #331                // Method cpw/mods/fml/common/eventhandler/EventBus.post:(Lcpw/mods/fml/common/eventhandler/Event;)Z
+     102: pop
+     103: return
+
+  public void func_71030_a(net.minecraft.entity.IMerchant, java.lang.String);
+    Code:
+       0: aload_1
+       1: aconst_null
+       2: invokeinterface #802,  2          // InterfaceMethod net/minecraft/entity/IMerchant.func_70932_a_:(Lnet/minecraft/entity/player/EntityPlayer;)V
+       7: return
+
+  public void func_71053_j();
+    Code:
+       0: return
+
+  public void func_71038_i();
+    Code:
+       0: return
+
+  public boolean func_70003_b(int, java.lang.String);
+    Code:
+       0: ldc_w         #811                // String seed
+       3: aload_2
+       4: invokevirtual #517                // Method java/lang/Object.equals:(Ljava/lang/Object;)Z
+       7: ifeq          20
+      10: aload_0
+      11: getfield      #815                // Field field_71133_b:Lnet/minecraft/server/MinecraftServer;
+      14: invokevirtual #820                // Method net/minecraft/server/MinecraftServer.func_71262_S:()Z
+      17: ifeq          147
+      20: ldc_w         #822                // String tell
+      23: aload_2
+      24: invokevirtual #517                // Method java/lang/Object.equals:(Ljava/lang/Object;)Z
+      27: ifne          147
+      30: ldc_w         #824                // String help
+      33: aload_2
+      34: invokevirtual #517                // Method java/lang/Object.equals:(Ljava/lang/Object;)Z
+      37: ifne          147
+      40: ldc_w         #826                // String me
+      43: aload_2
+      44: invokevirtual #517                // Method java/lang/Object.equals:(Ljava/lang/Object;)Z
+      47: ifne          147
+      50: aload_0
+      51: getfield      #815                // Field field_71133_b:Lnet/minecraft/server/MinecraftServer;
+      54: invokevirtual #830                // Method net/minecraft/server/MinecraftServer.func_71203_ab:()Lnet/minecraft/server/management/ServerConfigurationManager;
+      57: astore_3
+      58: aload_3
+      59: aload_0
+      60: invokevirtual #834                // Method func_146103_bH:()Lcom/mojang/authlib/GameProfile;
+      63: invokevirtual #840                // Method net/minecraft/server/management/ServerConfigurationManager.func_152596_g:(Lcom/mojang/authlib/GameProfile;)Z
+      66: ifeq          143
+      69: aload_3
+      70: invokevirtual #844                // Method net/minecraft/server/management/ServerConfigurationManager.func_152603_m:()Lnet/minecraft/server/management/UserListOps;
+      73: aload_0
+      74: invokevirtual #834                // Method func_146103_bH:()Lcom/mojang/authlib/GameProfile;
+      77: invokevirtual #850                // Method net/minecraft/server/management/UserListOps.func_152683_b:(Ljava/lang/Object;)Lnet/minecraft/server/management/UserListEntry;
+      80: astore        4
+      82: aload         4
+      84: instanceof    #852                // class net/minecraft/server/management/UserListOpsEntry
+      87: ifeq          116
+      90: aload         4
+      92: checkcast     #852                // class net/minecraft/server/management/UserListOpsEntry
+      95: astore        5
+      97: aload         5
+      99: invokevirtual #855                // Method net/minecraft/server/management/UserListOpsEntry.func_152644_a:()I
+     102: iload_1
+     103: if_icmplt     110
+     106: iconst_1
+     107: goto          111
+     110: iconst_0
+     111: istore        6
+     113: goto          134
+     116: aload_0
+     117: getfield      #815                // Field field_71133_b:Lnet/minecraft/server/MinecraftServer;
+     120: invokevirtual #860                // Method net/minecraft/server/MinecraftServer.func_110455_j:()I
+     123: iload_1
+     124: if_icmplt     131
+     127: iconst_1
+     128: goto          132
+     131: iconst_0
+     132: istore        6
+     134: iload         6
+     136: ifeq          143
+     139: iconst_1
+     140: goto          144
+     143: iconst_0
+     144: ifeq          151
+     147: iconst_1
+     148: goto          152
+     151: iconst_0
+     152: ireturn
+
+  public boolean func_96122_a(net.minecraft.entity.player.EntityPlayer);
+    Code:
+       0: getstatic     #580                // Field li/cil/oc/Settings$.MODULE$:Lli/cil/oc/Settings$;
+       3: invokevirtual #584                // Method li/cil/oc/Settings$.get:()Lli/cil/oc/Settings;
+       6: invokevirtual #871                // Method li/cil/oc/Settings.canAttackPlayers:()Z
+       9: ireturn
+
+  public boolean func_71043_e(boolean);
+    Code:
+       0: iconst_0
+       1: ireturn
+
+  public boolean func_70687_e(net.minecraft.potion.PotionEffect);
+    Code:
+       0: iconst_0
+       1: ireturn
+
+  public boolean func_70652_k(net.minecraft.entity.Entity);
+    Code:
+       0: iconst_0
+       1: ireturn
+
+  public boolean func_70097_a(net.minecraft.util.DamageSource, float);
+    Code:
+       0: iconst_0
+       1: ireturn
+
+  public void func_70691_i(float);
+    Code:
+       0: return
+
+  public void func_70606_j(float);
+    Code:
+       0: return
+
+  public void func_70106_y();
+    Code:
+       0: aload_0
+       1: iconst_1
+       2: putfield      #891                // Field net/minecraft/entity/Entity.field_70128_L:Z
+       5: return
+
+  public void func_70636_d();
+    Code:
+       0: return
+
+  public void func_71001_a(net.minecraft.entity.Entity, int);
+    Code:
+       0: return
+
+  public void func_70062_b(int, net.minecraft.item.ItemStack);
+    Code:
+       0: iload_1
+       1: iconst_0
+       2: if_icmpne     39
+       5: aload_0
+       6: invokevirtual #142                // Method agent:()Lli/cil/oc/api/internal/Agent;
+       9: invokeinterface #301,  1          // InterfaceMethod li/cil/oc/api/internal/Agent.equipmentInventory:()Lnet/minecraft/inventory/IInventory;
+      14: invokeinterface #899,  1          // InterfaceMethod net/minecraft/inventory/IInventory.func_70302_i_:()I
+      19: iconst_0
+      20: if_icmple     39
+      23: aload_0
+      24: invokevirtual #142                // Method agent:()Lli/cil/oc/api/internal/Agent;
+      27: invokeinterface #301,  1          // InterfaceMethod li/cil/oc/api/internal/Agent.equipmentInventory:()Lnet/minecraft/inventory/IInventory;
+      32: iload_1
+      33: aload_2
+      34: invokeinterface #539,  3          // InterfaceMethod net/minecraft/inventory/IInventory.func_70299_a:(ILnet/minecraft/item/ItemStack;)V
+      39: return
+
+  public void func_70604_c(net.minecraft.entity.EntityLivingBase);
+    Code:
+       0: return
+
+  public void func_130011_c(net.minecraft.entity.Entity);
+    Code:
+       0: return
+
+  public void func_70078_a(net.minecraft.entity.Entity);
+    Code:
+       0: return
+
+  public net.minecraft.entity.player.EntityPlayer$EnumStatus func_71018_a(int, int, int);
+    Code:
+       0: getstatic     #910                // Field net/minecraft/entity/player/EntityPlayer$EnumStatus.OTHER_PROBLEM:Lnet/minecraft/entity/player/EntityPlayer$EnumStatus;
+       3: areturn
+
+  public void func_145747_a(net.minecraft.util.IChatComponent);
+    Code:
+       0: return
+
+  public void func_71058_b(int, int, int);
+    Code:
+       0: return
+
+  public void func_71002_c(int, int, int, java.lang.String);
+    Code:
+       0: return
+
+  public void func_82244_d(int, int, int);
+    Code:
+       0: return
+
+  public void func_71007_a(net.minecraft.inventory.IInventory);
+    Code:
+       0: return
+
+  public void func_96125_a(net.minecraft.entity.item.EntityMinecartHopper);
+    Code:
+       0: return
+
+  public void func_110298_a(net.minecraft.entity.passive.EntityHorse, net.minecraft.inventory.IInventory);
+    Code:
+       0: return
+
+  public void func_146104_a(net.minecraft.tileentity.TileEntityBeacon);
+    Code:
+       0: return
+
+  public void func_146098_a(net.minecraft.tileentity.TileEntityBrewingStand);
+    Code:
+       0: return
+
+  public void func_146102_a(net.minecraft.tileentity.TileEntityDispenser);
+    Code:
+       0: return
+
+  public void func_146101_a(net.minecraft.tileentity.TileEntityFurnace);
+    Code:
+       0: return
+
+  public void func_146093_a(net.minecraft.tileentity.TileEntityHopper);
+    Code:
+       0: return
+
+  private final boolean sizeOrDamageChanged$1(int, int, net.minecraft.item.ItemStack);
+    Code:
+       0: aload_3
+       1: getfield      #427                // Field net/minecraft/item/ItemStack.field_77994_a:I
+       4: iload_1
+       5: if_icmpne     16
+       8: aload_3
+       9: invokevirtual #435                // Method net/minecraft/item/ItemStack.func_77960_j:()I
+      12: iload_2
+      13: if_icmpeq     20
+      16: iconst_1
+      17: goto          21
+      20: iconst_0
+      21: ireturn
+
+  private final boolean tagChanged$1(net.minecraft.nbt.NBTBase, net.minecraft.item.ItemStack);
+    Code:
+       0: aload_1
+       1: ifnonnull     11
+       4: aload_2
+       5: invokevirtual #438                // Method net/minecraft/item/ItemStack.func_77942_o:()Z
+       8: ifne          48
+      11: aload_1
+      12: ifnull        22
+      15: aload_2
+      16: invokevirtual #438                // Method net/minecraft/item/ItemStack.func_77942_o:()Z
+      19: ifeq          48
+      22: aload_1
+      23: ifnull        44
+      26: aload_2
+      27: invokevirtual #438                // Method net/minecraft/item/ItemStack.func_77942_o:()Z
+      30: ifeq          44
+      33: aload_1
+      34: aload_2
+      35: invokevirtual #442                // Method net/minecraft/item/ItemStack.func_77978_p:()Lnet/minecraft/nbt/NBTTagCompound;
+      38: invokevirtual #950                // Method net/minecraft/nbt/NBTBase.equals:(Ljava/lang/Object;)Z
+      41: ifeq          48
+      44: iconst_0
+      45: goto          49
+      48: iconst_1
+      49: ireturn
+
+  public li.cil.oc.server.agent.Player(li.cil.oc.api.internal.Agent);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #125                // Field agent:Lli/cil/oc/api/internal/Agent;
+       5: aload_0
+       6: aload_1
+       7: invokeinterface #146,  1          // InterfaceMethod li/cil/oc/api/internal/Agent.world:()Lnet/minecraft/world/World;
+      12: checkcast     #954                // class net/minecraft/world/WorldServer
+      15: getstatic     #92                 // Field li/cil/oc/server/agent/Player$.MODULE$:Lli/cil/oc/server/agent/Player$;
+      18: aload_1
+      19: invokevirtual #113                // Method li/cil/oc/server/agent/Player$.profileFor:(Lli/cil/oc/api/internal/Agent;)Lcom/mojang/authlib/GameProfile;
+      22: invokespecial #957                // Method net/minecraftforge/common/util/FakePlayer."<init>":(Lnet/minecraft/world/WorldServer;Lcom/mojang/authlib/GameProfile;)V
+      25: aload_0
+      26: new           #959                // class net/minecraft/network/NetHandlerPlayServer
+      29: dup
+      30: aload_0
+      31: getfield      #815                // Field field_71133_b:Lnet/minecraft/server/MinecraftServer;
+      34: getstatic     #964                // Field li/cil/oc/server/agent/FakeNetworkManager$.MODULE$:Lli/cil/oc/server/agent/FakeNetworkManager$;
+      37: aload_0
+      38: invokespecial #967                // Method net/minecraft/network/NetHandlerPlayServer."<init>":(Lnet/minecraft/server/MinecraftServer;Lnet/minecraft/network/NetworkManager;Lnet/minecraft/entity/player/EntityPlayerMP;)V
+      41: putfield      #971                // Field net/minecraft/entity/player/EntityPlayerMP.field_71135_a:Lnet/minecraft/network/NetHandlerPlayServer;
+      44: aload_0
+      45: getfield      #975                // Field field_71075_bZ:Lnet/minecraft/entity/player/PlayerCapabilities;
+      48: iconst_1
+      49: putfield      #980                // Field net/minecraft/entity/player/PlayerCapabilities.field_75101_c:Z
+      52: aload_0
+      53: getfield      #975                // Field field_71075_bZ:Lnet/minecraft/entity/player/PlayerCapabilities;
+      56: iconst_1
+      57: putfield      #983                // Field net/minecraft/entity/player/PlayerCapabilities.field_75102_a:Z
+      60: aload_0
+      61: getfield      #975                // Field field_71075_bZ:Lnet/minecraft/entity/player/PlayerCapabilities;
+      64: iconst_1
+      65: putfield      #986                // Field net/minecraft/entity/player/PlayerCapabilities.field_75100_b:Z
+      68: aload_0
+      69: iconst_1
+      70: putfield      #989                // Field net/minecraft/entity/Entity.field_70122_E:Z
+      73: aload_0
+      74: ldc_w         #990                // float 0.5f
+      77: putfield      #993                // Field net/minecraft/entity/Entity.field_70129_M:F
+      80: aload_0
+      81: fconst_0
+      82: putfield      #996                // Field net/minecraft/entity/player/EntityPlayer.eyeHeight:F
+      85: aload_0
+      86: fconst_1
+      87: fconst_1
+      88: invokevirtual #1000               // Method func_70105_a:(FF)V
+      91: new           #1002               // class li/cil/oc/server/agent/Inventory
+      94: dup
+      95: aload_1
+      96: invokespecial #1004               // Method li/cil/oc/server/agent/Inventory."<init>":(Lli/cil/oc/api/internal/Agent;)V
+      99: astore_2
+     100: getstatic     #1009               // Field li/cil/oc/integration/Mods$.MODULE$:Lli/cil/oc/integration/Mods$;
+     103: invokevirtual #1013               // Method li/cil/oc/integration/Mods$.BattleGear2:()Lli/cil/oc/integration/Mods$SimpleMod;
+     106: invokevirtual #1016               // Method li/cil/oc/integration/Mods$SimpleMod.isAvailable:()Z
+     109: ifeq          144
+     112: ldc           #32                 // class net/minecraft/entity/player/EntityPlayer
+     114: aload_0
+     115: aload_2
+     116: iconst_3
+     117: anewarray     #862                // class java/lang/String
+     120: dup
+     121: iconst_0
+     122: ldc_w         #1017               // String inventory
+     125: aastore
+     126: dup
+     127: iconst_1
+     128: ldc_w         #1018               // String field_71071_by
+     131: aastore
+     132: dup
+     133: iconst_2
+     134: ldc_w         #1020               // String bm
+     137: aastore
+     138: invokestatic  #1026               // Method cpw/mods/fml/common/ObfuscationReflectionHelper.setPrivateValue:(Ljava/lang/Class;Ljava/lang/Object;Ljava/lang/Object;[Ljava/lang/String;)V
+     141: goto          149
+     144: aload_0
+     145: aload_2
+     146: putfield      #1027               // Field net/minecraft/entity/player/EntityPlayer.field_71071_by:Lnet/minecraft/entity/player/InventoryPlayer;
+     149: aload_0
+     150: getfield      #661                // Field field_71071_by:Lnet/minecraft/entity/player/InventoryPlayer;
+     153: aload_0
+     154: putfield      #1030               // Field net/minecraft/entity/player/InventoryPlayer.field_70458_d:Lnet/minecraft/entity/player/EntityPlayer;
+     157: aload_0
+     158: new           #1032               // class net/minecraft/inventory/ContainerPlayer
+     161: dup
+     162: aload_0
+     163: getfield      #661                // Field field_71071_by:Lnet/minecraft/entity/player/InventoryPlayer;
+     166: aload_0
+     167: invokevirtual #185                // Method world:()Lnet/minecraft/world/World;
+     170: getfield      #1035               // Field net/minecraft/world/World.field_72995_K:Z
+     173: ifeq          180
+     176: iconst_0
+     177: goto          181
+     180: iconst_1
+     181: aload_0
+     182: invokespecial #1038               // Method net/minecraft/inventory/ContainerPlayer."<init>":(Lnet/minecraft/entity/player/InventoryPlayer;ZLnet/minecraft/entity/player/EntityPlayer;)V
+     185: putfield      #1042               // Field net/minecraft/entity/player/EntityPlayer.field_71069_bz:Lnet/minecraft/inventory/Container;
+     188: aload_0
+     189: aload_0
+     190: getfield      #1043               // Field field_71069_bz:Lnet/minecraft/inventory/Container;
+     193: putfield      #1046               // Field net/minecraft/entity/player/EntityPlayer.field_71070_bA:Lnet/minecraft/inventory/Container;
+     196: aload_0
+     197: getstatic     #1049               // Field net/minecraftforge/common/util/ForgeDirection.SOUTH:Lnet/minecraftforge/common/util/ForgeDirection;
+     200: putfield      #128                // Field facing:Lnet/minecraftforge/common/util/ForgeDirection;
+     203: aload_0
+     204: getstatic     #1049               // Field net/minecraftforge/common/util/ForgeDirection.SOUTH:Lnet/minecraftforge/common/util/ForgeDirection;
+     207: putfield      #132                // Field side:Lnet/minecraftforge/common/util/ForgeDirection;
+     210: aload_0
+     211: getfield      #1053               // Field field_71134_c:Lnet/minecraft/server/management/ItemInWorldManager;
+     214: dconst_1
+     215: invokevirtual #1059               // Method net/minecraft/server/management/ItemInWorldManager.setBlockReachDistance:(D)V
+     218: return
+}
+Compiled from "Player.scala"
+public final class li.cil.oc.server.agent.Player$$anonfun$clickBlock$1 extends scala.runtime.AbstractFunction1<net.minecraft.item.ItemStack, java.lang.Object> implements scala.Serializable {
+  private final li.cil.oc.server.agent.Player $outer;
+
+  public final int x$8;
+
+  public final int y$3;
+
+  public final int z$3;
+
+  public final int side$3;
+
+  private final boolean immediate$1;
+
+  private final java.lang.Object nonLocalReturnKey3$1;
+
+  public final double apply(net.minecraft.item.ItemStack);
+    Code:
+       0: aload_0
+       1: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+       4: new           #33                 // class li/cil/oc/server/agent/Player$$anonfun$clickBlock$1$$anonfun$apply$5
+       7: dup
+       8: aload_0
+       9: invokespecial #54                 // Method li/cil/oc/server/agent/Player$$anonfun$clickBlock$1$$anonfun$apply$5."<init>":(Lli/cil/oc/server/agent/Player$$anonfun$clickBlock$1;)V
+      12: invokevirtual #58                 // Method li/cil/oc/server/agent/Player.li$cil$oc$server$agent$Player$$shouldCancel:(Lscala/Function0;)Z
+      15: ifeq          31
+      18: new           #60                 // class scala/runtime/NonLocalReturnControl$mcD$sp
+      21: dup
+      22: aload_0
+      23: getfield      #62                 // Field nonLocalReturnKey3$1:Ljava/lang/Object;
+      26: dconst_0
+      27: invokespecial #65                 // Method scala/runtime/NonLocalReturnControl$mcD$sp."<init>":(Ljava/lang/Object;D)V
+      30: athrow
+      31: invokestatic  #71                 // Method net/minecraft/server/MinecraftServer.func_71276_C:()Lnet/minecraft/server/MinecraftServer;
+      34: aload_0
+      35: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+      38: invokevirtual #75                 // Method li/cil/oc/server/agent/Player.world:()Lnet/minecraft/world/World;
+      41: aload_0
+      42: getfield      #77                 // Field x$8:I
+      45: aload_0
+      46: getfield      #79                 // Field y$3:I
+      49: aload_0
+      50: getfield      #81                 // Field z$3:I
+      53: aload_0
+      54: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+      57: invokevirtual #85                 // Method net/minecraft/server/MinecraftServer.func_96290_a:(Lnet/minecraft/world/World;IIILnet/minecraft/entity/player/EntityPlayer;)Z
+      60: ifeq          76
+      63: new           #60                 // class scala/runtime/NonLocalReturnControl$mcD$sp
+      66: dup
+      67: aload_0
+      68: getfield      #62                 // Field nonLocalReturnKey3$1:Ljava/lang/Object;
+      71: dconst_0
+      72: invokespecial #65                 // Method scala/runtime/NonLocalReturnControl$mcD$sp."<init>":(Ljava/lang/Object;D)V
+      75: athrow
+      76: aload_0
+      77: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+      80: invokevirtual #75                 // Method li/cil/oc/server/agent/Player.world:()Lnet/minecraft/world/World;
+      83: aload_0
+      84: getfield      #77                 // Field x$8:I
+      87: aload_0
+      88: getfield      #79                 // Field y$3:I
+      91: aload_0
+      92: getfield      #81                 // Field z$3:I
+      95: invokevirtual #91                 // Method net/minecraft/world/World.func_147439_a:(III)Lnet/minecraft/block/Block;
+      98: astore_2
+      99: aload_0
+     100: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     103: invokevirtual #75                 // Method li/cil/oc/server/agent/Player.world:()Lnet/minecraft/world/World;
+     106: aload_0
+     107: getfield      #77                 // Field x$8:I
+     110: aload_0
+     111: getfield      #79                 // Field y$3:I
+     114: aload_0
+     115: getfield      #81                 // Field z$3:I
+     118: invokevirtual #95                 // Method net/minecraft/world/World.func_72805_g:(III)I
+     121: istore_3
+     122: aload_2
+     123: ifnonnull     130
+     126: iconst_0
+     127: goto          131
+     130: iconst_1
+     131: istore        4
+     133: iload         4
+     135: ifeq          177
+     138: aload_2
+     139: aload_0
+     140: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     143: invokevirtual #75                 // Method li/cil/oc/server/agent/Player.world:()Lnet/minecraft/world/World;
+     146: aload_0
+     147: getfield      #77                 // Field x$8:I
+     150: aload_0
+     151: getfield      #79                 // Field y$3:I
+     154: aload_0
+     155: getfield      #81                 // Field z$3:I
+     158: invokevirtual #101                // Method net/minecraft/block/Block.isAir:(Lnet/minecraft/world/IBlockAccess;III)Z
+     161: ifne          177
+     164: aload_2
+     165: iload_3
+     166: iconst_0
+     167: invokevirtual #105                // Method net/minecraft/block/Block.func_149678_a:(IZ)Z
+     170: ifeq          177
+     173: iconst_1
+     174: goto          178
+     177: iconst_0
+     178: istore        5
+     180: iload         5
+     182: ifeq          1205
+     185: new           #15                 // class net/minecraftforge/event/world/BlockEvent$BreakEvent
+     188: dup
+     189: aload_0
+     190: getfield      #77                 // Field x$8:I
+     193: aload_0
+     194: getfield      #79                 // Field y$3:I
+     197: aload_0
+     198: getfield      #81                 // Field z$3:I
+     201: aload_0
+     202: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     205: invokevirtual #75                 // Method li/cil/oc/server/agent/Player.world:()Lnet/minecraft/world/World;
+     208: aload_2
+     209: iload_3
+     210: aload_0
+     211: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     214: invokespecial #108                // Method net/minecraftforge/event/world/BlockEvent$BreakEvent."<init>":(IIILnet/minecraft/world/World;Lnet/minecraft/block/Block;ILnet/minecraft/entity/player/EntityPlayer;)V
+     217: astore        6
+     219: getstatic     #114                // Field net/minecraftforge/common/MinecraftForge.EVENT_BUS:Lcpw/mods/fml/common/eventhandler/EventBus;
+     222: aload         6
+     224: invokevirtual #120                // Method cpw/mods/fml/common/eventhandler/EventBus.post:(Lcpw/mods/fml/common/eventhandler/Event;)Z
+     227: pop
+     228: aload         6
+     230: invokevirtual #124                // Method net/minecraftforge/event/world/BlockEvent$BreakEvent.isCanceled:()Z
+     233: ifeq          249
+     236: new           #60                 // class scala/runtime/NonLocalReturnControl$mcD$sp
+     239: dup
+     240: aload_0
+     241: getfield      #62                 // Field nonLocalReturnKey3$1:Ljava/lang/Object;
+     244: dconst_0
+     245: invokespecial #65                 // Method scala/runtime/NonLocalReturnControl$mcD$sp."<init>":(Ljava/lang/Object;D)V
+     248: athrow
+     249: aload_2
+     250: aload_0
+     251: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     254: invokevirtual #75                 // Method li/cil/oc/server/agent/Player.world:()Lnet/minecraft/world/World;
+     257: aload_0
+     258: getfield      #77                 // Field x$8:I
+     261: aload_0
+     262: getfield      #79                 // Field y$3:I
+     265: aload_0
+     266: getfield      #81                 // Field z$3:I
+     269: aload_0
+     270: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     273: invokevirtual #128                // Method net/minecraft/block/Block.func_149699_a:(Lnet/minecraft/world/World;IIILnet/minecraft/entity/player/EntityPlayer;)V
+     276: aload_0
+     277: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     280: invokevirtual #75                 // Method li/cil/oc/server/agent/Player.world:()Lnet/minecraft/world/World;
+     283: aload_0
+     284: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     287: aload_0
+     288: getfield      #77                 // Field x$8:I
+     291: aload_0
+     292: getfield      #79                 // Field y$3:I
+     295: aload_0
+     296: getfield      #81                 // Field z$3:I
+     299: aload_0
+     300: getfield      #130                // Field side$3:I
+     303: invokevirtual #134                // Method net/minecraft/world/World.func_72886_a:(Lnet/minecraft/entity/player/EntityPlayer;IIII)Z
+     306: pop
+     307: aload_2
+     308: aload_0
+     309: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     312: invokevirtual #75                 // Method li/cil/oc/server/agent/Player.world:()Lnet/minecraft/world/World;
+     315: aload_0
+     316: getfield      #77                 // Field x$8:I
+     319: aload_0
+     320: getfield      #79                 // Field y$3:I
+     323: aload_0
+     324: getfield      #81                 // Field z$3:I
+     327: invokevirtual #138                // Method net/minecraft/block/Block.func_149712_f:(Lnet/minecraft/world/World;III)F
+     330: fstore        7
+     332: fload         7
+     334: iconst_0
+     335: i2f
+     336: fcmpg
+     337: ifge          344
+     340: iconst_1
+     341: goto          345
+     344: iconst_0
+     345: istore        8
+     347: iload         8
+     349: ifeq          356
+     352: iconst_0
+     353: goto          357
+     356: iconst_1
+     357: istore        9
+     359: iload         9
+     361: ifeq          1192
+     364: aload_0
+     365: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     368: invokevirtual #75                 // Method li/cil/oc/server/agent/Player.world:()Lnet/minecraft/world/World;
+     371: invokevirtual #142                // Method net/minecraft/world/World.func_72912_H:()Lnet/minecraft/world/storage/WorldInfo;
+     374: invokevirtual #148                // Method net/minecraft/world/storage/WorldInfo.func_76077_q:()Lnet/minecraft/world/WorldSettings$GameType;
+     377: invokevirtual #151                // Method net/minecraft/world/WorldSettings$GameType.func_82752_c:()Z
+     380: ifeq          418
+     383: aload_0
+     384: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     387: aload_0
+     388: getfield      #77                 // Field x$8:I
+     391: aload_0
+     392: getfield      #79                 // Field y$3:I
+     395: aload_0
+     396: getfield      #81                 // Field z$3:I
+     399: invokevirtual #155                // Method li/cil/oc/server/agent/Player.func_82246_f:(III)Z
+     402: ifne          418
+     405: new           #60                 // class scala/runtime/NonLocalReturnControl$mcD$sp
+     408: dup
+     409: aload_0
+     410: getfield      #62                 // Field nonLocalReturnKey3$1:Ljava/lang/Object;
+     413: dconst_0
+     414: invokespecial #65                 // Method scala/runtime/NonLocalReturnControl$mcD$sp."<init>":(Ljava/lang/Object;D)V
+     417: athrow
+     418: aload_2
+     419: getstatic     #161                // Field net/minecraft/init/Blocks.field_150321_G:Lnet/minecraft/block/Block;
+     422: astore        11
+     424: dup
+     425: ifnonnull     437
+     428: pop
+     429: aload         11
+     431: ifnull        445
+     434: goto          461
+     437: aload         11
+     439: invokevirtual #169                // Method java/lang/Object.equals:(Ljava/lang/Object;)Z
+     442: ifeq          461
+     445: getstatic     #175                // Field li/cil/oc/Settings$.MODULE$:Lli/cil/oc/Settings$;
+     448: invokevirtual #179                // Method li/cil/oc/Settings$.get:()Lli/cil/oc/Settings;
+     451: invokevirtual #184                // Method li/cil/oc/Settings.screwCobwebs:()Z
+     454: ifeq          461
+     457: iconst_1
+     458: goto          462
+     461: iconst_0
+     462: istore        10
+     464: aload_2
+     465: aload_0
+     466: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     469: iload_3
+     470: invokestatic  #190                // Method net/minecraftforge/common/ForgeHooks.canHarvestBlock:(Lnet/minecraft/block/Block;Lnet/minecraft/entity/player/EntityPlayer;I)Z
+     473: ifne          481
+     476: iload         10
+     478: ifeq          1179
+     481: aload_0
+     482: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     485: aload_2
+     486: iconst_0
+     487: iload_3
+     488: aload_0
+     489: getfield      #77                 // Field x$8:I
+     492: aload_0
+     493: getfield      #79                 // Field y$3:I
+     496: aload_0
+     497: getfield      #81                 // Field z$3:I
+     500: invokevirtual #194                // Method li/cil/oc/server/agent/Player.getBreakSpeed:(Lnet/minecraft/block/Block;ZIIII)F
+     503: fstore        12
+     505: iload         10
+     507: ifeq          522
+     510: getstatic     #175                // Field li/cil/oc/Settings$.MODULE$:Lli/cil/oc/Settings$;
+     513: invokevirtual #179                // Method li/cil/oc/Settings$.get:()Lli/cil/oc/Settings;
+     516: invokevirtual #198                // Method li/cil/oc/Settings.swingDelay:()D
+     519: goto          533
+     522: fload         7
+     524: f2d
+     525: ldc2_w        #199                // double 1.5d
+     528: dmul
+     529: fload         12
+     531: f2d
+     532: ddiv
+     533: dstore        13
+     535: getstatic     #205                // Field scala/runtime/RichDouble$.MODULE$:Lscala/runtime/RichDouble$;
+     538: getstatic     #210                // Field scala/Predef$.MODULE$:Lscala/Predef$;
+     541: dload         13
+     543: invokevirtual #214                // Method scala/Predef$.doubleWrapper:(D)D
+     546: invokevirtual #218                // Method scala/runtime/RichDouble$.isInfinity$extension:(D)Z
+     549: ifeq          565
+     552: new           #60                 // class scala/runtime/NonLocalReturnControl$mcD$sp
+     555: dup
+     556: aload_0
+     557: getfield      #62                 // Field nonLocalReturnKey3$1:Ljava/lang/Object;
+     560: dconst_0
+     561: invokespecial #65                 // Method scala/runtime/NonLocalReturnControl$mcD$sp."<init>":(Ljava/lang/Object;D)V
+     564: athrow
+     565: new           #25                 // class li/cil/oc/api/event/RobotBreakBlockEvent$Pre
+     568: dup
+     569: aload_0
+     570: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     573: invokevirtual #222                // Method li/cil/oc/server/agent/Player.agent:()Lli/cil/oc/api/internal/Agent;
+     576: aload_0
+     577: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     580: invokevirtual #75                 // Method li/cil/oc/server/agent/Player.world:()Lnet/minecraft/world/World;
+     583: aload_0
+     584: getfield      #77                 // Field x$8:I
+     587: aload_0
+     588: getfield      #79                 // Field y$3:I
+     591: aload_0
+     592: getfield      #81                 // Field z$3:I
+     595: dload         13
+     597: getstatic     #175                // Field li/cil/oc/Settings$.MODULE$:Lli/cil/oc/Settings$;
+     600: invokevirtual #179                // Method li/cil/oc/Settings$.get:()Lli/cil/oc/Settings;
+     603: invokevirtual #225                // Method li/cil/oc/Settings.harvestRatio:()D
+     606: dmul
+     607: invokespecial #228                // Method li/cil/oc/api/event/RobotBreakBlockEvent$Pre."<init>":(Lli/cil/oc/api/internal/Agent;Lnet/minecraft/world/World;IIID)V
+     610: astore        15
+     612: getstatic     #114                // Field net/minecraftforge/common/MinecraftForge.EVENT_BUS:Lcpw/mods/fml/common/eventhandler/EventBus;
+     615: aload         15
+     617: invokevirtual #120                // Method cpw/mods/fml/common/eventhandler/EventBus.post:(Lcpw/mods/fml/common/eventhandler/Event;)Z
+     620: pop
+     621: aload         15
+     623: invokevirtual #229                // Method li/cil/oc/api/event/RobotBreakBlockEvent$Pre.isCanceled:()Z
+     626: ifeq          642
+     629: new           #60                 // class scala/runtime/NonLocalReturnControl$mcD$sp
+     632: dup
+     633: aload_0
+     634: getfield      #62                 // Field nonLocalReturnKey3$1:Ljava/lang/Object;
+     637: dconst_0
+     638: invokespecial #65                 // Method scala/runtime/NonLocalReturnControl$mcD$sp."<init>":(Ljava/lang/Object;D)V
+     641: athrow
+     642: getstatic     #234                // Field scala/math/package$.MODULE$:Lscala/math/package$;
+     645: ldc2_w        #235                // double 0.05d
+     648: aload         15
+     650: invokevirtual #239                // Method li/cil/oc/api/event/RobotBreakBlockEvent$Pre.getBreakTime:()D
+     653: invokevirtual #243                // Method scala/math/package$.max:(DD)D
+     656: dstore        16
+     658: getstatic     #248                // Field li/cil/oc/integration/tcon/ModTinkersConstruct$.MODULE$:Lli/cil/oc/integration/tcon/ModTinkersConstruct$;
+     661: aload_1
+     662: invokevirtual #252                // Method li/cil/oc/integration/tcon/ModTinkersConstruct$.isInfiTool:(Lnet/minecraft/item/ItemStack;)Z
+     665: ifne          678
+     668: getstatic     #257                // Field li/cil/oc/integration/magtools/ModMagnanimousTools$.MODULE$:Lli/cil/oc/integration/magtools/ModMagnanimousTools$;
+     671: aload_1
+     672: invokevirtual #260                // Method li/cil/oc/integration/magtools/ModMagnanimousTools$.isMagTool:(Lnet/minecraft/item/ItemStack;)Z
+     675: ifeq          682
+     678: iconst_1
+     679: goto          683
+     682: iconst_0
+     683: istore        18
+     685: iload         18
+     687: ifeq          722
+     690: aload_0
+     691: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     694: aload_0
+     695: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     698: getfield      #264                // Field li/cil/oc/server/agent/Player.field_70163_u:D
+     701: ldc2_w        #265                // double 1.62d
+     704: dsub
+     705: putfield      #269                // Field net/minecraft/entity/Entity.field_70163_u:D
+     708: aload_0
+     709: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     712: aload_0
+     713: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     716: getfield      #264                // Field li/cil/oc/server/agent/Player.field_70163_u:D
+     719: putfield      #272                // Field net/minecraft/entity/Entity.field_70167_r:D
+     722: aload_1
+     723: ifnull        757
+     726: aload_1
+     727: invokevirtual #276                // Method net/minecraft/item/ItemStack.func_77973_b:()Lnet/minecraft/item/Item;
+     730: aload_1
+     731: aload_0
+     732: getfield      #77                 // Field x$8:I
+     735: aload_0
+     736: getfield      #79                 // Field y$3:I
+     739: aload_0
+     740: getfield      #81                 // Field z$3:I
+     743: aload_0
+     744: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     747: invokevirtual #282                // Method net/minecraft/item/Item.onBlockStartBreak:(Lnet/minecraft/item/ItemStack;IIILnet/minecraft/entity/player/EntityPlayer;)Z
+     750: ifeq          757
+     753: iconst_1
+     754: goto          758
+     757: iconst_0
+     758: istore        19
+     760: iload         19
+     762: ifeq          816
+     765: iload         18
+     767: ifeq          816
+     770: aload_0
+     771: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     774: aload_0
+     775: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     778: getfield      #264                // Field li/cil/oc/server/agent/Player.field_70163_u:D
+     781: ldc2_w        #265                // double 1.62d
+     784: dadd
+     785: putfield      #269                // Field net/minecraft/entity/Entity.field_70163_u:D
+     788: aload_0
+     789: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     792: aload_0
+     793: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     796: getfield      #264                // Field li/cil/oc/server/agent/Player.field_70163_u:D
+     799: putfield      #272                // Field net/minecraft/entity/Entity.field_70167_r:D
+     802: new           #60                 // class scala/runtime/NonLocalReturnControl$mcD$sp
+     805: dup
+     806: aload_0
+     807: getfield      #62                 // Field nonLocalReturnKey3$1:Ljava/lang/Object;
+     810: dload         16
+     812: invokespecial #65                 // Method scala/runtime/NonLocalReturnControl$mcD$sp."<init>":(Ljava/lang/Object;D)V
+     815: athrow
+     816: iload         19
+     818: ifeq          834
+     821: new           #60                 // class scala/runtime/NonLocalReturnControl$mcD$sp
+     824: dup
+     825: aload_0
+     826: getfield      #62                 // Field nonLocalReturnKey3$1:Ljava/lang/Object;
+     829: dconst_0
+     830: invokespecial #65                 // Method scala/runtime/NonLocalReturnControl$mcD$sp."<init>":(Ljava/lang/Object;D)V
+     833: athrow
+     834: aload_0
+     835: getfield      #284                // Field immediate$1:Z
+     838: ifeq          1149
+     841: aload_0
+     842: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     845: invokevirtual #75                 // Method li/cil/oc/server/agent/Player.world:()Lnet/minecraft/world/World;
+     848: iconst_m1
+     849: aload_0
+     850: getfield      #77                 // Field x$8:I
+     853: aload_0
+     854: getfield      #79                 // Field y$3:I
+     857: aload_0
+     858: getfield      #81                 // Field z$3:I
+     861: iconst_m1
+     862: invokevirtual #288                // Method net/minecraft/world/World.func_147443_d:(IIIII)V
+     865: aload_0
+     866: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     869: invokevirtual #75                 // Method li/cil/oc/server/agent/Player.world:()Lnet/minecraft/world/World;
+     872: aload_0
+     873: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     876: sipush        2001
+     879: aload_0
+     880: getfield      #77                 // Field x$8:I
+     883: aload_0
+     884: getfield      #79                 // Field y$3:I
+     887: aload_0
+     888: getfield      #81                 // Field z$3:I
+     891: aload_2
+     892: invokestatic  #292                // Method net/minecraft/block/Block.func_149682_b:(Lnet/minecraft/block/Block;)I
+     895: iload_3
+     896: bipush        12
+     898: ishl
+     899: iadd
+     900: invokevirtual #296                // Method net/minecraft/world/World.func_72889_a:(Lnet/minecraft/entity/player/EntityPlayer;IIIII)V
+     903: aload_1
+     904: ifnull        935
+     907: aload_1
+     908: aload_0
+     909: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     912: invokevirtual #75                 // Method li/cil/oc/server/agent/Player.world:()Lnet/minecraft/world/World;
+     915: aload_2
+     916: aload_0
+     917: getfield      #77                 // Field x$8:I
+     920: aload_0
+     921: getfield      #79                 // Field y$3:I
+     924: aload_0
+     925: getfield      #81                 // Field z$3:I
+     928: aload_0
+     929: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     932: invokevirtual #300                // Method net/minecraft/item/ItemStack.func_150999_a:(Lnet/minecraft/world/World;Lnet/minecraft/block/Block;IIILnet/minecraft/entity/player/EntityPlayer;)V
+     935: aload_2
+     936: aload_0
+     937: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     940: invokevirtual #75                 // Method li/cil/oc/server/agent/Player.world:()Lnet/minecraft/world/World;
+     943: aload_0
+     944: getfield      #77                 // Field x$8:I
+     947: aload_0
+     948: getfield      #79                 // Field y$3:I
+     951: aload_0
+     952: getfield      #81                 // Field z$3:I
+     955: iload_3
+     956: aload_0
+     957: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     960: invokevirtual #304                // Method net/minecraft/block/Block.func_149681_a:(Lnet/minecraft/world/World;IIIILnet/minecraft/entity/player/EntityPlayer;)V
+     963: aload_2
+     964: aload_0
+     965: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     968: invokevirtual #75                 // Method li/cil/oc/server/agent/Player.world:()Lnet/minecraft/world/World;
+     971: aload_0
+     972: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     975: aload_0
+     976: getfield      #77                 // Field x$8:I
+     979: aload_0
+     980: getfield      #79                 // Field y$3:I
+     983: aload_0
+     984: getfield      #81                 // Field z$3:I
+     987: aload_2
+     988: aload_0
+     989: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+     992: iload_3
+     993: invokevirtual #307                // Method net/minecraft/block/Block.canHarvestBlock:(Lnet/minecraft/entity/player/EntityPlayer;I)Z
+     996: invokevirtual #311                // Method net/minecraft/block/Block.removedByPlayer:(Lnet/minecraft/world/World;Lnet/minecraft/entity/player/EntityPlayer;IIIZ)Z
+     999: ifeq          1147
+    1002: aload_2
+    1003: aload_0
+    1004: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+    1007: invokevirtual #75                 // Method li/cil/oc/server/agent/Player.world:()Lnet/minecraft/world/World;
+    1010: aload_0
+    1011: getfield      #77                 // Field x$8:I
+    1014: aload_0
+    1015: getfield      #79                 // Field y$3:I
+    1018: aload_0
+    1019: getfield      #81                 // Field z$3:I
+    1022: iload_3
+    1023: invokevirtual #315                // Method net/minecraft/block/Block.func_149664_b:(Lnet/minecraft/world/World;IIII)V
+    1026: aload_2
+    1027: aload_0
+    1028: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+    1031: iload_3
+    1032: invokevirtual #307                // Method net/minecraft/block/Block.canHarvestBlock:(Lnet/minecraft/entity/player/EntityPlayer;I)Z
+    1035: ifeq          1098
+    1038: aload_2
+    1039: aload_0
+    1040: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+    1043: invokevirtual #75                 // Method li/cil/oc/server/agent/Player.world:()Lnet/minecraft/world/World;
+    1046: aload_0
+    1047: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+    1050: aload_0
+    1051: getfield      #77                 // Field x$8:I
+    1054: aload_0
+    1055: getfield      #79                 // Field y$3:I
+    1058: aload_0
+    1059: getfield      #81                 // Field z$3:I
+    1062: iload_3
+    1063: invokevirtual #319                // Method net/minecraft/block/Block.func_149636_a:(Lnet/minecraft/world/World;Lnet/minecraft/entity/player/EntityPlayer;IIII)V
+    1066: getstatic     #114                // Field net/minecraftforge/common/MinecraftForge.EVENT_BUS:Lcpw/mods/fml/common/eventhandler/EventBus;
+    1069: new           #30                 // class li/cil/oc/api/event/RobotBreakBlockEvent$Post
+    1072: dup
+    1073: aload_0
+    1074: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+    1077: invokevirtual #222                // Method li/cil/oc/server/agent/Player.agent:()Lli/cil/oc/api/internal/Agent;
+    1080: aload         6
+    1082: invokevirtual #323                // Method net/minecraftforge/event/world/BlockEvent$BreakEvent.getExpToDrop:()I
+    1085: i2d
+    1086: invokespecial #326                // Method li/cil/oc/api/event/RobotBreakBlockEvent$Post."<init>":(Lli/cil/oc/api/internal/Agent;D)V
+    1089: invokevirtual #120                // Method cpw/mods/fml/common/eventhandler/EventBus.post:(Lcpw/mods/fml/common/eventhandler/Event;)Z
+    1092: invokestatic  #332                // Method scala/runtime/BoxesRunTime.boxToBoolean:(Z)Ljava/lang/Boolean;
+    1095: goto          1132
+    1098: aload_1
+    1099: ifnonnull     1108
+    1102: getstatic     #338                // Field scala/runtime/BoxedUnit.UNIT:Lscala/runtime/BoxedUnit;
+    1105: goto          1132
+    1108: getstatic     #114                // Field net/minecraftforge/common/MinecraftForge.EVENT_BUS:Lcpw/mods/fml/common/eventhandler/EventBus;
+    1111: new           #30                 // class li/cil/oc/api/event/RobotBreakBlockEvent$Post
+    1114: dup
+    1115: aload_0
+    1116: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+    1119: invokevirtual #222                // Method li/cil/oc/server/agent/Player.agent:()Lli/cil/oc/api/internal/Agent;
+    1122: dconst_0
+    1123: invokespecial #326                // Method li/cil/oc/api/event/RobotBreakBlockEvent$Post."<init>":(Lli/cil/oc/api/internal/Agent;D)V
+    1126: invokevirtual #120                // Method cpw/mods/fml/common/eventhandler/EventBus.post:(Lcpw/mods/fml/common/eventhandler/Event;)Z
+    1129: invokestatic  #332                // Method scala/runtime/BoxesRunTime.boxToBoolean:(Z)Ljava/lang/Boolean;
+    1132: pop
+    1133: new           #60                 // class scala/runtime/NonLocalReturnControl$mcD$sp
+    1136: dup
+    1137: aload_0
+    1138: getfield      #62                 // Field nonLocalReturnKey3$1:Ljava/lang/Object;
+    1141: dload         16
+    1143: invokespecial #65                 // Method scala/runtime/NonLocalReturnControl$mcD$sp."<init>":(Ljava/lang/Object;D)V
+    1146: athrow
+    1147: dconst_0
+    1148: dreturn
+    1149: getstatic     #343                // Field li/cil/oc/common/EventHandler$.MODULE$:Lli/cil/oc/common/EventHandler$;
+    1152: new           #35                 // class li/cil/oc/server/agent/Player$$anonfun$clickBlock$1$$anonfun$apply$1
+    1155: dup
+    1156: aload_0
+    1157: dload         16
+    1159: invokespecial #346                // Method li/cil/oc/server/agent/Player$$anonfun$clickBlock$1$$anonfun$apply$1."<init>":(Lli/cil/oc/server/agent/Player$$anonfun$clickBlock$1;D)V
+    1162: invokevirtual #350                // Method li/cil/oc/common/EventHandler$.scheduleServer:(Lscala/Function0;)V
+    1165: new           #60                 // class scala/runtime/NonLocalReturnControl$mcD$sp
+    1168: dup
+    1169: aload_0
+    1170: getfield      #62                 // Field nonLocalReturnKey3$1:Ljava/lang/Object;
+    1173: dload         16
+    1175: invokespecial #65                 // Method scala/runtime/NonLocalReturnControl$mcD$sp."<init>":(Ljava/lang/Object;D)V
+    1178: athrow
+    1179: new           #60                 // class scala/runtime/NonLocalReturnControl$mcD$sp
+    1182: dup
+    1183: aload_0
+    1184: getfield      #62                 // Field nonLocalReturnKey3$1:Ljava/lang/Object;
+    1187: dconst_0
+    1188: invokespecial #65                 // Method scala/runtime/NonLocalReturnControl$mcD$sp."<init>":(Ljava/lang/Object;D)V
+    1191: athrow
+    1192: new           #60                 // class scala/runtime/NonLocalReturnControl$mcD$sp
+    1195: dup
+    1196: aload_0
+    1197: getfield      #62                 // Field nonLocalReturnKey3$1:Ljava/lang/Object;
+    1200: dconst_0
+    1201: invokespecial #65                 // Method scala/runtime/NonLocalReturnControl$mcD$sp."<init>":(Ljava/lang/Object;D)V
+    1204: athrow
+    1205: new           #60                 // class scala/runtime/NonLocalReturnControl$mcD$sp
+    1208: dup
+    1209: aload_0
+    1210: getfield      #62                 // Field nonLocalReturnKey3$1:Ljava/lang/Object;
+    1213: dconst_0
+    1214: invokespecial #65                 // Method scala/runtime/NonLocalReturnControl$mcD$sp."<init>":(Ljava/lang/Object;D)V
+    1217: athrow
+
+  public li.cil.oc.server.agent.Player li$cil$oc$server$agent$Player$$anonfun$$$outer();
+    Code:
+       0: aload_0
+       1: getfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+       4: areturn
+
+  public final java.lang.Object apply(java.lang.Object);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: checkcast     #163                // class net/minecraft/item/ItemStack
+       5: invokevirtual #377                // Method apply:(Lnet/minecraft/item/ItemStack;)D
+       8: invokestatic  #381                // Method scala/runtime/BoxesRunTime.boxToDouble:(D)Ljava/lang/Double;
+      11: areturn
+
+  public li.cil.oc.server.agent.Player$$anonfun$clickBlock$1(li.cil.oc.server.agent.Player, int, int, int, int, boolean, java.lang.Object);
+    Code:
+       0: aload_1
+       1: ifnonnull     6
+       4: aconst_null
+       5: athrow
+       6: aload_0
+       7: aload_1
+       8: putfield      #50                 // Field $outer:Lli/cil/oc/server/agent/Player;
+      11: aload_0
+      12: iload_2
+      13: putfield      #77                 // Field x$8:I
+      16: aload_0
+      17: iload_3
+      18: putfield      #79                 // Field y$3:I
+      21: aload_0
+      22: iload         4
+      24: putfield      #81                 // Field z$3:I
+      27: aload_0
+      28: iload         5
+      30: putfield      #130                // Field side$3:I
+      33: aload_0
+      34: iload         6
+      36: putfield      #284                // Field immediate$1:Z
+      39: aload_0
+      40: aload         7
+      42: putfield      #62                 // Field nonLocalReturnKey3$1:Ljava/lang/Object;
+      45: aload_0
+      46: invokespecial #386                // Method scala/runtime/AbstractFunction1."<init>":()V
+      49: return
+}

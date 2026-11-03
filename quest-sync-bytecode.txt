@@ -1,0 +1,150 @@
+﻿Compiled from "CSPQuestSync.java"
+public class ru.sky.dw.quests.common.network.CSPQuestSync implements cpw.mods.fml.common.network.simpleimpl.IMessage {
+  private final java.util.Map<java.lang.String, ru.sky.dw.quests.common.quest.QuestTab> questData;
+
+  public ru.sky.dw.quests.common.network.CSPQuestSync();
+    Code:
+       0: aload_0
+       1: invokespecial #17                 // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: new           #19                 // class java/util/LinkedHashMap
+       8: dup
+       9: invokespecial #20                 // Method java/util/LinkedHashMap."<init>":()V
+      12: putfield      #22                 // Field questData:Ljava/util/Map;
+      15: return
+
+  public ru.sky.dw.quests.common.network.CSPQuestSync(java.util.Map<java.lang.String, ru.sky.dw.quests.common.quest.QuestTab>);
+    Code:
+       0: aload_0
+       1: invokespecial #17                 // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: new           #19                 // class java/util/LinkedHashMap
+       8: dup
+       9: invokespecial #20                 // Method java/util/LinkedHashMap."<init>":()V
+      12: putfield      #22                 // Field questData:Ljava/util/Map;
+      15: aload_0
+      16: getfield      #22                 // Field questData:Ljava/util/Map;
+      19: aload_1
+      20: invokeinterface #31,  2           // InterfaceMethod java/util/Map.putAll:(Ljava/util/Map;)V
+      25: return
+
+  public void toBytes(io.netty.buffer.ByteBuf);
+    Code:
+       0: invokestatic  #39                 // Method ru/sky/dw/core/common/utils/SideUtils.isServer:()Z
+       3: ifeq          62
+       6: aload_1
+       7: aload_0
+       8: getfield      #22                 // Field questData:Ljava/util/Map;
+      11: invokeinterface #43,  1           // InterfaceMethod java/util/Map.size:()I
+      16: invokevirtual #49                 // Method io/netty/buffer/ByteBuf.writeInt:(I)Lio/netty/buffer/ByteBuf;
+      19: pop
+      20: aload_0
+      21: getfield      #22                 // Field questData:Ljava/util/Map;
+      24: invokeinterface #53,  1           // InterfaceMethod java/util/Map.values:()Ljava/util/Collection;
+      29: invokeinterface #59,  1           // InterfaceMethod java/util/Collection.iterator:()Ljava/util/Iterator;
+      34: astore_2
+      35: aload_2
+      36: invokeinterface #64,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+      41: ifeq          62
+      44: aload_2
+      45: invokeinterface #68,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      50: checkcast     #70                 // class ru/sky/dw/quests/common/quest/QuestTab
+      53: astore_3
+      54: aload_1
+      55: aload_3
+      56: invokestatic  #74                 // Method ru/sky/dw/quests/common/quest/QuestTab.writeToByte:(Lio/netty/buffer/ByteBuf;Lru/sky/dw/quests/common/quest/QuestTab;)V
+      59: goto          35
+      62: return
+
+  public void fromBytes(io.netty.buffer.ByteBuf);
+    Code:
+       0: invokestatic  #39                 // Method ru/sky/dw/core/common/utils/SideUtils.isServer:()Z
+       3: ifne          47
+       6: aload_1
+       7: invokevirtual #82                 // Method io/netty/buffer/ByteBuf.readInt:()I
+      10: istore_2
+      11: iconst_0
+      12: istore_3
+      13: iload_3
+      14: iload_2
+      15: if_icmpge     47
+      18: aload_1
+      19: invokestatic  #86                 // Method ru/sky/dw/quests/common/quest/QuestTab.readFromByte:(Lio/netty/buffer/ByteBuf;)Lru/sky/dw/quests/common/quest/QuestTab;
+      22: astore        4
+      24: aload_0
+      25: getfield      #22                 // Field questData:Ljava/util/Map;
+      28: aload         4
+      30: invokevirtual #90                 // Method ru/sky/dw/quests/common/quest/QuestTab.getTabID:()Ljava/lang/String;
+      33: aload         4
+      35: invokeinterface #94,  3           // InterfaceMethod java/util/Map.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+      40: pop
+      41: iinc          3, 1
+      44: goto          13
+      47: return
+
+  static java.util.Map access$000(ru.sky.dw.quests.common.network.CSPQuestSync);
+    Code:
+       0: aload_0
+       1: getfield      #22                 // Field questData:Ljava/util/Map;
+       4: areturn
+}
+Compiled from "ClientEventListener.java"
+public final class ru.sky.dw.quests.client.handler.ClientEventListener {
+  public static final ru.sky.dw.quests.client.handler.ClientEventListener INSTANCE;
+
+  private static final net.minecraft.client.settings.KeyBinding OPEN_QUEST_KEY;
+
+  private ru.sky.dw.quests.client.handler.ClientEventListener();
+    Code:
+       0: aload_0
+       1: invokespecial #23                 // Method java/lang/Object."<init>":()V
+       4: return
+
+  public void register();
+    Code:
+       0: invokestatic  #31                 // Method cpw/mods/fml/common/FMLCommonHandler.instance:()Lcpw/mods/fml/common/FMLCommonHandler;
+       3: invokevirtual #35                 // Method cpw/mods/fml/common/FMLCommonHandler.bus:()Lcpw/mods/fml/common/eventhandler/EventBus;
+       6: aload_0
+       7: invokevirtual #40                 // Method cpw/mods/fml/common/eventhandler/EventBus.register:(Ljava/lang/Object;)V
+      10: getstatic     #42                 // Field OPEN_QUEST_KEY:Lnet/minecraft/client/settings/KeyBinding;
+      13: invokestatic  #48                 // Method cpw/mods/fml/client/registry/ClientRegistry.registerKeyBinding:(Lnet/minecraft/client/settings/KeyBinding;)V
+      16: return
+
+  public void onKeyPress(cpw.mods.fml.common.gameevent.InputEvent$KeyInputEvent);
+    Code:
+       0: invokestatic  #57                 // Method net/minecraft/client/Minecraft.func_71410_x:()Lnet/minecraft/client/Minecraft;
+       3: astore_2
+       4: aload_2
+       5: getfield      #61                 // Field net/minecraft/client/Minecraft.field_71462_r:Lnet/minecraft/client/gui/GuiScreen;
+       8: ifnonnull     33
+      11: getstatic     #42                 // Field OPEN_QUEST_KEY:Lnet/minecraft/client/settings/KeyBinding;
+      14: invokevirtual #67                 // Method net/minecraft/client/settings/KeyBinding.func_151470_d:()Z
+      17: ifeq          33
+      20: invokestatic  #57                 // Method net/minecraft/client/Minecraft.func_71410_x:()Lnet/minecraft/client/Minecraft;
+      23: new           #69                 // class ru/sky/dw/quests/client/gui/GuiStarAtlas
+      26: dup
+      27: invokespecial #70                 // Method ru/sky/dw/quests/client/gui/GuiStarAtlas."<init>":()V
+      30: invokevirtual #74                 // Method net/minecraft/client/Minecraft.func_147108_a:(Lnet/minecraft/client/gui/GuiScreen;)V
+      33: return
+
+  public void onDisconnect(cpw.mods.fml.common.network.FMLNetworkEvent$ClientDisconnectionFromServerEvent);
+    Code:
+       0: getstatic     #85                 // Field ru/sky/dw/quests/client/ClientQuestManager.INSTANCE:Lru/sky/dw/quests/client/ClientQuestManager;
+       3: invokevirtual #88                 // Method ru/sky/dw/quests/client/ClientQuestManager.clearQuestData:()V
+       6: return
+
+  static {};
+    Code:
+       0: new           #2                  // class ru/sky/dw/quests/client/handler/ClientEventListener
+       3: dup
+       4: invokespecial #91                 // Method "<init>":()V
+       7: putstatic     #93                 // Field INSTANCE:Lru/sky/dw/quests/client/handler/ClientEventListener;
+      10: new           #63                 // class net/minecraft/client/settings/KeyBinding
+      13: dup
+      14: ldc           #95                 // String key.dw_quest
+      16: bipush        41
+      18: ldc           #97                 // String key.categories.gameplay
+      20: invokespecial #100                // Method net/minecraft/client/settings/KeyBinding."<init>":(Ljava/lang/String;ILjava/lang/String;)V
+      23: putstatic     #42                 // Field OPEN_QUEST_KEY:Lnet/minecraft/client/settings/KeyBinding;
+      26: return
+}

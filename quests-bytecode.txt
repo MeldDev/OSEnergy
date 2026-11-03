@@ -1,0 +1,547 @@
+﻿Compiled from "ClientQuestManager.java"
+public final class ru.sky.dw.quests.client.ClientQuestManager extends ru.sky.dw.quests.common.quest.AbstractQuestManager {
+  public static final ru.sky.dw.quests.client.ClientQuestManager INSTANCE;
+
+  private final java.util.concurrent.ConcurrentHashMap<java.lang.String, ru.sky.dw.quests.common.quest.playerdata.PlayerData> PLAYER_DATA;
+
+  private final java.util.concurrent.ConcurrentHashMap<java.lang.String, ru.sky.dw.quests.common.quest.QuestTab> QUEST_DATA;
+
+  private int questsCount;
+
+  public ru.sky.dw.quests.client.ClientQuestManager();
+    Code:
+       0: aload_0
+       1: invokespecial #22                 // Method ru/sky/dw/quests/common/quest/AbstractQuestManager."<init>":()V
+       4: aload_0
+       5: new           #24                 // class java/util/concurrent/ConcurrentHashMap
+       8: dup
+       9: invokespecial #25                 // Method java/util/concurrent/ConcurrentHashMap."<init>":()V
+      12: putfield      #27                 // Field PLAYER_DATA:Ljava/util/concurrent/ConcurrentHashMap;
+      15: aload_0
+      16: new           #24                 // class java/util/concurrent/ConcurrentHashMap
+      19: dup
+      20: invokespecial #25                 // Method java/util/concurrent/ConcurrentHashMap."<init>":()V
+      23: putfield      #29                 // Field QUEST_DATA:Ljava/util/concurrent/ConcurrentHashMap;
+      26: return
+
+  public void init();
+    Code:
+       0: new           #33                 // class java/lang/UnsupportedOperationException
+       3: dup
+       4: invokespecial #34                 // Method java/lang/UnsupportedOperationException."<init>":()V
+       7: athrow
+
+  public void loadQuests();
+    Code:
+       0: new           #33                 // class java/lang/UnsupportedOperationException
+       3: dup
+       4: invokespecial #34                 // Method java/lang/UnsupportedOperationException."<init>":()V
+       7: athrow
+
+  public void reload();
+    Code:
+       0: new           #33                 // class java/lang/UnsupportedOperationException
+       3: dup
+       4: invokespecial #34                 // Method java/lang/UnsupportedOperationException."<init>":()V
+       7: athrow
+
+  public java.util.Map<java.lang.String, ru.sky.dw.quests.common.quest.QuestTab> getQuestData();
+    Code:
+       0: aload_0
+       1: getfield      #29                 // Field QUEST_DATA:Ljava/util/concurrent/ConcurrentHashMap;
+       4: areturn
+
+  public void clearQuestData();
+    Code:
+       0: aload_0
+       1: getfield      #29                 // Field QUEST_DATA:Ljava/util/concurrent/ConcurrentHashMap;
+       4: invokevirtual #43                 // Method java/util/concurrent/ConcurrentHashMap.clear:()V
+       7: return
+
+  public void putAllQuestData(java.util.Map<java.lang.String, ru.sky.dw.quests.common.quest.QuestTab>);
+    Code:
+       0: aload_0
+       1: getfield      #29                 // Field QUEST_DATA:Ljava/util/concurrent/ConcurrentHashMap;
+       4: aload_1
+       5: invokevirtual #49                 // Method java/util/concurrent/ConcurrentHashMap.putAll:(Ljava/util/Map;)V
+       8: aload_0
+       9: iconst_0
+      10: putfield      #51                 // Field questsCount:I
+      13: aload_0
+      14: getfield      #29                 // Field QUEST_DATA:Ljava/util/concurrent/ConcurrentHashMap;
+      17: invokevirtual #55                 // Method java/util/concurrent/ConcurrentHashMap.values:()Ljava/util/Collection;
+      20: invokeinterface #61,  1           // InterfaceMethod java/util/Collection.iterator:()Ljava/util/Iterator;
+      25: astore_2
+      26: aload_2
+      27: invokeinterface #67,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+      32: ifeq          61
+      35: aload_2
+      36: invokeinterface #71,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      41: checkcast     #73                 // class ru/sky/dw/quests/common/quest/QuestTab
+      44: astore_3
+      45: aload_0
+      46: dup
+      47: getfield      #51                 // Field questsCount:I
+      50: aload_3
+      51: invokevirtual #77                 // Method ru/sky/dw/quests/common/quest/QuestTab.getQuestsCount:()I
+      54: iadd
+      55: putfield      #51                 // Field questsCount:I
+      58: goto          26
+      61: return
+
+  public int getQuestsCount();
+    Code:
+       0: aload_0
+       1: getfield      #51                 // Field questsCount:I
+       4: ireturn
+
+  public void addPlayerData(ru.sky.dw.quests.common.quest.playerdata.PlayerData);
+    Code:
+       0: aload_0
+       1: getfield      #27                 // Field PLAYER_DATA:Ljava/util/concurrent/ConcurrentHashMap;
+       4: aload_1
+       5: invokevirtual #90                 // Method ru/sky/dw/quests/common/quest/playerdata/PlayerData.getPlayerName:()Ljava/lang/String;
+       8: aload_1
+       9: invokevirtual #94                 // Method java/util/concurrent/ConcurrentHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+      12: pop
+      13: return
+
+  public ru.sky.dw.quests.common.quest.playerdata.PlayerData getPlayerData(java.lang.String);
+    Code:
+       0: aload_0
+       1: getfield      #27                 // Field PLAYER_DATA:Ljava/util/concurrent/ConcurrentHashMap;
+       4: aload_1
+       5: invokevirtual #102                // Method java/util/concurrent/ConcurrentHashMap.get:(Ljava/lang/Object;)Ljava/lang/Object;
+       8: checkcast     #86                 // class ru/sky/dw/quests/common/quest/playerdata/PlayerData
+      11: areturn
+
+  public void clear();
+    Code:
+       0: aload_0
+       1: getfield      #27                 // Field PLAYER_DATA:Ljava/util/concurrent/ConcurrentHashMap;
+       4: invokevirtual #43                 // Method java/util/concurrent/ConcurrentHashMap.clear:()V
+       7: aload_0
+       8: getfield      #29                 // Field QUEST_DATA:Ljava/util/concurrent/ConcurrentHashMap;
+      11: invokevirtual #43                 // Method java/util/concurrent/ConcurrentHashMap.clear:()V
+      14: return
+
+  static {};
+    Code:
+       0: new           #2                  // class ru/sky/dw/quests/client/ClientQuestManager
+       3: dup
+       4: invokespecial #106                // Method "<init>":()V
+       7: putstatic     #108                // Field INSTANCE:Lru/sky/dw/quests/client/ClientQuestManager;
+      10: return
+}
+Compiled from "QuestSerialization.java"
+public final class ru.sky.dw.quests.common.io.QuestSerialization {
+  private static final java.lang.String TAG_ID;
+
+  private static final java.lang.String TAG_TABS;
+
+  private static final java.lang.String TAG_QUESTS;
+
+  private static final java.lang.String TAG_TASKS;
+
+  private static final java.lang.String TAG_COMPLETED;
+
+  private static final java.lang.String TAG_REWARDED;
+
+  private static final java.lang.String TAG_PROGRESS;
+
+  public ru.sky.dw.quests.common.io.QuestSerialization();
+    Code:
+       0: aload_0
+       1: invokespecial #36                 // Method java/lang/Object."<init>":()V
+       4: return
+
+  public static net.minecraft.nbt.NBTTagCompound serialize(ru.sky.dw.quests.common.quest.playerdata.PlayerData);
+    Code:
+       0: new           #42                 // class net/minecraft/nbt/NBTTagCompound
+       3: dup
+       4: invokespecial #43                 // Method net/minecraft/nbt/NBTTagCompound."<init>":()V
+       7: astore_1
+       8: new           #45                 // class net/minecraft/nbt/NBTTagList
+      11: dup
+      12: invokespecial #46                 // Method net/minecraft/nbt/NBTTagList."<init>":()V
+      15: astore_2
+      16: aload_0
+      17: invokevirtual #52                 // Method ru/sky/dw/quests/common/quest/playerdata/PlayerData.getTabData:()Ljava/util/Map;
+      20: invokeinterface #58,  1           // InterfaceMethod java/util/Map.values:()Ljava/util/Collection;
+      25: invokeinterface #64,  1           // InterfaceMethod java/util/Collection.iterator:()Ljava/util/Iterator;
+      30: astore_3
+      31: aload_3
+      32: invokeinterface #70,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+      37: ifeq          63
+      40: aload_3
+      41: invokeinterface #74,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      46: checkcast     #76                 // class ru/sky/dw/quests/common/quest/playerdata/TabData
+      49: astore        4
+      51: aload_2
+      52: aload         4
+      54: invokestatic  #79                 // Method serialize:(Lru/sky/dw/quests/common/quest/playerdata/TabData;)Lnet/minecraft/nbt/NBTTagCompound;
+      57: invokevirtual #83                 // Method net/minecraft/nbt/NBTTagList.func_74742_a:(Lnet/minecraft/nbt/NBTBase;)V
+      60: goto          31
+      63: aload_2
+      64: invokevirtual #87                 // Method net/minecraft/nbt/NBTTagList.func_74745_c:()I
+      67: ifle          77
+      70: aload_1
+      71: ldc           #17                 // String tabs
+      73: aload_2
+      74: invokevirtual #91                 // Method net/minecraft/nbt/NBTTagCompound.func_74782_a:(Ljava/lang/String;Lnet/minecraft/nbt/NBTBase;)V
+      77: aload_1
+      78: areturn
+
+  public static ru.sky.dw.quests.common.quest.playerdata.PlayerData deserializePlayerData(net.minecraft.nbt.NBTTagCompound);
+    Code:
+       0: new           #48                 // class ru/sky/dw/quests/common/quest/playerdata/PlayerData
+       3: dup
+       4: invokespecial #102                // Method ru/sky/dw/quests/common/quest/playerdata/PlayerData."<init>":()V
+       7: astore_1
+       8: aload_0
+       9: ldc           #17                 // String tabs
+      11: bipush        10
+      13: invokevirtual #106                // Method net/minecraft/nbt/NBTTagCompound.func_150295_c:(Ljava/lang/String;I)Lnet/minecraft/nbt/NBTTagList;
+      16: astore_2
+      17: iconst_0
+      18: istore_3
+      19: aload_2
+      20: invokevirtual #87                 // Method net/minecraft/nbt/NBTTagList.func_74745_c:()I
+      23: istore        4
+      25: iload_3
+      26: iload         4
+      28: if_icmpge     68
+      31: aload_2
+      32: iload_3
+      33: invokevirtual #110                // Method net/minecraft/nbt/NBTTagList.func_150305_b:(I)Lnet/minecraft/nbt/NBTTagCompound;
+      36: astore        5
+      38: aload         5
+      40: invokestatic  #114                // Method deserializeTabData:(Lnet/minecraft/nbt/NBTTagCompound;)Lru/sky/dw/quests/common/quest/playerdata/TabData;
+      43: astore        6
+      45: aload_1
+      46: invokevirtual #52                 // Method ru/sky/dw/quests/common/quest/playerdata/PlayerData.getTabData:()Ljava/util/Map;
+      49: aload         6
+      51: invokevirtual #118                // Method ru/sky/dw/quests/common/quest/playerdata/TabData.getTabID:()Ljava/lang/String;
+      54: aload         6
+      56: invokeinterface #122,  3          // InterfaceMethod java/util/Map.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+      61: pop
+      62: iinc          3, 1
+      65: goto          25
+      68: aload_1
+      69: areturn
+
+  public static net.minecraft.nbt.NBTTagCompound serialize(ru.sky.dw.quests.common.quest.playerdata.TabData);
+    Code:
+       0: new           #42                 // class net/minecraft/nbt/NBTTagCompound
+       3: dup
+       4: invokespecial #43                 // Method net/minecraft/nbt/NBTTagCompound."<init>":()V
+       7: astore_1
+       8: aload_1
+       9: ldc           #14                 // String id
+      11: aload_0
+      12: invokevirtual #118                // Method ru/sky/dw/quests/common/quest/playerdata/TabData.getTabID:()Ljava/lang/String;
+      15: invokevirtual #131                // Method net/minecraft/nbt/NBTTagCompound.func_74778_a:(Ljava/lang/String;Ljava/lang/String;)V
+      18: new           #45                 // class net/minecraft/nbt/NBTTagList
+      21: dup
+      22: invokespecial #46                 // Method net/minecraft/nbt/NBTTagList."<init>":()V
+      25: astore_2
+      26: aload_0
+      27: invokevirtual #134                // Method ru/sky/dw/quests/common/quest/playerdata/TabData.getQuestData:()Ljava/util/Map;
+      30: invokeinterface #58,  1           // InterfaceMethod java/util/Map.values:()Ljava/util/Collection;
+      35: invokeinterface #64,  1           // InterfaceMethod java/util/Collection.iterator:()Ljava/util/Iterator;
+      40: astore_3
+      41: aload_3
+      42: invokeinterface #70,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+      47: ifeq          73
+      50: aload_3
+      51: invokeinterface #74,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      56: checkcast     #136                // class ru/sky/dw/quests/common/quest/playerdata/QuestData
+      59: astore        4
+      61: aload_2
+      62: aload         4
+      64: invokestatic  #139                // Method serialize:(Lru/sky/dw/quests/common/quest/playerdata/QuestData;)Lnet/minecraft/nbt/NBTTagCompound;
+      67: invokevirtual #83                 // Method net/minecraft/nbt/NBTTagList.func_74742_a:(Lnet/minecraft/nbt/NBTBase;)V
+      70: goto          41
+      73: aload_2
+      74: invokevirtual #87                 // Method net/minecraft/nbt/NBTTagList.func_74745_c:()I
+      77: ifle          87
+      80: aload_1
+      81: ldc           #20                 // String quests
+      83: aload_2
+      84: invokevirtual #91                 // Method net/minecraft/nbt/NBTTagCompound.func_74782_a:(Ljava/lang/String;Lnet/minecraft/nbt/NBTBase;)V
+      87: aload_1
+      88: areturn
+
+  public static ru.sky.dw.quests.common.quest.playerdata.TabData deserializeTabData(net.minecraft.nbt.NBTTagCompound);
+    Code:
+       0: aload_0
+       1: ldc           #14                 // String id
+       3: invokevirtual #146                // Method net/minecraft/nbt/NBTTagCompound.func_74779_i:(Ljava/lang/String;)Ljava/lang/String;
+       6: astore_1
+       7: new           #76                 // class ru/sky/dw/quests/common/quest/playerdata/TabData
+      10: dup
+      11: aload_1
+      12: invokespecial #149                // Method ru/sky/dw/quests/common/quest/playerdata/TabData."<init>":(Ljava/lang/String;)V
+      15: astore_2
+      16: aload_0
+      17: ldc           #20                 // String quests
+      19: bipush        10
+      21: invokevirtual #106                // Method net/minecraft/nbt/NBTTagCompound.func_150295_c:(Ljava/lang/String;I)Lnet/minecraft/nbt/NBTTagList;
+      24: astore_3
+      25: iconst_0
+      26: istore        4
+      28: aload_3
+      29: invokevirtual #87                 // Method net/minecraft/nbt/NBTTagList.func_74745_c:()I
+      32: istore        5
+      34: iload         4
+      36: iload         5
+      38: if_icmpge     79
+      41: aload_3
+      42: iload         4
+      44: invokevirtual #110                // Method net/minecraft/nbt/NBTTagList.func_150305_b:(I)Lnet/minecraft/nbt/NBTTagCompound;
+      47: astore        6
+      49: aload         6
+      51: invokestatic  #155                // Method deserializeQuestData:(Lnet/minecraft/nbt/NBTTagCompound;)Lru/sky/dw/quests/common/quest/playerdata/QuestData;
+      54: astore        7
+      56: aload_2
+      57: invokevirtual #134                // Method ru/sky/dw/quests/common/quest/playerdata/TabData.getQuestData:()Ljava/util/Map;
+      60: aload         7
+      62: invokevirtual #158                // Method ru/sky/dw/quests/common/quest/playerdata/QuestData.getQuestID:()Ljava/lang/String;
+      65: aload         7
+      67: invokeinterface #122,  3          // InterfaceMethod java/util/Map.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+      72: pop
+      73: iinc          4, 1
+      76: goto          34
+      79: aload_2
+      80: areturn
+
+  public static net.minecraft.nbt.NBTTagCompound serialize(ru.sky.dw.quests.common.quest.playerdata.QuestData);
+    Code:
+       0: new           #42                 // class net/minecraft/nbt/NBTTagCompound
+       3: dup
+       4: invokespecial #43                 // Method net/minecraft/nbt/NBTTagCompound."<init>":()V
+       7: astore_1
+       8: aload_1
+       9: ldc           #14                 // String id
+      11: aload_0
+      12: invokevirtual #158                // Method ru/sky/dw/quests/common/quest/playerdata/QuestData.getQuestID:()Ljava/lang/String;
+      15: invokevirtual #131                // Method net/minecraft/nbt/NBTTagCompound.func_74778_a:(Ljava/lang/String;Ljava/lang/String;)V
+      18: aload_0
+      19: invokevirtual #164                // Method ru/sky/dw/quests/common/quest/playerdata/QuestData.isCompleted:()Z
+      22: ifeq          32
+      25: aload_1
+      26: ldc           #26                 // String completed
+      28: iconst_1
+      29: invokevirtual #168                // Method net/minecraft/nbt/NBTTagCompound.func_74757_a:(Ljava/lang/String;Z)V
+      32: aload_0
+      33: invokevirtual #171                // Method ru/sky/dw/quests/common/quest/playerdata/QuestData.isRewarded:()Z
+      36: ifeq          46
+      39: aload_1
+      40: ldc           #29                 // String rewarded
+      42: iconst_1
+      43: invokevirtual #168                // Method net/minecraft/nbt/NBTTagCompound.func_74757_a:(Ljava/lang/String;Z)V
+      46: new           #45                 // class net/minecraft/nbt/NBTTagList
+      49: dup
+      50: invokespecial #46                 // Method net/minecraft/nbt/NBTTagList."<init>":()V
+      53: astore_2
+      54: aload_0
+      55: getfield      #175                // Field ru/sky/dw/quests/common/quest/playerdata/QuestData.taskData:Ljava/util/concurrent/ConcurrentHashMap;
+      58: invokevirtual #178                // Method java/util/concurrent/ConcurrentHashMap.values:()Ljava/util/Collection;
+      61: invokeinterface #64,  1           // InterfaceMethod java/util/Collection.iterator:()Ljava/util/Iterator;
+      66: astore_3
+      67: aload_3
+      68: invokeinterface #70,  1           // InterfaceMethod java/util/Iterator.hasNext:()Z
+      73: ifeq          99
+      76: aload_3
+      77: invokeinterface #74,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      82: checkcast     #180                // class ru/sky/dw/quests/common/quest/playerdata/TaskData
+      85: astore        4
+      87: aload_2
+      88: aload         4
+      90: invokestatic  #183                // Method serialize:(Lru/sky/dw/quests/common/quest/playerdata/TaskData;)Lnet/minecraft/nbt/NBTTagCompound;
+      93: invokevirtual #83                 // Method net/minecraft/nbt/NBTTagList.func_74742_a:(Lnet/minecraft/nbt/NBTBase;)V
+      96: goto          67
+      99: aload_2
+     100: invokevirtual #87                 // Method net/minecraft/nbt/NBTTagList.func_74745_c:()I
+     103: ifle          113
+     106: aload_1
+     107: ldc           #23                 // String tasks
+     109: aload_2
+     110: invokevirtual #91                 // Method net/minecraft/nbt/NBTTagCompound.func_74782_a:(Ljava/lang/String;Lnet/minecraft/nbt/NBTBase;)V
+     113: aload_1
+     114: areturn
+
+  public static ru.sky.dw.quests.common.quest.playerdata.QuestData deserializeQuestData(net.minecraft.nbt.NBTTagCompound);
+    Code:
+       0: aload_0
+       1: ldc           #14                 // String id
+       3: invokevirtual #146                // Method net/minecraft/nbt/NBTTagCompound.func_74779_i:(Ljava/lang/String;)Ljava/lang/String;
+       6: astore_1
+       7: new           #136                // class ru/sky/dw/quests/common/quest/playerdata/QuestData
+      10: dup
+      11: aload_1
+      12: invokespecial #187                // Method ru/sky/dw/quests/common/quest/playerdata/QuestData."<init>":(Ljava/lang/String;)V
+      15: astore_2
+      16: aload_0
+      17: ldc           #26                 // String completed
+      19: invokevirtual #191                // Method net/minecraft/nbt/NBTTagCompound.func_74764_b:(Ljava/lang/String;)Z
+      22: ifeq          35
+      25: aload_2
+      26: aload_0
+      27: ldc           #26                 // String completed
+      29: invokevirtual #194                // Method net/minecraft/nbt/NBTTagCompound.func_74767_n:(Ljava/lang/String;)Z
+      32: invokevirtual #198                // Method ru/sky/dw/quests/common/quest/playerdata/QuestData.setCompleted:(Z)V
+      35: aload_0
+      36: ldc           #29                 // String rewarded
+      38: invokevirtual #191                // Method net/minecraft/nbt/NBTTagCompound.func_74764_b:(Ljava/lang/String;)Z
+      41: ifeq          54
+      44: aload_2
+      45: aload_0
+      46: ldc           #29                 // String rewarded
+      48: invokevirtual #194                // Method net/minecraft/nbt/NBTTagCompound.func_74767_n:(Ljava/lang/String;)Z
+      51: invokevirtual #201                // Method ru/sky/dw/quests/common/quest/playerdata/QuestData.setRewarded:(Z)V
+      54: aload_0
+      55: ldc           #23                 // String tasks
+      57: bipush        10
+      59: invokevirtual #106                // Method net/minecraft/nbt/NBTTagCompound.func_150295_c:(Ljava/lang/String;I)Lnet/minecraft/nbt/NBTTagList;
+      62: astore_3
+      63: iconst_0
+      64: istore        4
+      66: aload_3
+      67: invokevirtual #87                 // Method net/minecraft/nbt/NBTTagList.func_74745_c:()I
+      70: istore        5
+      72: iload         4
+      74: iload         5
+      76: if_icmpge     118
+      79: aload_3
+      80: iload         4
+      82: invokevirtual #110                // Method net/minecraft/nbt/NBTTagList.func_150305_b:(I)Lnet/minecraft/nbt/NBTTagCompound;
+      85: astore        6
+      87: aload         6
+      89: invokestatic  #205                // Method deserializeTaskData:(Lnet/minecraft/nbt/NBTTagCompound;)Lru/sky/dw/quests/common/quest/playerdata/TaskData;
+      92: astore        7
+      94: aload_2
+      95: getfield      #175                // Field ru/sky/dw/quests/common/quest/playerdata/QuestData.taskData:Ljava/util/concurrent/ConcurrentHashMap;
+      98: aload         7
+     100: invokevirtual #208                // Method ru/sky/dw/quests/common/quest/playerdata/TaskData.getTaskID:()I
+     103: invokestatic  #214                // Method java/lang/Integer.valueOf:(I)Ljava/lang/Integer;
+     106: aload         7
+     108: invokevirtual #215                // Method java/util/concurrent/ConcurrentHashMap.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+     111: pop
+     112: iinc          4, 1
+     115: goto          72
+     118: aload_2
+     119: areturn
+
+  public static net.minecraft.nbt.NBTTagCompound serialize(ru.sky.dw.quests.common.quest.playerdata.TaskData);
+    Code:
+       0: new           #42                 // class net/minecraft/nbt/NBTTagCompound
+       3: dup
+       4: invokespecial #43                 // Method net/minecraft/nbt/NBTTagCompound."<init>":()V
+       7: astore_1
+       8: aload_1
+       9: ldc           #14                 // String id
+      11: aload_0
+      12: invokevirtual #208                // Method ru/sky/dw/quests/common/quest/playerdata/TaskData.getTaskID:()I
+      15: invokevirtual #221                // Method net/minecraft/nbt/NBTTagCompound.func_74768_a:(Ljava/lang/String;I)V
+      18: aload_1
+      19: ldc           #32                 // String progress
+      21: aload_0
+      22: invokevirtual #224                // Method ru/sky/dw/quests/common/quest/playerdata/TaskData.getProgress:()I
+      25: invokevirtual #221                // Method net/minecraft/nbt/NBTTagCompound.func_74768_a:(Ljava/lang/String;I)V
+      28: aload_0
+      29: invokevirtual #225                // Method ru/sky/dw/quests/common/quest/playerdata/TaskData.isCompleted:()Z
+      32: ifeq          42
+      35: aload_1
+      36: ldc           #26                 // String completed
+      38: iconst_1
+      39: invokevirtual #168                // Method net/minecraft/nbt/NBTTagCompound.func_74757_a:(Ljava/lang/String;Z)V
+      42: aload_1
+      43: areturn
+
+  public static ru.sky.dw.quests.common.quest.playerdata.TaskData deserializeTaskData(net.minecraft.nbt.NBTTagCompound);
+    Code:
+       0: aload_0
+       1: ldc           #14                 // String id
+       3: invokevirtual #229                // Method net/minecraft/nbt/NBTTagCompound.func_74762_e:(Ljava/lang/String;)I
+       6: istore_1
+       7: aload_0
+       8: ldc           #32                 // String progress
+      10: invokevirtual #229                // Method net/minecraft/nbt/NBTTagCompound.func_74762_e:(Ljava/lang/String;)I
+      13: istore_2
+      14: aload_0
+      15: ldc           #26                 // String completed
+      17: invokevirtual #194                // Method net/minecraft/nbt/NBTTagCompound.func_74767_n:(Ljava/lang/String;)Z
+      20: istore_3
+      21: new           #180                // class ru/sky/dw/quests/common/quest/playerdata/TaskData
+      24: dup
+      25: iload_1
+      26: invokespecial #232                // Method ru/sky/dw/quests/common/quest/playerdata/TaskData."<init>":(I)V
+      29: astore        4
+      31: aload         4
+      33: iload_2
+      34: invokevirtual #235                // Method ru/sky/dw/quests/common/quest/playerdata/TaskData.setProgress:(I)V
+      37: iload_3
+      38: ifeq          47
+      41: aload         4
+      43: iconst_1
+      44: invokevirtual #236                // Method ru/sky/dw/quests/common/quest/playerdata/TaskData.setCompleted:(Z)V
+      47: aload         4
+      49: areturn
+}
+Compiled from "CSPQuestSync.java"
+public class ru.sky.dw.quests.common.network.CSPQuestSync$Handler implements cpw.mods.fml.common.network.simpleimpl.IMessageHandler<ru.sky.dw.quests.common.network.CSPQuestSync, cpw.mods.fml.common.network.simpleimpl.IMessage> {
+  public ru.sky.dw.quests.common.network.CSPQuestSync$Handler();
+    Code:
+       0: aload_0
+       1: invokespecial #15                 // Method java/lang/Object."<init>":()V
+       4: return
+
+  public cpw.mods.fml.common.network.simpleimpl.IMessage onMessage(ru.sky.dw.quests.common.network.CSPQuestSync, cpw.mods.fml.common.network.simpleimpl.MessageContext);
+    Code:
+       0: aload_1
+       1: ifnonnull     6
+       4: aconst_null
+       5: areturn
+       6: getstatic     #25                 // Field ru/sky/dw/quests/client/ClientQuestManager.INSTANCE:Lru/sky/dw/quests/client/ClientQuestManager;
+       9: invokevirtual #28                 // Method ru/sky/dw/quests/client/ClientQuestManager.clearQuestData:()V
+      12: getstatic     #25                 // Field ru/sky/dw/quests/client/ClientQuestManager.INSTANCE:Lru/sky/dw/quests/client/ClientQuestManager;
+      15: aload_1
+      16: invokestatic  #32                 // Method ru/sky/dw/quests/common/network/CSPQuestSync.access$000:(Lru/sky/dw/quests/common/network/CSPQuestSync;)Ljava/util/Map;
+      19: invokevirtual #36                 // Method ru/sky/dw/quests/client/ClientQuestManager.putAllQuestData:(Ljava/util/Map;)V
+      22: getstatic     #42                 // Field ru/sky/dw/quests/client/gui/elements/UIQuestBrowser.selectedTab:Lru/sky/dw/quests/common/quest/QuestTab;
+      25: ifnull        57
+      28: getstatic     #42                 // Field ru/sky/dw/quests/client/gui/elements/UIQuestBrowser.selectedTab:Lru/sky/dw/quests/common/quest/QuestTab;
+      31: invokevirtual #48                 // Method ru/sky/dw/quests/common/quest/QuestTab.getTabID:()Ljava/lang/String;
+      34: astore_3
+      35: getstatic     #54                 // Field ru/sky/dw/quests/DwQuests.QUEST_MANAGER:Lru/sky/dw/quests/common/quest/AbstractQuestManager;
+      38: aload_3
+      39: invokevirtual #60                 // Method ru/sky/dw/quests/common/quest/AbstractQuestManager.getQuestTabByID:(Ljava/lang/String;)Lru/sky/dw/quests/common/quest/QuestTab;
+      42: astore        4
+      44: aload         4
+      46: ifnull        54
+      49: aload         4
+      51: putstatic     #42                 // Field ru/sky/dw/quests/client/gui/elements/UIQuestBrowser.selectedTab:Lru/sky/dw/quests/common/quest/QuestTab;
+      54: goto          93
+      57: getstatic     #54                 // Field ru/sky/dw/quests/DwQuests.QUEST_MANAGER:Lru/sky/dw/quests/common/quest/AbstractQuestManager;
+      60: invokevirtual #64                 // Method ru/sky/dw/quests/common/quest/AbstractQuestManager.getQuestTabs:()Ljava/util/Collection;
+      63: invokeinterface #70,  1           // InterfaceMethod java/util/Collection.isEmpty:()Z
+      68: ifne          93
+      71: getstatic     #54                 // Field ru/sky/dw/quests/DwQuests.QUEST_MANAGER:Lru/sky/dw/quests/common/quest/AbstractQuestManager;
+      74: invokevirtual #64                 // Method ru/sky/dw/quests/common/quest/AbstractQuestManager.getQuestTabs:()Ljava/util/Collection;
+      77: invokeinterface #74,  1           // InterfaceMethod java/util/Collection.iterator:()Ljava/util/Iterator;
+      82: invokeinterface #80,  1           // InterfaceMethod java/util/Iterator.next:()Ljava/lang/Object;
+      87: checkcast     #44                 // class ru/sky/dw/quests/common/quest/QuestTab
+      90: putstatic     #42                 // Field ru/sky/dw/quests/client/gui/elements/UIQuestBrowser.selectedTab:Lru/sky/dw/quests/common/quest/QuestTab;
+      93: aconst_null
+      94: areturn
+
+  public cpw.mods.fml.common.network.simpleimpl.IMessage onMessage(cpw.mods.fml.common.network.simpleimpl.IMessage, cpw.mods.fml.common.network.simpleimpl.MessageContext);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: checkcast     #10                 // class ru/sky/dw/quests/common/network/CSPQuestSync
+       5: aload_2
+       6: invokevirtual #90                 // Method onMessage:(Lru/sky/dw/quests/common/network/CSPQuestSync;Lcpw/mods/fml/common/network/simpleimpl/MessageContext;)Lcpw/mods/fml/common/network/simpleimpl/IMessage;
+       9: areturn
+}
